@@ -1,0 +1,996 @@
+DOCUMENTO DE REQUISITOS DE SOFTWARE (SRS)
+
+PLATAFORMA YOGUE-SE YOGA
+
+Versão: 1.0
+Tipo: Sistema web responsivo
+Projeto: Plataforma institucional e sistema de gestão de estúdio de yoga
+Idioma: Português (Brasil)
+Moeda: Real brasileiro (BRL)
+Fuso horário: America/Sao_Paulo
+
+⸻
+
+1. OBJETIVO DO PROJETO
+
+Desenvolver uma plataforma própria para o estúdio Yogue-se Yoga, integrando três ambientes:
+
+1. Site institucional: apresentação do estúdio, método Superioga, professora, horários e agendamento de aulas experimentais.
+2. Painel administrativo: gerenciamento de alunos, horários, turmas, agendamentos, créditos, reposições e experimentais.
+3. Área do aluno: acesso individual para consultar horários fixos, acompanhar créditos, avisar ausências, agendar reposições e acessar a comunidade Pato Yoga Club.
+
+Os três ambientes devem compartilhar o mesmo banco de dados, garantindo atualização automática das informações.
+
+1.1 Objetivos principais
+
+* Automatizar a gestão das turmas.
+* Controlar a capacidade máxima de 8 alunos por aula.
+* Gerenciar horários fixos e recorrentes.
+* Automatizar créditos de reposição.
+* Permitir que os alunos administrem seus próprios agendamentos.
+* Facilitar a captação de novos alunos.
+* Reduzir a necessidade de intervenções administrativas.
+* Proporcionar uma experiência digital exclusiva e alinhada à identidade Yogue-se.
+
+2. PERFIS DE ACESSO
+
+O sistema deverá possuir três níveis de acesso.
+
+2.1 Administrador
+
+Acesso completo a todas as funcionalidades.
+
+Permissões:
+
+* Visualizar e editar todos os alunos.
+* Criar, editar e excluir cadastros.
+* Criar e gerenciar planos.
+* Criar e editar turmas e horários.
+* Gerenciar horários fixos.
+* Adicionar agendamentos manualmente.
+* Aprovar ou recusar experimentais.
+* Conceder, devolver e cancelar créditos.
+* Consultar históricos.
+* Cadastrar feriados e recessos.
+* Bloquear horários.
+* Cancelar aulas.
+* Gerenciar conteúdos da comunidade.
+* Consultar relatórios.
+
+2.2 Aluno
+
+Acesso restrito ao próprio cadastro.
+
+Permissões:
+
+* Consultar seus dados.
+* Consultar horários fixos.
+* Visualizar calendário pessoal.
+* Avisar não comparecimento.
+* Agendar reposições.
+* Alterar horários fixos, conforme disponibilidade.
+* Consultar créditos e vencimentos.
+* Acessar a comunidade.
+
+O aluno não poderá visualizar informações pessoais ou agendamentos individuais de outros alunos.
+
+2.3 Visitante
+
+Acesso sem autenticação.
+
+Permissões:
+
+* Visualizar o site institucional.
+* Conhecer as modalidades.
+* Consultar horários e vagas.
+* Solicitar aula experimental.
+* Acessar o login.
+
+3. CONFIGURAÇÕES GERAIS
+
+Parâmetro	Configuração
+Capacidade por turma	8 pessoas
+Modalidade 1	Superioga Clássico
+Modalidade 2	Superioga Intenso
+Aula experimental	R$ 45,00
+Antecedência mínima para crédito	24 horas
+Validade do crédito	30 dias
+Limite de créditos acumulados	Ilimitado
+Limite de reposições	2 por semana
+Semana de contabilização	Segunda a domingo
+Modalidades permitidas para reposição	Ambas
+Dias fixos	Recorrência semanal
+Fuso horário	America/Sao_Paulo
+
+A capacidade deve ser configurável pelo administrador, mantendo 8 como valor inicial.
+
+4. MÓDULO ADMINISTRATIVO
+
+4.1 Dashboard
+
+Criar uma tela inicial com indicadores:
+
+* Total de alunos ativos.
+* Total de alunos inativos.
+* Total de aulas do dia.
+* Total de vagas ocupadas.
+* Total de vagas disponíveis.
+* Reposições agendadas.
+* Experimentais pendentes.
+* Experimentais confirmadas.
+* Créditos disponíveis.
+* Créditos próximos do vencimento.
+
+Os indicadores devem ser atualizados conforme as movimentações do sistema.
+
+4.2 Calendário administrativo
+
+Criar calendário com três visualizações:
+
+* Diária.
+* Semanal.
+* Mensal.
+
+Cada horário deverá exibir:
+
+* Horário.
+* Modalidade.
+* Quantidade de alunos fixos.
+* Quantidade de reposições.
+* Quantidade de experimentais confirmadas.
+* Quantidade de vagas disponíveis.
+
+Exemplo de turma
+
+Terça-feira, 19h – Superioga Clássico.
+
+Tipo	Quantidade
+Alunos fixos	5
+Reposições	2
+Experimentais	1
+Total	8
+Vagas	0
+
+Ao clicar no horário, abrir a lista de participantes, com identificação do tipo de vínculo.
+
+Ao clicar em um aluno, abrir seu cadastro.
+
+4.3 Cadastro de turmas
+
+Permitir cadastrar:
+
+* Nome da modalidade.
+* Dia da semana.
+* Horário de início.
+* Horário de término.
+* Capacidade máxima.
+* Status ativo/inativo.
+
+O administrador poderá criar, editar, bloquear ou desativar horários.
+
+4.4 Cadastro de alunos
+
+Campos obrigatórios:
+
+* Nome completo.
+* Telefone.
+* E-mail.
+* Data de nascimento.
+* Data de matrícula.
+* Plano contratado.
+* Status do cadastro.
+
+Campos de gestão:
+
+* Dias e horários fixos.
+* Histórico de agendamentos.
+* Histórico de cancelamentos.
+* Créditos disponíveis.
+* Créditos utilizados.
+* Créditos vencidos.
+* Histórico de faltas.
+* Observações administrativas.
+
+Status possíveis:
+
+* Experimental.
+* Aguardando matrícula.
+* Ativo.
+* Inativo.
+
+4.5 Gestão de planos
+
+Criar módulo para cadastro e manutenção de planos.
+
+Campos:
+
+* Nome do plano.
+* Valor mensal.
+* Quantidade de aulas por semana.
+* Descrição.
+* Status.
+
+Os planos serão cadastrados exclusivamente pelo administrador.
+
+A plataforma não deverá exigir uma tabela de preços fixa no código.
+
+4.6 Adicionar agendamento manualmente
+
+Criar botão Adicionar agendamento.
+
+Campos:
+
+* Selecionar aluno.
+* Selecionar data.
+* Selecionar horário.
+* Selecionar modalidade.
+* Selecionar tipo de agendamento.
+
+Tipos:
+
+* Aula fixa.
+* Reposição.
+* Experimental.
+* Alteração de horário fixo.
+
+Antes de confirmar, verificar disponibilidade e capacidade.
+
+5. MÓDULO DE HORÁRIOS FIXOS
+
+5.1 Cadastro de horário fixo
+
+Cada aluno ativo poderá possuir um ou mais horários fixos semanais.
+
+Exemplo:
+
+* Terça-feira às 19h.
+* Quinta-feira às 19h.
+
+O sistema deverá gerar reservas recorrentes para as ocorrências futuras dos horários cadastrados.
+
+Essas reservas deverão ocupar vagas da turma automaticamente.
+
+5.2 Alteração de horário fixo pelo aluno
+
+Disponibilizar botão Alterar meu horário fixo.
+
+Fluxo:
+
+1. Aluno acessa seus horários.
+2. Seleciona o horário que deseja alterar.
+3. Visualiza os horários disponíveis.
+4. Seleciona o novo horário.
+5. O sistema verifica a disponibilidade na próxima ocorrência da nova turma.
+6. Se houver vaga, confirma a alteração.
+7. A reserva antiga é liberada.
+8. A nova reserva passa a ser recorrente.
+
+Não será necessária aprovação administrativa.
+
+A alteração não gera crédito de reposição.
+
+A operação deverá ser transacional: se a nova reserva não puder ser confirmada, o horário antigo deverá permanecer intacto.
+
+6. MÓDULO DE CANCELAMENTOS E CRÉDITOS
+
+Este módulo é prioritário e deverá funcionar automaticamente.
+
+6.1 Botão de não comparecimento
+
+Disponibilizar na área do aluno o botão:
+
+Avisar não comparecimento.
+
+O botão deverá estar disponível para cada aula fixa agendada.
+
+Ao clicar, exibir uma confirmação:
+
+“Você deseja avisar que não poderá comparecer a esta aula?”
+
+Após confirmar, calcular automaticamente o intervalo entre o horário atual e o início da aula.
+
+Regra de 24 horas
+
+Cenário A: aviso realizado com antecedência igual ou superior a 24 horas.
+
+* Registrar cancelamento.
+* Liberar a vaga.
+* Gerar um crédito.
+* Definir vencimento para 30 dias após a geração.
+* Exibir crédito na área do aluno.
+* Disponibilizar botão para agendar reposição.
+
+Cenário B: aviso realizado com menos de 24 horas.
+
+* Registrar cancelamento.
+* Liberar a vaga.
+* Não gerar crédito.
+* Registrar falta sem direito automático à reposição.
+* Exibir confirmação do aviso.
+
+A administração poderá conceder crédito manualmente em qualquer situação excepcional.
+
+6.2 Gestão de créditos
+
+Cada crédito deverá possuir:
+
+* Identificador único.
+* Aluno vinculado.
+* Data de geração.
+* Data de vencimento.
+* Origem do crédito.
+* Status.
+* Agendamento associado, quando houver.
+
+Origens possíveis:
+
+* Cancelamento de aula fixa.
+* Cancelamento de aula pelo estúdio.
+* Concessão manual.
+
+Status:
+
+* Disponível.
+* Reservado.
+* Utilizado.
+* Vencido.
+* Cancelado.
+
+6.3 Validade
+
+O crédito terá validade de 30 dias a partir da data de geração.
+
+Após o vencimento, deverá ser automaticamente bloqueado para utilização.
+
+O sistema deverá executar uma rotina automática de atualização dos créditos vencidos.
+
+6.4 Agendamento de reposição
+
+Disponibilizar botão Agendar reposição.
+
+O botão deverá aparecer somente quando houver créditos disponíveis e o aluno estiver apto a agendar.
+
+Fluxo:
+
+1. Consultar créditos disponíveis.
+2. Verificar limite semanal de reposições.
+3. Exibir calendário de turmas.
+4. Mostrar somente turmas com vagas.
+5. Permitir seleção de qualquer modalidade.
+6. Confirmar agendamento.
+7. Reservar a vaga.
+8. Vincular o crédito à reserva.
+
+Regras obrigatórias
+
+* Máximo de duas reposições por aluno de segunda a domingo.
+* O limite considera reposições efetivamente agendadas naquela semana, não apenas créditos gerados.
+* Não permitir agendamento sem crédito válido.
+* Não permitir agendamento em turma lotada.
+* Não permitir agendamento em horário bloqueado.
+* O crédito deverá ficar reservado enquanto estiver associado à reposição.
+* Ao concluir a aula, registrar como utilizado.
+
+6.5 Cancelamento de reposição
+
+O aluno poderá cancelar uma reposição.
+
+Com 24 horas ou mais:
+
+* Cancelar a reserva.
+* Liberar a vaga.
+* Devolver o crédito.
+* Manter a data de vencimento original.
+
+Com menos de 24 horas:
+
+* Cancelar a reserva.
+* Liberar a vaga.
+* Cancelar definitivamente o crédito.
+
+Não gerar um novo crédito para o cancelamento de uma reposição.
+
+6.6 Administração de créditos
+
+Disponibilizar ferramentas administrativas:
+
+* Conceder crédito.
+* Devolver crédito.
+* Cancelar crédito.
+* Consultar vencimentos.
+* Consultar utilização.
+* Consultar histórico.
+
+Toda alteração manual deverá registrar:
+
+* Administrador responsável.
+* Data e horário.
+* Motivo.
+* Crédito afetado.
+* Estado anterior e novo estado.
+
+7. MÓDULO DE FERIADOS E CANCELAMENTOS DO ESTÚDIO
+
+7.1 Feriados
+
+O administrador poderá cadastrar feriados nacionais e bloquear as turmas correspondentes.
+
+Não gerar créditos para alunos fixos.
+
+7.2 Recessos
+
+Permitir cadastrar períodos de recesso.
+
+Não gerar créditos.
+
+7.3 Cancelamento de aula pelo estúdio
+
+Quando uma aula for cancelada pelo administrador:
+
+* Cancelar as reservas daquela ocorrência.
+* Liberar a capacidade.
+* Gerar automaticamente um crédito para cada aluno fixo afetado.
+* Registrar a origem do crédito como cancelamento do estúdio.
+
+O crédito deverá possuir validade de 30 dias.
+
+A administração poderá cancelar o crédito caso o aluno opte por uma alternativa oferecida pelo estúdio.
+
+O processo deverá impedir duplicidade de créditos se a mesma aula for cancelada mais de uma vez ou se a operação for repetida.
+
+8. MÓDULO DE AULAS EXPERIMENTAIS
+
+8.1 Agendamento público
+
+Criar formulário de experimental.
+
+Campos:
+
+* Nome completo.
+* Telefone.
+* Dia e horário desejados.
+* Modalidade.
+* Declaração obrigatória.
+
+Texto da declaração:
+
+“Declaro estar em condições de saúde aptas à prática de yoga e me comprometo a informar à professora qualquer condição ou limitação relevante para a realização das atividades.”
+
+O sistema deverá apresentar o valor de R$ 45,00 antes da solicitação.
+
+8.2 Restrição de duplicidade
+
+Permitir apenas uma aula experimental por pessoa.
+
+Utilizar o telefone como identificador para verificar experimentais anteriores.
+
+Normalizar os números de telefone antes da comparação.
+
+A administração deverá poder consultar tentativas anteriores.
+
+8.3 Aprovação administrativa
+
+O agendamento público deverá iniciar com status:
+
+PENDENTE DE APROVAÇÃO.
+
+A solicitação pendente não ocupará definitivamente uma vaga.
+
+O administrador poderá:
+
+* Aprovar.
+* Recusar.
+* Alterar a data ou horário.
+* Consultar os dados.
+* Registrar pagamento pendente ou realizado.
+* Registrar contato via WhatsApp.
+
+Ao aprovar, o sistema deverá verificar novamente a disponibilidade da turma.
+
+Se não houver vaga, impedir a confirmação e solicitar a escolha de outro horário.
+
+Após aprovação, a vaga será ocupada.
+
+8.4 Pagamento
+
+O valor inicial da experimental será R$ 45,00.
+
+Na primeira versão, o controle será manual.
+
+Permitir status:
+
+* Pendente.
+* Pago.
+* Isento.
+* Reembolsado.
+
+Não implementar cobrança automática na primeira versão.
+
+8.5 Cancelamento de experimental
+
+Aplicar regra de 24 horas.
+
+Com 24 horas ou mais:
+
+* Permitir reagendamento.
+* Registrar cancelamento da reserva anterior.
+* Manter o direito à experimental.
+
+Com menos de 24 horas:
+
+* Registrar perda do direito ao reagendamento.
+
+Não comparecimento:
+
+* Registrar falta.
+* Encerrar o direito ao reagendamento.
+
+8.6 Conversão em aluno
+
+Após a realização da experimental, permitir ação administrativa:
+
+Converter em aluno.
+
+Fluxo:
+
+1. Alterar status para aguardando matrícula.
+2. Enviar acesso para completar cadastro.
+3. Apresentar os planos cadastrados.
+4. Permitir escolha do plano.
+5. Permitir escolha de dia e horário fixo.
+6. Verificar disponibilidade.
+7. Confirmar matrícula.
+8. Alterar status para ativo.
+9. Liberar acesso à área do aluno.
+
+O sistema deverá manter o histórico da experimental.
+
+9. ÁREA LOGADA DO ALUNO
+
+9.1 Home
+
+Exibir:
+
+* Saudação personalizada.
+* Próxima aula.
+* Horários fixos.
+* Créditos disponíveis.
+* Créditos próximos do vencimento.
+* Avisos do estúdio.
+* Acesso ao Pato Yoga Club.
+
+9.2 Meu perfil
+
+Permitir consultar:
+
+* Nome.
+* Telefone.
+* E-mail.
+* Data de nascimento.
+* Plano.
+* Data de início.
+* Horários fixos.
+
+Permitir editar dados pessoais autorizados.
+
+9.3 Meu calendário
+
+Exibir calendário individual com:
+
+* Aulas fixas.
+* Aulas canceladas.
+* Reposições.
+* Experimentais, quando aplicável.
+* Histórico de aulas.
+
+Diferenciar visualmente cada tipo de agendamento.
+
+9.4 Meus créditos
+
+Exibir:
+
+* Quantidade de créditos disponíveis.
+* Data de geração.
+* Data de vencimento.
+* Status.
+* Histórico de utilização.
+
+9.5 Ações do aluno
+
+Disponibilizar:
+
+1. Avisar não comparecimento.
+2. Agendar reposição.
+3. Alterar horário fixo.
+4. Consultar calendário.
+5. Consultar créditos.
+6. Acessar comunidade.
+
+10. SITE INSTITUCIONAL
+
+Criar um site responsivo, com navegação intuitiva.
+
+10.1 Home
+
+Seções:
+
+* Apresentação do Yogue-se.
+* Diferenciais do estúdio.
+* Método Superioga.
+* Modalidades.
+* Professora.
+* Fotos do ambiente.
+* Horários.
+* Endereço.
+* Contato.
+* Pato Yoga Club.
+
+10.2 Página do método
+
+Apresentar o método Superioga, sua proposta e benefícios.
+
+10.3 Modalidades
+
+Criar páginas individuais:
+
+Superioga Clássico
+
+* Prática dinâmica.
+* Força.
+* Flexibilidade.
+* Equilíbrio.
+* Foco.
+* Respiração.
+* Meditação.
+
+Superioga Intenso
+
+* Prática mais desafiadora.
+* Posturas mais complexas.
+* Desenvolvimento de força e flexibilidade.
+* Não indicada para gestantes.
+
+10.4 Agenda pública
+
+Exibir:
+
+* Dias.
+* Horários.
+* Modalidade.
+* Vagas disponíveis.
+
+Não exibir nomes ou informações pessoais dos alunos.
+
+10.5 Aula experimental
+
+Botão de acesso ao formulário de experimental.
+
+10.6 Login
+
+Botão de login no canto superior direito.
+
+11. PATO YOGA CLUB
+
+Criar área exclusiva para alunos ativos.
+
+Funcionalidades:
+
+* Comunicados.
+* Conteúdos sobre yoga.
+* Dicas e curiosidades.
+* Eventos.
+* Benefícios de parceiros.
+* Cupons de desconto.
+* Loja Yogue-se.
+* Conteúdos exclusivos.
+
+O administrador deverá conseguir publicar, editar e remover conteúdos.
+
+12. ESTRUTURA DO BANCO DE DADOS
+
+Criar banco de dados relacional.
+
+Entidades principais:
+
+USERS
+
+* id
+* name
+* email
+* phone
+* password_hash
+* role
+* status
+* created_at
+
+STUDENTS
+
+* id
+* user_id
+* birth_date
+* enrollment_date
+* plan_id
+* student_status
+* health_declaration
+* health_declaration_accepted_at
+
+PLANS
+
+* id
+* name
+* price
+* weekly_frequency
+* description
+* status
+
+CLASS_TYPES
+
+* id
+* name
+* description
+* status
+
+CLASS_SLOTS
+
+* id
+* class_type_id
+* weekday
+* start_time
+* end_time
+* capacity
+* status
+
+FIXED_ENROLLMENTS
+
+* id
+* student_id
+* class_slot_id
+* start_date
+* end_date
+* status
+
+CLASS_SESSIONS
+
+* id
+* class_slot_id
+* session_date
+* status
+* cancellation_reason
+
+Representa cada ocorrência concreta de uma turma semanal.
+
+BOOKINGS
+
+* id
+* student_id
+* class_session_id
+* booking_type
+* status
+* created_at
+* cancelled_at
+
+Tipos:
+
+* FIXED
+* MAKEUP
+* EXPERIMENTAL
+
+CREDITS
+
+* id
+* student_id
+* source
+* source_booking_id
+* generated_at
+* expires_at
+* status
+* used_booking_id
+
+CREDIT_TRANSACTIONS
+
+* id
+* credit_id
+* action
+* previous_status
+* new_status
+* reason
+* admin_user_id
+* created_at
+
+EXPERIMENTALS
+
+* id
+* name
+* phone
+* class_session_id
+* status
+* payment_status
+* health_declaration
+* requested_at
+* approved_at
+* attended_at
+
+HOLIDAYS
+
+* id
+* date
+* name
+* status
+
+STUDIO_CLOSURES
+
+* id
+* start_date
+* end_date
+* reason
+* status
+
+NOTIFICATIONS
+
+* id
+* user_id
+* title
+* message
+* read_at
+* created_at
+
+COMMUNITY_CONTENT
+
+* id
+* title
+* content
+* image
+* category
+* status
+* published_at
+
+Os relacionamentos deverão garantir integridade referencial, histórico e rastreabilidade das operações.
+
+13. REGRAS DE SEGURANÇA E INTEGRIDADE
+
+Implementar obrigatoriamente:
+
+1. Autenticação segura.
+2. Senhas armazenadas com hash seguro.
+3. Controle de permissões por perfil.
+4. Proteção de dados pessoais.
+5. Proteção contra acesso indevido a cadastros.
+6. Validação de dados no servidor.
+7. Controle transacional das reservas.
+8. Prevenção de agendamentos duplicados.
+9. Prevenção de créditos duplicados.
+10. Registro de alterações administrativas.
+11. Rotina automática de expiração de créditos.
+12. Backup periódico.
+13. Conformidade com a LGPD.
+
+Todas as operações de reserva e utilização de crédito devem ser processadas no servidor, nunca dependendo exclusivamente de validações no navegador.
+
+14. REQUISITOS DE INTERFACE
+
+A plataforma deverá ser:
+
+* Responsiva para desktop, tablet e celular.
+* Preferencialmente mobile-first na área do aluno.
+* De navegação simples e intuitiva.
+* Visualmente alinhada à marca Yogue-se.
+* Com carregamento rápido.
+* Com feedback claro para operações concluídas ou não realizadas.
+
+Identidade visual
+
+Direção estética:
+
+* Minimalista.
+* Moderna.
+* Acolhedora.
+* Elegante.
+* Leve.
+
+Paleta sugerida:
+
+* Off-white.
+* Bege.
+* Verde sálvia.
+* Tons terrosos.
+* Cinza suave.
+
+Tipografia limpa e legível.
+
+15. CRITÉRIOS DE ACEITAÇÃO
+
+A plataforma somente deverá ser considerada funcional quando os seguintes testes forem aprovados.
+
+Teste	Resultado esperado
+Turma com 8 reservas	Não permite uma nona reserva
+Cancelamento com 24h exatas	Gera crédito
+Cancelamento com 23h59	Não gera crédito
+Crédito após 30 dias	Fica indisponível
+Agendamento sem crédito	É bloqueado
+Terceira reposição na semana	É bloqueada
+Reposição em outra modalidade	Permitida
+Cancelamento de reposição com 24h	Devolve crédito
+Cancelamento de reposição com menos de 24h	Perde crédito
+Crédito devolvido	Mantém vencimento original
+Alteração de horário fixo com vaga	Confirmada
+Alteração de horário fixo sem vaga	Bloqueada
+Feriado	Não gera crédito
+Cancelamento pelo estúdio	Gera crédito automático
+Experimental duplicada	Bloqueada
+Experimental sem aprovação	Não ocupa vaga
+Experimental aprovada com turma lotada	Não permite confirmação
+Experimental aprovada	Ocupa vaga
+Conversão em aluno	Cria matrícula e horários fixos
+Duas reservas simultâneas na última vaga	Apenas uma é confirmada
+
+16. PRIORIDADES DE IMPLEMENTAÇÃO
+
+FASE 1 – SISTEMA OPERACIONAL
+
+* Banco de dados.
+* Autenticação.
+* Painel administrativo.
+* Cadastro de alunos.
+* Cadastro de planos.
+* Cadastro de turmas.
+* Calendário.
+* Horários fixos.
+* Cancelamentos.
+* Créditos.
+* Reposições.
+* Feriados e recessos.
+* Experimentais.
+
+FASE 2 – ÁREA DO ALUNO
+
+* Login.
+* Perfil.
+* Calendário individual.
+* Aviso de não comparecimento.
+* Agendamento de reposições.
+* Alteração de horários fixos.
+* Consulta de créditos.
+
+FASE 3 – SITE INSTITUCIONAL
+
+* Home.
+* Método.
+* Modalidades.
+* Professora.
+* Agenda pública.
+* Formulário experimental.
+* Login.
+
+FASE 4 – COMUNIDADE E EXPANSÃO
+
+* Pato Yoga Club.
+* Publicação de conteúdos.
+* Notificações.
+* Relatórios.
+* Integração de pagamentos.
+* Melhorias futuras.
+
+17. ORIENTAÇÕES PARA O DESENVOLVEDOR
+
+O desenvolvimento deverá seguir uma arquitetura modular, permitindo expansão sem necessidade de reconstruir o sistema.
+
+Priorizar a lógica operacional e a consistência dos dados antes da implementação visual completa.
+
+Requisitos fundamentais:
+
+* Uma única fonte de dados para os três ambientes.
+* Agenda centralizada.
+* Reservas recorrentes para alunos fixos.
+* Ocupação compartilhada entre fixos, reposições e experimentais aprovadas.
+* Créditos controlados individualmente.
+* Regras de 24 horas calculadas no servidor.
+* Limite semanal de duas reposições.
+* Histórico completo de movimentações.
+* Interface responsiva.
+* Código organizado e documentado.
+
+ENTREGA ESPERADA: uma plataforma web própria do Yogue-se Yoga, com gestão administrativa integrada, site institucional e área exclusiva dos alunos, funcionando de maneira automatizada e preparada para futuras expansões.
+
+⸻
+
+FIM DO DOCUMENTO – SRS YOGUE-SE V1.0
