@@ -231,8 +231,8 @@ T17 → T19
 
 **Done when**:
 
-- [ ] Unique por data em holidays presente
-- [ ] Tipos Drizzle exportados e agregados no index do schema
+- [x] Unique por data em holidays presente
+- [x] Tipos Drizzle exportados e agregados no index do schema
 
 **Tests**: none
 **Gate**: build
