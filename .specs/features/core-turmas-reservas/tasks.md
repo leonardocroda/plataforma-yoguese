@@ -386,7 +386,7 @@ T17 → T19
 
 **Done when**:
 
-- [ ] Integration tests: criacao atualiza composicao; encerramento deixa de contar desde a data; turma cheia recusa serial
+- [x] Integration tests: criacao atualiza composicao; encerramento deixa de contar desde a data; turma cheia recusa serial
 
 **Tests**: integration
 **Gate**: full
