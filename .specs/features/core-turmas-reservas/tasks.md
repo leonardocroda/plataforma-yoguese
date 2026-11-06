@@ -270,8 +270,8 @@ T17 → T19
 
 **Done when**:
 
-- [ ] `npm run db:migrate` aplica tudo sobre o container vazio
-- [ ] Teste de integracao do seed carrega modalidades e alunos de teste
+- [x] `npm run db:migrate` aplica tudo sobre o container vazio
+- [x] Teste de integracao do seed carrega modalidades e alunos de teste
 
 **Tests**: integration
 **Gate**: full
