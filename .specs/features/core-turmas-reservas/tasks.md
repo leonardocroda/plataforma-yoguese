@@ -290,7 +290,7 @@ T17 → T19
 
 **Done when**:
 
-- [ ] Todo branch coberto por unit tests (incl. virada de mes e horario de verao no calculo de datas)
+- [x] Todo branch coberto por unit tests (incl. virada de mes e horario de verao no calculo de datas)
 
 **Tests**: unit
 **Gate**: quick
