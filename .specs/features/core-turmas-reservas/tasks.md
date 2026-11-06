@@ -9,8 +9,8 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: inline - arquitetura decidida em STATE.md (AD-004, monolito modular); sem design.md separado
-**Status**: Draft
-**Approved**:
+**Status**: Approved
+**Approved**: 2026-11-06 - user: "sim"
 **Build**: `npm run build; npm run lint`
 **Run unit**: `npx vitest run --reporter=verbose --exclude "**/*.int.test.ts"`
 **Run int**: `npx vitest run --reporter=verbose "**/*.int.test.ts"`
@@ -107,13 +107,13 @@ T17 → T19
 **What**: criar o app Next.js (App Router) com TypeScript, ESLint, Tailwind e scripts `dev`/`build`/`lint` no npm
 **Where**: `package.json`
 **Depends on**: None
-**Reuses**: `create-next-app` (App Router, TS, ESLint, Tailwind)
+**Reuses**: `create-next-app` (App Router, TS, ESLint, Tailwind) - substituted by manual scaffold: create-next-app refuses a non-empty directory
 **Requirement**: fundacao para todos os RES
 
 **Done when**:
 
-- [ ] `npm run dev` sobe o app; `npm run build` e `npm run lint` passam
-- [ ] Route groups `(admin)` e `(site)` criados vazios
+- [x] `npm run dev` sobe o app; `npm run build` e `npm run lint` passam
+- [x] Route groups `(admin)` e `(site)` criados vazios
 
 **Tests**: none
 **Gate**: build
@@ -567,7 +567,7 @@ Proof: run int | ✓ agenda > slot inativo fora da lista
 
 The feature's live state, written as it happens - a compaction gives no warning.
 
-**Settled mid-build:** none yet
+**Settled mid-build:** 2026-11-06 - user autorizou T1 como desbloqueio do build gate ("T1 primeiro, gate depois") e 3 batch workers para o restante ("3 batch workers")
 **Dispatched:** none yet
 **Walked:** none yet
 

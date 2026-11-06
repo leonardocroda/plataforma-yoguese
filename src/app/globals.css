@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+:root {
+  --yoguese-off-white: #faf8f4;
+  --yoguese-bege: #e8ded0;
+  --yoguese-salvia: #a8b8a0;
+  --yoguese-cinza: #6b6b6b;
+}
