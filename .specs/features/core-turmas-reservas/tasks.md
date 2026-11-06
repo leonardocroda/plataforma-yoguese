@@ -211,8 +211,8 @@ T17 → T19
 
 **Done when**:
 
-- [ ] Unique constraint da sessao por (class_slot_id, session_date) presente
-- [ ] Tipos Drizzle exportados e agregados no index do schema
+- [x] Unique constraint da sessao por (class_slot_id, session_date) presente
+- [x] Tipos Drizzle exportados e agregados no index do schema
 
 **Tests**: none
 **Gate**: build
