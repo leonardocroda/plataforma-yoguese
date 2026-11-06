@@ -568,7 +568,7 @@ Proof: run int | ✓ agenda > slot inativo fora da lista
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** 2026-11-06 - user autorizou T1 como desbloqueio do build gate ("T1 primeiro, gate depois") e 3 batch workers para o restante ("3 batch workers")
-**Dispatched:** none yet
+**Dispatched:** batch A (fase 1 restante: T2-T9) at HEAD 1cc7e73 - sent 2026-11-06; returned: pending
 **Walked:** none yet
 
 ---
