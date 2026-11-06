@@ -45,6 +45,7 @@ quantos vão, quantas vagas restam, quais são fixos/reposições/experimentais.
 | UI administrativa mínima sem auth | Tela de turmas e ocorrências sem login nesta slice | Decidido em discuss ("vertical slice sem auth") | y |
 | Alunos e modalidades iniciais | Seed com 2 modalidades (Superioga Clássico e Intenso) e alunos de teste | Cadastro de alunos é feature própria; seed permite testar contagens/vagas | y |
 | Cruzamento de horários do mesmo aluno no mesmo dia | Permitido, mas apenas o admin marca: mesma ocorrência recusada como duplicada; segunda aula no mesmo dia exige marcação admin | Decisão do usuário (AD-011): aluno faz n aulas/dia presencialmente, mas o self-service marca no máximo uma | y |
+| Horizonte de "ocorrências em aberto" na edição de capacidade | Ocorrências futuras materializadas + a próxima ocorrência; edição recusada se levar vagas < 0, citando a ocorrência mais afetada | RES-17 não fixa horizonte; escolha de implementação do T16, registrada como spec-precision no código | n |
 
 **Open questions:** none - all resolved or logged above.
 
@@ -80,7 +81,7 @@ quantos vão, quantas vagas restam, quais são fixos/reposições/experimentais.
 
 1. WHEN qualquer operação de leitura ou agendamento referencia (turma, data) de hoje ou futura THEN o sistema SHALL materializar a ocorrência daquela data naquele dia da semana do slot (get-or-create) - sem job e sem horizonte fixo <!-- event-driven -->
 2. WHILE a data de referência é um feriado cadastrado ou cai dentro de um recesso THEN a ocorrência SHALL estar BLOQUEADA e o sistema SHALL recusar novas reservas nela <!-- state-driven -->
-3. The system SHALL computar por ocorrência: nº de alunos fixos, nº de reposições, nº de experimentais, total e vagas = capacity - total - fixos <!-- ubiquitous -->
+3. The system SHALL computar por ocorrência: nº de alunos fixos, nº de reposições, nº de experimentais, total (fixos + reposições + experimentais) e vagas = capacity - total <!-- ubiquitous -->
 4. Com fixos derivados: WHILE um FIXED_ENROLLMENT está ativo e cobre a data THEN o aluno SHALL contar como fixo naquela ocorrência; WHILE ele está terminado ou inativo THEN SHALL deixar de contar <!-- state-driven -->
 5. IF a data consultada é no passado THEN o sistema SHALL permitir apenas leitura e SHALL recusar materialização para agendamento novo <!-- unwanted-behavior -->
 

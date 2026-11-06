@@ -91,12 +91,15 @@ T12 → T16
 ### Fase 4: Interface minima
 
 ```
+T7 → T20
 T14 → T17
 T15 → T17
 T16 → T17
 T16 → T18
 T17 → T19
 ```
+
+(T20 - servico de feriados/recessos, aberto pelo finding do batch B, dona dos checks C11-C13)
 
 ---
 
@@ -414,8 +417,26 @@ T17 → T19
 
 ---
 
-### T17: Server actions do admin
+### T20: Servico de feriados e recessos
 
+**What**: servico de CRUD de holidays (criar com unique por data, recusar duplicado) e studio_closures (periodo com extremos inclusos), dono dos checks C11-C13 - aberto pelo finding do batch B (testes anteriores so inseriam bloqueios via fixture)
+**Where**: `src/modules/turmas/services/bloqueios.ts`
+**Depends on**: T7
+**Reuses**: `src/test/postgres.ts`, `src/test/fixtures.ts`
+**Requirement**: RES-11, RES-12, RES-13
+
+**Done when**:
+
+- [ ] Integration tests: feriado cria bloqueio da data; recesso inclui extremos; data repetida recusada - os tres com dono
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(turmas): servico de feriados e recessos`
+
+---
+
+### T17: Server actions do admin
 **What**: server actions finas para turma, modalidade, reserva e enrollment que chamam os servicos (sem auth nesta slice) e devolvem erros de validacao
 **Where**: `src/modules/turmas/actions.ts`
 **Depends on**: T14, T15, T16
@@ -569,7 +590,8 @@ The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** 2026-11-06 - user autorizou T1 como desbloqueio do build gate ("T1 primeiro, gate depois") e 3 batch workers para o restante ("3 batch workers"); 2026-11-06 - user determinou identifiers em ingles no codigo ("voce ta dando varios nomes de variavel em portugues, precisa traduzir pra ingles isso ai" - AD-012: normalizacao apos o batch B retornar, obrigatoria a partir do batch C)
 **Dispatched:** batch A (fase 1 restante: T2-T9) at HEAD 1cc7e73 - sent 2026-11-06; returned: 2026-11-06, T2-T9 todos commitados, gates verdes vitest 5/5 + build + lint, desvios: auto-correção de fuminha próprio do T8, seed fixado em 4 alunos (spec-precision gap registrado), sem script db:seed
-Batch B (fases 2-3: T10-T16) at HEAD e3b0cfa - sent 2026-11-06; returned: pending
+Batch B (fases 2-3: T10-T16) at HEAD e3b0cfa - sent 2026-11-06; returned: 2026-11-06, PASS: 7/7 tasks, 52 testes verdes (unit+int), build+lint limpos; desvios: composicao = capacity-total (alinhado ao exemplo binding do PRD, AC do spec corrigido em seguida), end_date exclusive (conta até vésperas da data), horizonte de ocorrências em aberto = materializadas futuras + próxima (assumption "n" no spec), CRUD de feriados/recessos sem dona -> T20 aberta
+Normalização AD-012 (identifiers -> ingles) at HEAD - dispatched once T20/docs commitada; returned: pending
 **Walked:** none yet
 
 ---
@@ -602,6 +624,7 @@ T13 → T15
 T14 → T15
 T13 → T16
 T12 → T16
+T7 → T20
 T14 → T17
 T15 → T17
 T16 → T17
@@ -625,6 +648,7 @@ Execution e estritamente sequencial - um worker trabalha uma task por vez, em or
 | T9 migration+seed | 1 seed | OK |
 | T10-T12 dominio | 1 funcao cada | OK |
 | T13-T16 servicos | 1 servico cada | OK |
+| T20 bloqueios | 1 servico | OK |
 | T17 actions | 1 arquivo de actions | OK |
 | T18 endpoint | 1 route | OK |
 | T19 tela | 1 pagina | OK |
@@ -651,6 +675,7 @@ Execution e estritamente sequencial - um worker trabalha uma task por vez, em or
 | T14 | T13 | T13→T14 | OK |
 | T15 | T13, T14 | arrows to T15 | OK |
 | T16 | T13, T12 | arrows to T16 | OK |
+| T20 | T7 | T7→T20 | OK |
 | T17 | T14, T15, T16 | arrows to T17 | OK |
 | T18 | T16 | T16→T18 | OK |
 | T19 | T17 | T17→T19 | OK |
@@ -667,5 +692,6 @@ Nota: o diagrama da Execution Plan lista a mesma relacao dos `Depends on` - nenh
 | T8, T9 | migrations / schema | integration | integration | OK |
 | T10-T12 | dominio | unit | unit | OK |
 | T13-T17 | servicos / actions | integration | integration | OK |
+| T20 | servico de bloqueios | integration | integration | OK |
 | T18 | route | integration | integration | OK |
 | T19 | UI | none | none | OK |
