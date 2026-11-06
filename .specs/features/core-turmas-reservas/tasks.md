@@ -132,8 +132,8 @@ T17 → T19
 
 **Done when**:
 
-- [ ] `npx vitest run` executa o teste fuminha (verde)
-- [ ] Convencão registrada: `*.test.ts` = unit, `*.int.test.ts` = integration
+- [x] `npx vitest run` executa o teste fuminha (verde)
+- [x] Convencão registrada: `*.test.ts` = unit, `*.int.test.ts` = integration
 
 **Tests**: unit
 **Gate**: quick
