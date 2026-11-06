@@ -1,0 +1,14 @@
+node_modules/
+.next/
+out/
+build/
+
+# env
+.env
+.env*.local
+
+# tooling
+__pycache__/
+*.pyc
+
+# specs - projekt data tracked; runtime noise not
