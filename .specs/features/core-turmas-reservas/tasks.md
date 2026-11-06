@@ -366,8 +366,8 @@ T17 → T19
 
 **Done when**:
 
-- [ ] Integration test de concorrencia: reservas paralelas disputam a ultima vaga -> exatamente 1 confirmada, demais recusadas
-- [ ] Dedup, passado, auditoria e same-day admin com testes verdes
+- [x] Integration test de concorrencia: reservas paralelas disputam a ultima vaga -> exatamente 1 confirmada, demais recusadas
+- [x] Dedup, passado, auditoria e same-day admin com testes verdes
 
 **Tests**: integration
 **Gate**: full

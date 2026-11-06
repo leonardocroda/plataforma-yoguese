@@ -22,9 +22,12 @@ export async function criarTurma(
   db: DbClient,
   entrada: { weekday: number; capacity: number; startTime?: string; endTime?: string },
 ): Promise<TurmaTeste> {
+  // Nome com sufixo aleatorio: class_types.name e unica e uma suite pode
+  // criar varias turmas
+  const sufixo = Math.random().toString(16).slice(2, 10);
   const [modalidade] = await db
     .insert(classTypes)
-    .values({ name: "Superioga Teste" })
+    .values({ name: `Superioga Teste ${sufixo}` })
     .returning();
 
   const [slot] = await db
