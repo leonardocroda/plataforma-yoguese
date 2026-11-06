@@ -74,6 +74,16 @@ accepts FIXED/MAKEUP/EXPERIMENTAL types without type-specific rules.
 Credit validation ("nao permitir agendamento sem credito valido", PRD 6.4)
 lands in the credits feature.
 
+### AD-011 - ACTIVE - Multiple classes in the same day require admin marking (2026-11-06)
+
+User correction to a spec assumption: a student may attend N classes on
+the same day, but only the admin marks the second and later ones. In
+self-service the student books at most one class per day - even with an
+available credit ("mesmo tendo credito, o aluno nao podera marcar mais de
+uma aula no mesmo dia"). The admin-side allowance is a core-slice
+criterion (admin may book the same student twice on a date); the student
+self-service limit is enforced when the student-area booking lands.
+
 ## Handoff
 
 Snapshot - updated when work pauses.

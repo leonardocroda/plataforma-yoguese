@@ -71,6 +71,11 @@ administrativa mínima, sem autenticação.
 
 ## Deferred Ideas
 
+- Regra de self-service do aluno: no máximo uma aula marcada pelo próprio
+  aluno no mesmo dia, mesmo com crédito disponível (segunda em diante só
+  com marcação admin — AD-011). Entra quando a área do aluno criar
+  agendamento self-service; a parte admin já está no spec desta slice.
+
 - Regra de 24 horas e créditos (PRD módulo 6) — feature seguinte.
 - Fluxo de aprovação de experimentais (PRD módulo 8) — feature própria.
 - Autenticação e perfis (PRD seções 2 e 13) — feature própria.

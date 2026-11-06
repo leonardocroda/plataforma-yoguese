@@ -44,7 +44,7 @@ quantos vão, quantas vagas restam, quais são fixos/reposições/experimentais.
 | Reservas em datas passadas | Recusadas: agendamento apenas hoje/futuro no fuso do estúdio | Histórico não é criado por reserva nova; correção retroativa manual fica para feature futura | n |
 | UI administrativa mínima sem auth | Tela de turmas e ocorrências sem login nesta slice | Decidido em discuss ("vertical slice sem auth") | y |
 | Alunos e modalidades iniciais | Seed com 2 modalidades (Superioga Clássico e Intenso) e alunos de teste | Cadastro de alunos é feature própria; seed permite testar contagens/vagas | y |
-| Cruzamento de horários do mesmo aluno no mesmo dia | Permitido, exceto reserva ativa duplicada na MESMA ocorrência | PRD permite múltiplos horários fixos semanais; nada proíbe duas aulas no mesmo dia | n |
+| Cruzamento de horários do mesmo aluno no mesmo dia | Permitido, mas apenas o admin marca: mesma ocorrência recusada como duplicada; segunda aula no mesmo dia exige marcação admin | Decisão do usuário (AD-011): aluno faz n aulas/dia presencialmente, mas o self-service marca no máximo uma | y |
 
 **Open questions:** none - all resolved or logged above.
 
@@ -117,6 +117,7 @@ quantos vão, quantas vagas restam, quais são fixos/reposições/experimentais.
 3. IF duas ou mais reservas concorrentes disputam a última vaga então exatamente UMA confirmada e as demais recusadas - transação isolada, sem overbooking <!-- unwanted-behavior -->
 4. IF o aluno já possui reserva ativa na mesma ocorrência THEN o sistema SHALL recusar a nova reserva como duplicada <!-- unwanted-behavior -->
 5. IF a reserva é para data no passado THEN o sistema SHALL recusar <!-- unwanted-behavior -->
+5. WHEN o admin agenda o mesmo aluno para uma segunda ocorrência no mesmo dia (turma diferente) THEN o sistema SHALL permitir a reserva - a marcação da segunda aula em diante é exclusivamente do admin <!-- event-driven -->
 6. WHEN uma reserva é confirmada THEN o sistema SHALL registrar student_id, class_session_id, tipo, status ativo e timestamps para auditoria <!-- event-driven -->
 
 **Independent Test**: turma cap 8 com 8 ocupantes... criar 9 reservas concorrentes (script paralelo) em cap 1 e contar exatamente 1 confirmada; duplicar reserva mesma sessão/aluno e ver recusa.
