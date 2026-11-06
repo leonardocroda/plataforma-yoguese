@@ -172,8 +172,8 @@ T17 → T19
 
 **Done when**:
 
-- [ ] Tipos Drizzle exportados; FKs e constraints de integridade presentes
-- [ ] Export agregado em `src/db/schema/index.ts`
+- [x] Tipos Drizzle exportados; FKs e constraints de integridade presentes
+- [x] Export agregado em `src/db/schema/index.ts`
 
 **Tests**: none
 **Gate**: build
