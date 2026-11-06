@@ -405,7 +405,7 @@ T17 → T19
 
 **Done when**:
 
-- [ ] Integration tests: CRUD com validacoes e leitura de composicao verdes
+- [x] Integration tests: CRUD com validacoes e leitura de composicao verdes
 
 **Tests**: integration
 **Gate**: full
