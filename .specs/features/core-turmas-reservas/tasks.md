@@ -328,7 +328,7 @@ T17 → T19
 
 **Done when**:
 
-- [ ] Unit tests cobrem o exemplo do PRD (5 fixos + 2 reposicoes + 1 experimental = 8, vagas 0)
+- [x] Unit tests cobrem o exemplo do PRD (5 fixos + 2 reposicoes + 1 experimental = 8, vagas 0)
 
 **Tests**: unit
 **Gate**: quick
