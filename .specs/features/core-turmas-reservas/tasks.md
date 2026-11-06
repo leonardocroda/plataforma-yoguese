@@ -251,7 +251,7 @@ T17 → T19
 
 **Done when**:
 
-- [ ] Um `*.int.test.ts` de fuminha sobe container, aplica migrations e consulta Postgres
+- [x] Um `*.int.test.ts` de fuminha sobe container, aplica migrations e consulta Postgres
 
 **Tests**: integration
 **Gate**: full

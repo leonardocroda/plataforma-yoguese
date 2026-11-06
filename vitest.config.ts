@@ -6,5 +6,8 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     include: ["src/**/__tests__/**/*.test.ts"],
+    // Subida de Postgres via Testcontainers pode demorar minutos na 1a vez
+    hookTimeout: 180_000,
+    testTimeout: 60_000,
   },
 });
