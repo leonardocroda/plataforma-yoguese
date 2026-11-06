@@ -309,7 +309,7 @@ T17 → T19
 
 **Done when**:
 
-- [ ] Cada regra com unit test verde no Run unit
+- [x] Cada regra com unit test verde no Run unit
 
 **Tests**: unit
 **Gate**: quick
