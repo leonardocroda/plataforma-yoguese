@@ -192,7 +192,7 @@ T17 → T19
 
 **Done when**:
 
-- [ ] Tipos Drizzle exportados e agregados no index do schema
+- [x] Tipos Drizzle exportados e agregados no index do schema
 
 **Tests**: none
 **Gate**: build
