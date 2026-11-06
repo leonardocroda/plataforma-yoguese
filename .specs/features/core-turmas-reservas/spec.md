@@ -1,6 +1,6 @@
 # Core Turmas e Reservas Specification
 
-**Approved**:
+**Approved**: 2026-11-06 - user: "bora"
 
 ## Problem Statement
 
