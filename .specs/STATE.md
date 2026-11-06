@@ -84,6 +84,16 @@ uma aula no mesmo dia"). The admin-side allowance is a core-slice
 criterion (admin may book the same student twice on a date); the student
 self-service limit is enforced when the student-area booking lands.
 
+### AD-012 - ACTIVE - Code identifiers in English (2026-11-06)
+
+User instruction mid-build: variables, functions, types and file names in
+the codebase are written in English ("voce ta dando varios nomes de
+variavel em portugues, precisa traduzir pra ingles isso ai"). Portuguese
+stays where the user-facing product lives: UI copy, seed data (student
+names, class modality labels), commit-scoped docs and spec prose. Applies
+retroactively via a normalization pass after the current batch returns,
+and is mandatory for Batch C onward.
+
 ## Handoff
 
 Snapshot - updated when work pauses.
