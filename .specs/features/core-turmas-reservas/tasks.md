@@ -347,7 +347,7 @@ T17 → T19
 
 **Done when**:
 
-- [ ] Integration tests: cria na primeira consulta e re-consulta sem duplicar; feriado/recesso bloqueia; data passada recusada
+- [x] Integration tests: cria na primeira consulta e re-consulta sem duplicar; feriado/recesso bloqueia; data passada recusada
 
 **Tests**: integration
 **Gate**: full
