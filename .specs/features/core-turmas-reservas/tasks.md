@@ -152,8 +152,8 @@ T17 → T19
 
 **Done when**:
 
-- [ ] `npm run db:generate` gera migrations; `npm run db:migrate` aplica contra DATABASE_URL
-- [ ] Build passa
+- [x] `npm run db:generate` gera migrations; `npm run db:migrate` aplica contra DATABASE_URL
+- [x] Build passa
 
 **Tests**: none
 **Gate**: build
