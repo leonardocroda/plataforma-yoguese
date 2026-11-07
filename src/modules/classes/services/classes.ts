@@ -193,6 +193,37 @@ export async function deactivateSlot(
 
 // ---- leitura unica de composicao (RES-27) ----
 
+export type SlotWithType = {
+  id: string;
+  classTypeId: string;
+  classTypeName: string;
+  weekday: number;
+  startTime: string;
+  endTime: string;
+  capacity: number;
+};
+
+/**
+ * Turmas ativas com o nome da modalidade - base da grade do painel e da
+ * agenda publica. Turma inativa nao aparece em nenhuma das duas.
+ */
+export async function listActiveSlots(db: DbClient): Promise<SlotWithType[]> {
+  return db
+    .select({
+      id: classSlots.id,
+      classTypeId: classSlots.classTypeId,
+      classTypeName: classTypes.name,
+      weekday: classSlots.weekday,
+      startTime: classSlots.startTime,
+      endTime: classSlots.endTime,
+      capacity: classSlots.capacity,
+    })
+    .from(classSlots)
+    .innerJoin(classTypes, eq(classSlots.classTypeId, classTypes.id))
+    .where(eq(classSlots.status, "ATIVA"))
+    .orderBy(asc(classSlots.startTime));
+}
+
 export type OccurrenceComposition = Composition & {
   classSlotId: string;
   date: string;

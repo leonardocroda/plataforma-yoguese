@@ -464,7 +464,7 @@ T17 → T19
 
 **Done when**:
 
-- [ ] Integration test do route: happy path, slot inativo ausente, nomes ausentes
+- [x] Integration test do route: happy path, slot inativo ausente, nomes ausentes
 
 **Tests**: integration
 **Gate**: full
@@ -575,10 +575,10 @@ Proof: run int | ✓ enrollments > end_date removes the count after the end
 Proof: run int | ✓ enrollments > student history
 
 **C26** - Agenda publica: data/horario/modalidade/vagas sem dados pessoais (RES-25, AC 1)
-Proof: run int | ✓ agenda > periodo sem dados pessoais
+Proof: run int | ✓ agenda > returns the period without personal data
 
 **C27** - Slot inativo ausente da agenda publica (RES-26, AC 2)
-Proof: run int | ✓ agenda > slot inativo fora da lista
+Proof: run int | ✓ agenda > omits an inactive slot from the list
 
 (RES-27, AC 1 - servico unico: exercitado por C8 e C26; sem teste proprio)
 
