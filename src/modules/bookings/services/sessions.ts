@@ -1,7 +1,12 @@
-import { and, eq, gte, lte } from "drizzle-orm";
+import { and, eq, gte, inArray, lte } from "drizzle-orm";
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "../../../db/schema";
-import { classSessions, classSlots, classTypes } from "../../../db/schema";
+import {
+  bookings,
+  classSessions,
+  classSlots,
+  classTypes,
+} from "../../../db/schema";
 import {
   holidays,
   studioClosures,
@@ -138,6 +143,50 @@ export async function materializeSession(
   return winner
     ? { ok: true, value: winner }
     : { ok: false, error: "falha ao materializar ocorrencia" };
+}
+
+/**
+ * Cancela as ocorrencias futuras agendadas de uma turma e libera as vagas das
+ * reservas ativas delas (AD-013). O historico e preservado: as reservas ficam
+ * CANCELADA, nao sao apagadas, e nenhum credito e gerado (modulo de creditos
+ * ainda nao existe).
+ */
+export async function cancelFutureSessions(
+  db: DbClient,
+  input: { classSlotId: string; fromDate: string },
+  now: Date = new Date(),
+): Promise<number> {
+  const sessions = await db
+    .select({ id: classSessions.id })
+    .from(classSessions)
+    .where(
+      and(
+        eq(classSessions.classSlotId, input.classSlotId),
+        gte(classSessions.sessionDate, input.fromDate),
+        eq(classSessions.status, "AGENDADA"),
+      ),
+    );
+
+  if (sessions.length === 0) return 0;
+
+  const sessionIds = sessions.map((session) => session.id);
+
+  await db
+    .update(classSessions)
+    .set({ status: "CANCELADA", updatedAt: now })
+    .where(inArray(classSessions.id, sessionIds));
+
+  await db
+    .update(bookings)
+    .set({ status: "CANCELADA", updatedAt: now })
+    .where(
+      and(
+        inArray(bookings.classSessionId, sessionIds),
+        eq(bookings.status, "ATIVA"),
+      ),
+    );
+
+  return sessions.length;
 }
 
 /** A data cai em feriado cadastrado ou dentro de um recesso (extremos inclusos). */

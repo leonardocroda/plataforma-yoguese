@@ -132,6 +132,12 @@ export default async function AdminGradePage() {
                       </p>
                     ) : null}
 
+                    {occurrence.composition.sessionStatus === "CANCELADA" ? (
+                      <p className="mt-2 text-xs text-red-700">
+                        Cancelada - a grade da turma mudou
+                      </p>
+                    ) : null}
+
                     <OccurrenceForms
                       students={students.map((student) => ({
                         id: student.id,

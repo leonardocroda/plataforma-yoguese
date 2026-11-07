@@ -224,6 +224,75 @@ describe("classes", () => {
       expect(edited.value.endTime).toBe("19:00:00");
     }
   });
+
+  it("editing the weekday cancels the old future occurrences and their bookings", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const students = await createStudents(pg.db, 1);
+    const oldDate = nextOccurrence({ weekday: 3 }, today);
+
+    const booking = await createBooking(pg.db, {
+      studentId: students[0],
+      classSlotId: slotId,
+      date: oldDate,
+      type: "MAKEUP",
+    });
+    expect(booking.ok).toBe(true);
+
+    const edited = await updateSlot(pg.db, slotId, {
+      weekday: 4,
+      startTime: "07:00:00",
+      endTime: "08:00:00",
+    });
+    expect(edited.ok).toBe(true);
+
+    // A ocorrencia da grade antiga e cancelada e a reserva liberada (AD-013)
+    const [oldSession] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.sessionDate, oldDate));
+    expect(oldSession.status).toBe("CANCELADA");
+
+    const [oldBooking] = await pg.db.select().from(bookings);
+    expect(oldBooking.status).toBe("CANCELADA");
+
+    // A leitura da ocorrencia cancelada nao conta mais a reserva
+    const oldReading = await getComposition(pg.db, {
+      classSlotId: slotId,
+      date: oldDate,
+    });
+    expect(oldReading.ok).toBe(true);
+    if (oldReading.ok) {
+      expect(oldReading.value.sessionStatus).toBe("CANCELADA");
+      expect(oldReading.value.makeupCount).toBe(0);
+      expect(oldReading.value.total).toBe(0);
+      expect(oldReading.value.availableSpots).toBe(8);
+    }
+
+    // A ocorrencia cancelada nao aceita reserva nova
+    const [other] = await createStudents(pg.db, 1);
+    const refused = await createBooking(pg.db, {
+      studentId: other,
+      classSlotId: slotId,
+      date: oldDate,
+      type: "MAKEUP",
+    });
+    expect(refused.ok).toBe(false);
+    if (!refused.ok) {
+      expect(refused.error).toContain("cancelada");
+    }
+
+    // A nova grade materializa na nova data, com a vaga liberada
+    const newDate = nextOccurrence({ weekday: 4 }, today);
+    const newReading = await getComposition(pg.db, {
+      classSlotId: slotId,
+      date: newDate,
+    });
+    expect(newReading.ok).toBe(true);
+    if (newReading.ok) {
+      expect(newReading.value.sessionStatus).toBe("AGENDADA");
+      expect(newReading.value.availableSpots).toBe(8);
+    }
+  });
 });
 
 function addDays(date: string, days: number): string {

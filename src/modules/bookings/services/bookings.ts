@@ -67,6 +67,9 @@ export async function createBooking(
   if (session.status === "BLOQUEADA") {
     return { ok: false, error: "ocorrencia bloqueada por feriado/recesso" };
   }
+  if (session.status === "CANCELADA") {
+    return { ok: false, error: "ocorrencia cancelada" };
+  }
 
   const [slot] = await db
     .select()

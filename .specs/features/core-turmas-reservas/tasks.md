@@ -414,6 +414,7 @@ T17 → T19
 - [x] Integration tests: CRUD com validacoes e leitura de composicao verdes
 - [x] Servico unico de composicao (`getOccurrenceComposition` em src/modules/bookings/services/composition.ts) usado pelo agendamento, pela leitura e pela agenda publica (RES-27)
 - [x] Modalidade inativa esconde as turmas dela da grade e da agenda publica
+- [x] Editar dia ou horario cancela as ocorrencias futuras da grade antiga e libera as reservas delas (AD-013)
 
 **Tests**: integration
 **Gate**: full

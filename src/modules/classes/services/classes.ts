@@ -10,7 +10,7 @@ import {
   validateSlot,
 } from "../domain/validators";
 import { todayInStudio, nextOccurrence } from "../domain/occurrences";
-import { DbClient } from "../../bookings/services/sessions";
+import { DbClient, cancelFutureSessions } from "../../bookings/services/sessions";
 import { getOccurrenceComposition } from "../../bookings/services/composition";
 
 export type { DbClient };
@@ -164,9 +164,19 @@ export async function updateSlot(
     .where(eq(classSlots.id, id))
     .returning();
 
-  return edited
-    ? { ok: true, value: edited }
-    : { ok: false, error: "falha ao editar turma" };
+  if (!edited) return { ok: false, error: "falha ao editar turma" };
+
+  // Mudou o dia ou o horario: as ocorrencias futuras da grade antiga sao
+  // canceladas e as reservas delas liberadas (AD-013).
+  if (scheduleChanged(current, merged)) {
+    await cancelFutureSessions(
+      db,
+      { classSlotId: id, fromDate: todayInStudio(now) },
+      now,
+    );
+  }
+
+  return { ok: true, value: edited };
 }
 
 export async function deactivateSlot(
@@ -231,6 +241,15 @@ function validationError(errors: SlotValidationError[]): string {
 
 function withStatus(status?: "ATIVA" | "INATIVA") {
   return status ? { status } : {};
+}
+
+/** O dia da semana ou o horario da turma mudaram na edicao (AD-013). */
+function scheduleChanged(current: Slot, merged: SlotData): boolean {
+  return (
+    merged.weekday !== current.weekday ||
+    merged.startTime.slice(0, 5) !== current.startTime.slice(0, 5) ||
+    merged.endTime.slice(0, 5) !== current.endTime.slice(0, 5)
+  );
 }
 
 type AffectedOccurrence = { date: string; occupancy: number };
