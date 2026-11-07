@@ -427,7 +427,7 @@ T17 → T19
 
 **Done when**:
 
-- [ ] Integration tests: feriado cria bloqueio da data; recesso inclui extremos; data repetida recusada - os tres com dono
+- [x] Integration tests: feriado cria bloqueio da data; recesso inclui extremos; data repetida recusada - os tres com dono
 
 **Tests**: integration
 **Gate**: full
@@ -530,13 +530,13 @@ Proof: run int | ✓ enrollments > an ended enrollment leaves the date count
 Proof: run int | ✓ sessions > rejects materializing a past date
 
 **C11** - Feriado cadastrado bloqueia as ocorrencias da data (RES-11, AC 1)
-Proof: run int | ✓ feriados > cria bloqueio da data
+Proof: run int | ✓ blocks > a holiday blocks the occurrence on that date
 
 **C12** - Recesso com extremos inclusos gera bloqueio no intervalo (RES-12, AC 2)
-Proof: run int | ✓ feriados > recesso inclui extremos
+Proof: run int | ✓ blocks > a closure blocks the inclusive boundary dates
 
 **C13** - Feriado duplicado para a mesma data recusado (RES-13, AC 3)
-Proof: run int | ✓ feriados > recusa data repetida
+Proof: run int | ✓ blocks > refuses a holiday on a date already registered
 
 **C14** - Reserva manual em ocorrencia com vaga confirma e ocupa a vaga (RES-14, AC 1)
 Proof: run int | ✓ bookings > confirms when a spot is available
