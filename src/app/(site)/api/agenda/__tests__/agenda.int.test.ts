@@ -111,6 +111,30 @@ describe("agenda", () => {
     expect(raw).not.toContain(inactiveType.name);
   });
 
+  it("omits a class with an inactive class type from the list", async () => {
+    const inactiveType = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const active = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const [activeType] = await pg.db
+      .select()
+      .from(classTypes)
+      .where(eq(classTypes.id, active.classTypeId));
+
+    await pg.db
+      .update(classTypes)
+      .set({ status: "INATIVA" })
+      .where(eq(classTypes.id, inactiveType.classTypeId));
+
+    const date = nextOccurrence({ weekday: 3 }, today);
+    const response = await GET(
+      new Request(`http://localhost/api/agenda?from=${date}&to=${date}`),
+    );
+    expect(response.status).toBe(200);
+
+    const body = await response.json();
+    expect(body.occurrences).toHaveLength(1);
+    expect(body.occurrences[0].classTypeName).toBe(activeType.name);
+  });
+
   it("rejects an invalid period with 400", async () => {
     const missing = await GET(new Request("http://localhost/api/agenda"));
     expect(missing.status).toBe(400);

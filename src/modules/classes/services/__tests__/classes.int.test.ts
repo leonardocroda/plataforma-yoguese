@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { classSessions, classSlots, classTypes } from "../../../../db/schema";
+import { bookings, classSessions, classSlots, classTypes } from "../../../../db/schema";
 import { createStudents, createTestClass, clearTables } from "../../../../test/fixtures";
 import { PostgresTestInstance, startPostgres } from "../../../../test/postgres";
 import { todayInStudio, nextOccurrence } from "../../domain/occurrences";
@@ -11,6 +11,7 @@ import {
   createClassType,
   createSlot,
   deactivateSlot,
+  listActiveSlots,
   updateClassType,
   updateSlot,
 } from "../classes";
@@ -132,6 +133,35 @@ describe("classes", () => {
       .where(eq(classTypes.id, created.value.id));
     expect(row.name).toBe("Superioga Fluide 2");
     expect(row.status).toBe("INATIVA");
+  });
+
+  it("an inactive class type hides its classes and refuses bookings", async () => {
+    const { classTypeId, slotId } = await createTestClass(pg.db, {
+      weekday: 3,
+      capacity: 8,
+    });
+    const students = await createStudents(pg.db, 1);
+    const date = nextOccurrence({ weekday: 3 }, today);
+
+    const deactivated = await updateClassType(pg.db, classTypeId, { status: "INATIVA" });
+    expect(deactivated.ok).toBe(true);
+
+    // A grade do painel e a agenda publica listam turmas ativas
+    const slots = await listActiveSlots(pg.db);
+    expect(slots).toHaveLength(0);
+
+    const booking = await createBooking(pg.db, {
+      studentId: students[0],
+      classSlotId: slotId,
+      date,
+      type: "MAKEUP",
+    });
+    expect(booking.ok).toBe(false);
+    if (!booking.ok) {
+      expect(booking.error).toContain("modalidade inativa");
+    }
+    const created = await pg.db.select().from(bookings);
+    expect(created).toHaveLength(0);
   });
 
   it("deactivating a class affects future occurrences", async () => {

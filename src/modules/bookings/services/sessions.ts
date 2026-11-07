@@ -1,12 +1,16 @@
 import { and, eq, gte, lte } from "drizzle-orm";
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "../../../db/schema";
-import { classSessions, classSlots } from "../../../db/schema";
+import { classSessions, classSlots, classTypes } from "../../../db/schema";
 import {
   holidays,
   studioClosures,
 } from "../../../db/schema";
-import { todayInStudio, isDatePast } from "../../classes/domain/occurrences";
+import {
+  todayInStudio,
+  isDatePast,
+  weekdayOf,
+} from "../../classes/domain/occurrences";
 
 export type DbClient = NodePgDatabase<typeof schema>;
 
@@ -20,6 +24,10 @@ export type SessionResult =
  * Get-or-create da ocorrencia de (slot, data) - RES-06. Idempotente, sem job
  * e sem horizonte fixo (AD-008). Marca BLOQUEADA em feriado/recesso (RES-07)
  * e recusa materializar data passada para agendamento (RES-10).
+ *
+ * Turma ou modalidade inativa nao materializa nem aceita reserva: a recusa
+ * vale tambem para a ocorrencia que ja existia (RES-04, AD-014). A
+ * ocorrencia de uma turma so existe no dia da semana dela.
  */
 export async function materializeSession(
   db: DbClient,
@@ -32,6 +40,39 @@ export async function materializeSession(
       ok: false,
       error: "data passada nao permite materializacao para agendamento",
       field: "date",
+    };
+  }
+
+  const [slot] = await db
+    .select()
+    .from(classSlots)
+    .where(eq(classSlots.id, input.classSlotId));
+
+  if (!slot) {
+    return { ok: false, error: "turma nao encontrada" };
+  }
+
+  const [classType] = await db
+    .select()
+    .from(classTypes)
+    .where(eq(classTypes.id, slot.classTypeId));
+
+  if (!classType) {
+    return { ok: false, error: "modalidade nao encontrada" };
+  }
+
+  if (slot.status === "INATIVA") {
+    return {
+      ok: false,
+      error: "turma inativa nao gera ocorrencias nem aceita reservas",
+      field: "status",
+    };
+  }
+  if (classType.status === "INATIVA") {
+    return {
+      ok: false,
+      error: "modalidade inativa nao gera ocorrencias nem aceita reservas",
+      field: "status",
     };
   }
 
@@ -60,19 +101,12 @@ export async function materializeSession(
     return { ok: true, value: existing };
   }
 
-  const [slot] = await db
-    .select()
-    .from(classSlots)
-    .where(eq(classSlots.id, input.classSlotId));
-
-  if (!slot) {
-    return { ok: false, error: "turma nao encontrada" };
-  }
-  if (slot.status === "INATIVA") {
+  // A ocorrencia de uma turma so existe no dia da semana dela (RES-06)
+  if (weekdayOf(input.date) !== slot.weekday) {
     return {
       ok: false,
-      error: "turma inativa nao gera novas ocorrencias",
-      field: "status",
+      error: "data nao corresponde ao dia da semana da turma",
+      field: "date",
     };
   }
 

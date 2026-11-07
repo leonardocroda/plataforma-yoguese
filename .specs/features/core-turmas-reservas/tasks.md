@@ -351,6 +351,7 @@ T17 → T19
 **Done when**:
 
 - [x] Integration tests: cria na primeira consulta e re-consulta sem duplicar; feriado/recesso bloqueia; data passada recusada
+- [x] Ocorrencia so materializa no dia da semana da turma; turma ou modalidade inativa nao materializa nem aceita reserva na ocorrencia ja existente
 
 **Tests**: integration
 **Gate**: full
@@ -412,6 +413,7 @@ T17 → T19
 
 - [x] Integration tests: CRUD com validacoes e leitura de composicao verdes
 - [x] Servico unico de composicao (`getOccurrenceComposition` em src/modules/bookings/services/composition.ts) usado pelo agendamento, pela leitura e pela agenda publica (RES-27)
+- [x] Modalidade inativa esconde as turmas dela da grade e da agenda publica
 
 **Tests**: integration
 **Gate**: full
@@ -468,6 +470,7 @@ T17 → T19
 **Done when**:
 
 - [x] Integration test do route: happy path, slot inativo ausente, nomes ausentes
+- [x] Turma de modalidade inativa ausente da agenda publica
 
 **Tests**: integration
 **Gate**: full

@@ -214,7 +214,12 @@ export async function listActiveSlots(db: DbClient): Promise<SlotWithType[]> {
     })
     .from(classSlots)
     .innerJoin(classTypes, eq(classSlots.classTypeId, classTypes.id))
-    .where(eq(classSlots.status, "ATIVA"))
+    .where(
+      and(
+        eq(classSlots.status, "ATIVA"),
+        eq(classTypes.status, "ATIVA"),
+      ),
+    )
     .orderBy(asc(classSlots.startTime));
 }
 

@@ -9,7 +9,9 @@ import { createStudents, createTestClass, clearTables } from "../../../../test/f
 import { PostgresTestInstance, startPostgres } from "../../../../test/postgres";
 import { todayInStudio, nextOccurrence } from "../../../classes/domain/occurrences";
 import { createEnrollment } from "../../../students/services/enrollments";
+import { deactivateSlot } from "../../../classes/services/classes";
 import { getComposition } from "../composition";
+import { materializeSession } from "../sessions";
 import { createBooking, BookingInput } from "../bookings";
 
 describe("bookings", () => {
@@ -271,6 +273,54 @@ describe("bookings", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error).toContain("bloqueada");
+    }
+    const created = await pg.db.select().from(bookings);
+    expect(created).toHaveLength(0);
+  });
+
+  it("refuses a booking on an occurrence of an inactive class", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const date = nextOccurrence({ weekday: 3 }, today);
+    const students = await createStudents(pg.db, 1);
+
+    // A ocorrencia ja materializada continua no banco
+    const occurrence = await materializeSession(pg.db, { classSlotId: slotId, date });
+    expect(occurrence.ok).toBe(true);
+
+    const deactivated = await deactivateSlot(pg.db, slotId);
+    expect(deactivated.ok).toBe(true);
+
+    const result = await createBooking(pg.db, {
+      studentId: students[0],
+      classSlotId: slotId,
+      date,
+      type: "MAKEUP",
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toContain("inativa");
+    }
+    const created = await pg.db.select().from(bookings);
+    expect(created).toHaveLength(0);
+  });
+
+  it("refuses a booking on a date outside the class weekday", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const date = nextOccurrence({ weekday: 4 }, today); // quarta numa turma de terca
+    const students = await createStudents(pg.db, 1);
+
+    const result = await createBooking(pg.db, {
+      studentId: students[0],
+      classSlotId: slotId,
+      date,
+      type: "MAKEUP",
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toContain("dia da semana");
+      expect(result.field).toBe("date");
     }
     const created = await pg.db.select().from(bookings);
     expect(created).toHaveLength(0);

@@ -125,6 +125,21 @@ describe("sessions", () => {
     const created = await pg.db.select().from(classSessions);
     expect(created).toHaveLength(0);
   });
+
+  it("refuses materializing a date outside the class weekday", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const date = nextOccurrence({ weekday: 4 }, today); // quarta numa turma de terca
+
+    const result = await materializeSession(pg.db, { classSlotId: slotId, date });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toContain("dia da semana");
+      expect(result.field).toBe("date");
+    }
+    const created = await pg.db.select().from(classSessions);
+    expect(created).toHaveLength(0);
+  });
 });
 
 /** Soma dias de calendario sobre uma data "YYYY-MM-DD" (meio-dia UTC). */
