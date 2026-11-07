@@ -9,8 +9,9 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: inline - arquitetura decidida em STATE.md (AD-004, monolito modular); sem design.md separado
-**Status**: Approved
+**Status**: Done
 **Approved**: 2026-11-06 - user: "sim"
+**Completed**: 2026-11-07 - gate `validate_verification.py` verde (0 erro, 0 warning) no HEAD de fechamento, com os 10 achados do Verifier fechados por commit
 **Build**: `npm run build; npm run lint`
 **Run unit**: `npx vitest run --reporter=verbose --exclude "**/*.int.test.ts"`
 **Run int**: `npx vitest run --reporter=verbose int.test`
