@@ -1,6 +1,6 @@
 # core-turmas-reservas proofs
 
-**HEAD**: 94bc324
+**HEAD**: 5fa234f
 **Tree**: clean
 **Shell**: C:/Program Files/Git\bin\bash.exe
 **Result**: 33 pass, 0 fail
@@ -46,17 +46,17 @@
 `Run int` - exit 0
 
 ```
- ✓ src/__tests__/seed.int.test.ts > seed > the two PRD class types 20ms
- ✓ src/__tests__/seed.int.test.ts > seed > test students are loaded 8ms
- ✓ src/modules/classes/__tests__/actions.int.test.ts > admin actions > deactivates a class type and a slot through the actions 60ms
- ✓ src/modules/classes/__tests__/actions.int.test.ts > admin actions > creates a manual booking through the action 89ms
- ✓ src/modules/classes/__tests__/actions.int.test.ts > admin actions > propagates the no-vacancy error from the booking action 77ms
- ✓ src/modules/classes/__tests__/actions.int.test.ts > admin actions > creates and ends a fixed enrollment through the actions 67ms
+ ✓ src/modules/classes/__tests__/actions.int.test.ts > admin actions > creates and ends a fixed enrollment through the actions 306ms
+ ✓ src/modules/classes/services/__tests__/classes.int.test.ts > composition > reads a materialized past occurrence and refuses creating a new one 211ms
+ ✓ src/modules/classes/services/__tests__/classes.int.test.ts > composition > reading a past date does not materialize 164ms
+ ✓ src/__tests__/seed.int.test.ts > seed > migration applies on the empty container 7ms
+ ✓ src/__tests__/seed.int.test.ts > seed > the two PRD class types 38ms
+ ✓ src/__tests__/seed.int.test.ts > seed > test students are loaded 11ms
 
  Test Files  10 passed (10)
       Tests  57 passed (57)
-   Start at  07:18:58
-   Duration  86.70s (tests 86%, import 14%)
+   Start at  07:35:56
+   Duration  86.65s (tests 87%, import 13%)
 
 (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
   - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
@@ -66,17 +66,17 @@ Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
 `Run unit` - exit 0
 
 ```
- ✓ src/modules/classes/domain/__tests__/occurrences.test.ts > occurrences > occurrence dates include both edges when they match the slot 0ms
+ ✓ src/modules/classes/domain/__tests__/occurrences.test.ts > occurrences > occurrence dates include both edges when they match the slot 1ms
  ✓ src/modules/classes/domain/__tests__/occurrences.test.ts > occurrences > occurrence dates with an invalid range return an empty list 0ms
- ✓ src/modules/classes/domain/__tests__/occurrences.test.ts > occurrences > occurrence dates do not shift during the daylight saving transition 0ms
- ✓ src/modules/classes/domain/__tests__/occurrences.test.ts > occurrences > next occurrence is the same day when today is a class day 0ms
- ✓ src/modules/classes/domain/__tests__/occurrences.test.ts > occurrences > next occurrence advances to the following week 0ms
- ✓ src/modules/classes/domain/__tests__/occurrences.test.ts > occurrences > addDays crosses the month boundary 0ms
+ ✓ src/modules/classes/domain/__tests__/occurrences.test.ts > occurrences > occurrence dates do not shift during the daylight saving transition 2ms
+ ✓ src/modules/classes/domain/__tests__/occurrences.test.ts > occurrences > next occurrence is the same day when today is a class day 1ms
+ ✓ src/modules/classes/domain/__tests__/occurrences.test.ts > occurrences > next occurrence advances to the following week 1ms
+ ✓ src/modules/classes/domain/__tests__/occurrences.test.ts > occurrences > addDays crosses the month boundary 1ms
 
  Test Files  4 passed (4)
       Tests  21 passed (21)
-   Start at  07:20:29
-   Duration  336ms (import 47%, transform 22%, worker 18%, tests 13%)
+   Start at  07:37:26
+   Duration  697ms (import 52%, worker 17%, transform 16%, tests 14%, environment 1%)
 
 (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
   - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json

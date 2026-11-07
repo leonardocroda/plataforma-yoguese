@@ -521,7 +521,7 @@ Proof: run int | ✓ classes > default capacity is eight
 **C3** - Fim<=inicio, weekday fora de 1-7 ou capacidade < 1 recusam com o campo apontado (RES-03, AC 3)
 Proof: run unit | ✓ validators > rejects every invalid field naming the offending one
 
-**C4** - Editar/desativar turma reflete nas ocorrencias futuras (RES-04, AC 4)
+**C4** - Editar/desativar turma reflete nas ocorrencias futuras: desativar recusa reservas na ocorrencia ja materializada, editar dia/horario cancela as ocorrencias futuras antigas e suas reservas (RES-04, AC 4; RES-29)
 Proof: run int | ✓ classes > editing or deactivating a class affects future occurrences
 
 **C5** - Duas modalidades do PRD seedadas (RES-05, AC 5)
@@ -596,7 +596,7 @@ Proof: run int | ✓ agenda > omits an inactive slot from the list
 **C28** - Turma com 8 reservas nao permite uma nona reserva (RES-14, RES-15; teste de aceitacao do PRD)
 Proof: run int | ✓ bookings > a class with eight bookings refuses the ninth
 
-**C29** - Editar a capacidade abaixo da ocupacao de uma ocorrencia futura e recusado, citando a ocorrencia mais afetada (RES-04; edge case do spec)
+**C29** - Editar a capacidade abaixo da ocupacao de uma ocorrencia futura e recusado, citando a ocorrencia mais afetada (RES-28, acrescentado na rodada de verificacao; edge case do spec)
 Proof: run int | ✓ classes > rejects a capacity below the occupancy of a future occurrence
 
 **C30** - Feriado e recesso na mesma data produzem uma unica ocorrencia bloqueada, que recusa reservas (RES-07, RES-11, RES-12; edge case do spec)
@@ -617,7 +617,9 @@ Batch B (fases 2-3: T10-T16) at HEAD e3b0cfa - sent 2026-11-06; returned: 2026-1
 Normalização AD-012 (identifiers -> ingles) at HEAD 2f24221 - dispatched 2026-11-06 (T20 permanece aberta para o batch C); returned: 2026-11-06, PASS: schema, modulos, servicos, fixtures e suites renomeados para ingles (identifiers, imports, paths e nomes de describe/it), 52 testes verdes (unit 20 + int 32), build+lint limpos; desvio: o `Run int` (`"**/*.int.test.ts"`) nao selecionava nenhum arquivo e foi corrigido para `int.test`
 Batch C (fase 4: T20, T17, T18, T19) at HEAD 750543c - sent 2026-11-06; returned: 2026-11-07, PASS: 4/4 tasks commitados (T20 b3c935d, T17 cc97483, T18 31bf62e, T19 no ultimo commit), gates verdes (vitest 64 testes + build + lint), walk de browser ok; desvios: acoes/route/pagina resolvem o client de src/db por import dinamico (build sem DATABASE_URL), agenda publica lista as turmas ativas com composicao derivada, grade mostra janela de 7 dias a partir de hoje
 **Walked:** 2026-11-07 - browser Edge headless (playwright-core) contra o dev server em http://localhost:3001 (a 3000 estava ocupada por outro processo): /grade devolveu 200 com a grade (Terca 2026-11-10 Superioga Classico 19:00-20:00, Vagas 8; Quinta 2026-11-12 Superioga Intenso 07:00-08:00, Vagas 4) e os formularios de reserva e de fixo; clique "Reservar" (Aluno Teste 1, Reposicao) -> Reposicoes 1 / Vagas 7 com a mensagem "Reserva confirmada."; clique "Vincular fixo" (Aluno Teste 2) -> Fixos 1 / Vagas 6 com "Horario fixo vinculado."; com a turma de quinta na capacidade 1, a segunda reserva mostrou "sem vaga disponivel nesta ocorrencia" e a composicao ficou em Vagas 0. /api/agenda?from=2026-11-07&to=2026-11-13 devolveu 200 com as 2 ocorrencias (data, horario, modalidade, vagas, sem nome de aluno) e um periodo invalido devolveu 400. Banco do walk: container docker "yoguese-walk" (postgres:17-alpine, porta 55432), DATABASE_URL=postgres://test:test@localhost:55432/test, migrations + seed (2 modalidades, 4 alunos) + 2 turmas + reservas de exemplo.
-Verifier (author != verifier) at HEAD d16d038 - sent 2026-11-07; returned: pending
+Verifier (author != verifier) at HEAD d16d038 - sent 2026-11-07; returned: 2026-11-07, FAIL com 10 achados: 5 lacunas de prova (C1 apontava para teste de dominio unit; C3, C7, C9 e C10 nomeavam teste que cobre so parte do caso) e 5 bugs - turma desativada ainda aceitando reserva, edicao de dia/horario deixando a ocorrencia antiga viva com as reservas, RES-27 sem servico unico (duas derivacoes de ocupacao), modalidade inativa sem efeito e agenda publica publicando ocorrencia bloqueada com 8 vagas - mais materializacao em dia da semana errado e aluno com enrollment+reserva contado duas vezes; e 3 regras da spec sem check (o 8+1 do PRD, a edicao de capacidade e o feriado+recesso na mesma data). Sondas proprias do Verifier: concorrencia com M=2 -> 2 confirmadas e 6 recusadas; recesso de extremos inclusos bloqueia inicio e fim e mantem o dia anterior AGENDADA
+Fix worker at HEAD 528ee2b - sent 2026-11-07; returned: 2026-11-07, PASS: os 10 achados corrigidos em 6 commits (30c1cfe servico unico de composicao + contagem de aluno distincto; fa57e08 turma/modalidade ativas e dia da turma; 63f8efb cancelamento das ocorrencias antigas na edicao de dia/horario; 252e95e agenda publica omite bloqueada; d13713b provas de C1/C3/C4/C7/C9/C10; 94bc324 checks C28-C30), C31 acrescentado para o RES-27, 78 testes verdes (unit 21 + int 57), build+lint limpos, check_proofs 33 pass / 0 fail; desvios do worker: C31 foi acrescentado alem dos C28-C30 pedidos e a desativacao de turma apenas recusa reservas e esconde a turma (nao cancela ocorrencias) - o cancelamento da AD-013 vale para a edicao de dia/horario
+Rodada de correcao (orchestrator) at HEAD 5fa234f - 2026-11-07: criterios RES-28 (edicao de capacidade abaixo da ocupacao) e RES-29 (edicao de dia/horario cancela as ocorrencias futuras antigas, AD-013) acrescentados ao spec, linhas de prova de C4 e C29 reapontadas, verification.md com a coluna Closed preenchida e as linhas C28-C31 do Verifier; gates finais rodados no HEAD de fechamento
 
 ---
 

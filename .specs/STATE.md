@@ -114,12 +114,22 @@ BLOQUEADA.
 
 Snapshot - updated when work pauses.
 
-### Handoff snapshot (2026-11-06)
+### Handoff snapshot (2026-11-07)
 
-- Repo initialized this session; first commit pending (docs + spec).
-- Feature in course: `core-turmas-reservas` - SPECIFY phase, spec written,
-  awaiting user approval before Design/Tasks/Execute.
-- Stack decisions AD-001..AD-009 ready to feed the scaffold tasks.
-- Deferred to later features: auth/profiles, credits + 24h rule,
-  experimental approval flow, student-area UI, institutional site,
-  notifications, payments, reports.
+- Feature `core-turmas-reservas` EXECUTADA: 20 tasks (T1-T20), uma commit atomica por
+  task, mais 6 commits da rodada de correcao do Verifier.
+- Verifier (author != verifier) devolveu FAIL com 10 achados; os 10 foram corrigidos,
+  cada um fechado por commit na coluna `Closed` de `verification.md`, e os checks
+  C28-C31 foram acrescentados. Criterios RES-28 e RES-29 acrescentados ao spec
+  (regra da edicao de capacidade e da edicao de dia/horario).
+- Suite: 78 testes verdes (unit 21 + integration 57), build e lint limpos,
+  `check_proofs.py` com 33 pass / 0 fail.
+- Decisoes do usuario que valem para as proximas features: AD-013 (editar dia/horario
+  cancela as ocorrencias futuras antigas e as reservas delas - na feature de creditos
+  isso vira credito automatico) e AD-014 (agenda publica omite bloqueadas e inativas;
+  a grade admin mostra BLOQUEADA).
+- `proofs.md` e artefato gerado: fica regenerado no HEAD de fechamento (por isso
+  aparece como modificacao local depois do ultimo commit).
+- Deferred to later features: auth/profiles, credits + 24h rule (a AD-013 vira
+  credito automatico la), experimental approval flow, student-area UI, institutional
+  site, notifications, payments, reports, agenda (validacao de `from`/`to`).

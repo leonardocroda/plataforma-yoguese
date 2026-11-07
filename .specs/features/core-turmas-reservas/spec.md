@@ -178,6 +178,13 @@ quantos vão, quantas vagas restam, quais são fixos/reposições/experimentais.
 - IF get-or-create roda duas vezes para mesma (turma, data) THEN apenas uma ocorrência é criada - idempotência da materialização (RES-19)
 - Ocupação em testes de concorrência com mesma COUNT: 1 posto... "IF reservas N concorrentes para M vagas THEN SHALL exatamente M confirmadas e N-M recusadas" (RES-20)
 
+### Critérios acrescentados após a rodada de verificação (2026-11-07)
+
+Acrescentados pelo achado do Verifier - os critérios acima permanecem como aprovados; estes recebem ID próprio porque colidiam com IDs de story (regra da edição de capacidade) ou weren't covered by any check.
+
+- IF o admin edita a capacidade de uma turma para valor menor que a ocupação de uma ocorrência futura THEN o sistema SHALL recusar a edição informando a ocorrência mais afetada e SHALL manter a turma sem alteração. (RES-28)
+- WHEN o admin edita o dia da semana ou o horário de uma turma THEN o sistema SHALL cancelar as ocorrências futuras daquela turma sob o agendamento anterior e cancelar as reservas delas, preservando o histórico. (RES-29, decisão AD-013)
+
 ---
 
 ## Requirement Traceability
@@ -211,6 +218,8 @@ quantos vão, quantas vagas restam, quais são fixos/reposições/experimentais.
 | RES-25 | P2: Leitura pública | -      | Pending |
 | RES-26 | P2: Leitura pública | -      | Pending |
 | RES-27 | P3: Serviço único | -      | Pending |
+| RES-28 | Edge: edição de capacidade | -      | Verified |
+| RES-29 | Edge: edição de dia/horário (AD-013) | -      | Verified |
 
 ---
 
