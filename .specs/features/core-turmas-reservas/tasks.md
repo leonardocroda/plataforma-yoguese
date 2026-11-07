@@ -483,9 +483,9 @@ T17 → T19
 
 **Done when**:
 
-- [ ] Composicao exibida por ocorrencia (as tres perguntas do negocio)
-- [ ] Form de reserva grava via action; erro de vaga mostra mensagem clara
-- [ ] Rotas/junturas visitadas no walk (browser) sem erro de render
+- [x] Composicao exibida por ocorrencia (as tres perguntas do negocio)
+- [x] Form de reserva grava via action; erro de vaga mostra mensagem clara
+- [x] Rotas/junturas visitadas no walk (browser) sem erro de render
 
 **Tests**: none
 **Gate**: build
@@ -592,8 +592,8 @@ The feature's live state, written as it happens - a compaction gives no warning.
 **Dispatched:** batch A (fase 1 restante: T2-T9) at HEAD 1cc7e73 - sent 2026-11-06; returned: 2026-11-06, T2-T9 todos commitados, gates verdes vitest 5/5 + build + lint, desvios: auto-correção de fuminha próprio do T8, seed fixado em 4 alunos (spec-precision gap registrado), sem script db:seed
 Batch B (fases 2-3: T10-T16) at HEAD e3b0cfa - sent 2026-11-06; returned: 2026-11-06, PASS: 7/7 tasks, 52 testes verdes (unit+int), build+lint limpos; desvios: composicao = capacity-total (alinhado ao exemplo binding do PRD, AC do spec corrigido em seguida), end_date exclusive (conta até vésperas da data), horizonte de ocorrências em aberto = materializadas futuras + próxima (assumption "n" no spec), CRUD de feriados/recessos sem dona -> T20 aberta
 Normalização AD-012 (identifiers -> ingles) at HEAD 2f24221 - dispatched 2026-11-06 (T20 permanece aberta para o batch C); returned: 2026-11-06, PASS: schema, modulos, servicos, fixtures e suites renomeados para ingles (identifiers, imports, paths e nomes de describe/it), 52 testes verdes (unit 20 + int 32), build+lint limpos; desvio: o `Run int` (`"**/*.int.test.ts"`) nao selecionava nenhum arquivo e foi corrigido para `int.test`
-Batch C (fase 4: T20, T17, T18, T19) at HEAD 750543c - sent 2026-11-06; returned: pending
-**Walked:** none yet
+Batch C (fase 4: T20, T17, T18, T19) at HEAD 750543c - sent 2026-11-06; returned: 2026-11-07, PASS: 4/4 tasks commitados (T20 b3c935d, T17 cc97483, T18 31bf62e, T19 no ultimo commit), gates verdes (vitest 64 testes + build + lint), walk de browser ok; desvios: acoes/route/pagina resolvem o client de src/db por import dinamico (build sem DATABASE_URL), agenda publica lista as turmas ativas com composicao derivada, grade mostra janela de 7 dias a partir de hoje
+**Walked:** 2026-11-07 - browser Edge headless (playwright-core) contra o dev server em http://localhost:3001 (a 3000 estava ocupada por outro processo): /grade devolveu 200 com a grade (Terca 2026-11-10 Superioga Classico 19:00-20:00, Vagas 8; Quinta 2026-11-12 Superioga Intenso 07:00-08:00, Vagas 4) e os formularios de reserva e de fixo; clique "Reservar" (Aluno Teste 1, Reposicao) -> Reposicoes 1 / Vagas 7 com a mensagem "Reserva confirmada."; clique "Vincular fixo" (Aluno Teste 2) -> Fixos 1 / Vagas 6 com "Horario fixo vinculado."; com a turma de quinta na capacidade 1, a segunda reserva mostrou "sem vaga disponivel nesta ocorrencia" e a composicao ficou em Vagas 0. /api/agenda?from=2026-11-07&to=2026-11-13 devolveu 200 com as 2 ocorrencias (data, horario, modalidade, vagas, sem nome de aluno) e um periodo invalido devolveu 400. Banco do walk: container docker "yoguese-walk" (postgres:17-alpine, porta 55432), DATABASE_URL=postgres://test:test@localhost:55432/test, migrations + seed (2 modalidades, 4 alunos) + 2 turmas + reservas de exemplo.
 
 ---
 
