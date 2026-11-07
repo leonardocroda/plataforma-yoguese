@@ -1,22 +1,22 @@
 # core-turmas-reservas proofs
 
-**HEAD**: d16d038
+**HEAD**: 94bc324
 **Tree**: clean
 **Shell**: C:/Program Files/Git\bin\bash.exe
-**Result**: 29 pass, 0 fail
+**Result**: 33 pass, 0 fail
 
 | Check | Proof | Result |
 | --- | --- | --- |
-| C1 | `run unit / ✓ validators > accepts a valid class` | pass |
+| C1 | `run int / ✓ admin actions > creates a class type and a slot through the actions` | pass |
 | C2 | `run int / ✓ classes > default capacity is eight` | pass |
-| C3 | `run unit / ✓ validators > rejects an end time less than or equal to the start` | pass |
-| C4 | `run int / ✓ classes > deactivating a class affects future occurrences` | pass |
+| C3 | `run unit / ✓ validators > rejects every invalid field naming the offending one` | pass |
+| C4 | `run int / ✓ classes > editing or deactivating a class affects future occurrences` | pass |
 | C5 | `run int / ✓ seed > the two PRD class types` | pass |
 | C6 | `run int / ✓ sessions > creates on the first query and re-queries without duplicating` | pass |
-| C7 | `run int / ✓ sessions > a holiday blocks the occurrence` | pass |
+| C7 | `run int / ✓ bookings > rejects a booking in an occurrence blocked by holiday or closure` | pass |
 | C8 | `run int / ✓ composition > PRD example 5+2+1 cap 8 with zero spots left` | pass |
-| C9 | `run int / ✓ enrollments > an ended enrollment leaves the date count` | pass |
-| C10 | `run int / ✓ sessions > rejects materializing a past date` | pass |
+| C9 | `run int / ✓ enrollments > counts an active enrollment as fixed and stops counting after it ends` | pass |
+| C10 | `run int / ✓ composition > reads a materialized past occurrence and refuses creating a new one` | pass |
 | C11 | `run int / ✓ blocks > a holiday blocks the occurrence on that date` | pass |
 | C12 | `run int / ✓ blocks > a closure blocks the inclusive boundary dates` | pass |
 | C13 | `run int / ✓ blocks > refuses a holiday on a date already registered` | pass |
@@ -34,10 +34,34 @@
 | C25 | `run int / ✓ enrollments > student history` | pass |
 | C26 | `run int / ✓ agenda > returns the period without personal data` | pass |
 | C27 | `run int / ✓ agenda > omits an inactive slot from the list` | pass |
+| C28 | `run int / ✓ bookings > a class with eight bookings refuses the ninth` | pass |
+| C29 | `run int / ✓ classes > rejects a capacity below the occupancy of a future occurrence` | pass |
+| C30 | `run int / ✓ blocks > a holiday and a closure on the same date block one single occurrence` | pass |
+| C31 | `run int / ✓ occurrence composition > the single composition service feeds the booking and the reading paths` | pass |
 | Build | `npm run build` | pass |
 | Build | `npm run lint` | pass |
 
 ## Output
+
+`Run int` - exit 0
+
+```
+ ✓ src/__tests__/seed.int.test.ts > seed > the two PRD class types 20ms
+ ✓ src/__tests__/seed.int.test.ts > seed > test students are loaded 8ms
+ ✓ src/modules/classes/__tests__/actions.int.test.ts > admin actions > deactivates a class type and a slot through the actions 60ms
+ ✓ src/modules/classes/__tests__/actions.int.test.ts > admin actions > creates a manual booking through the action 89ms
+ ✓ src/modules/classes/__tests__/actions.int.test.ts > admin actions > propagates the no-vacancy error from the booking action 77ms
+ ✓ src/modules/classes/__tests__/actions.int.test.ts > admin actions > creates and ends a fixed enrollment through the actions 67ms
+
+ Test Files  10 passed (10)
+      Tests  57 passed (57)
+   Start at  07:18:58
+   Duration  86.70s (tests 86%, import 14%)
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+```
 
 `Run unit` - exit 0
 
@@ -47,32 +71,12 @@
  ✓ src/modules/classes/domain/__tests__/occurrences.test.ts > occurrences > occurrence dates do not shift during the daylight saving transition 0ms
  ✓ src/modules/classes/domain/__tests__/occurrences.test.ts > occurrences > next occurrence is the same day when today is a class day 0ms
  ✓ src/modules/classes/domain/__tests__/occurrences.test.ts > occurrences > next occurrence advances to the following week 0ms
- ✓ src/modules/classes/domain/__tests__/occurrences.test.ts > occurrences > addDays crosses the month boundary 1ms
+ ✓ src/modules/classes/domain/__tests__/occurrences.test.ts > occurrences > addDays crosses the month boundary 0ms
 
  Test Files  4 passed (4)
-      Tests  20 passed (20)
-   Start at  01:26:14
-   Duration  367ms (import 46%, transform 24%, worker 17%, tests 12%, environment 1%)
-
-(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
-  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
-Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
-```
-
-`Run int` - exit 0
-
-```
- ✓ src/app/(site)/api/agenda/__tests__/agenda.int.test.ts > agenda > rejects an invalid period with 400 22ms
- ✓ src/modules/classes/__tests__/actions.int.test.ts > admin actions > propagates the slot validation error to the caller 44ms
- ✓ src/modules/classes/__tests__/actions.int.test.ts > admin actions > deactivates a class type and a slot through the actions 49ms
- ✓ src/modules/classes/__tests__/actions.int.test.ts > admin actions > creates a manual booking through the action 164ms
- ✓ src/modules/classes/__tests__/actions.int.test.ts > admin actions > propagates the no-vacancy error from the booking action 161ms
- ✓ src/modules/classes/__tests__/actions.int.test.ts > admin actions > creates and ends a fixed enrollment through the actions 61ms
-
- Test Files  9 passed (9)
-      Tests  44 passed (44)
-   Start at  01:26:18
-   Duration  79.02s (tests 87%, import 13%)
+      Tests  21 passed (21)
+   Start at  07:20:29
+   Duration  336ms (import 47%, transform 22%, worker 18%, tests 13%)
 
 (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
   - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
