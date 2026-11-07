@@ -10,5 +10,6 @@ build/
 # tooling
 __pycache__/
 *.pyc
+*.tsbuildinfo
 
 # specs - projekt data tracked; runtime noise not

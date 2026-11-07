@@ -1,0 +1,30 @@
+# Postgres local para desenvolvimento da plataforma Yogue-se.
+#
+#   docker compose up -d      sobe o banco (porta 55432)
+#   npm run db:migrate        aplica as migrations
+#   npm run db:seed           grava as 2 modalidades do PRD e os alunos de teste
+#   npm run dev               sobe o app apontando para este banco
+#
+# O container "yoguese-walk", usado no walk de browser, ocupa a mesma porta:
+# pare-o com "docker stop yoguese-walk" antes de subir este compose.
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: yoguese-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: test
+    ports:
+      - "55432:5432"
+    volumes:
+      - yoguese-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test -d test"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  yoguese-pgdata:
