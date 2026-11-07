@@ -1,9 +1,15 @@
 import { and, count, eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { bookings, holidays } from "../../../../db/schema";
+import {
+  bookings,
+  classSessions,
+  holidays,
+} from "../../../../db/schema";
 import { createStudents, createTestClass, clearTables } from "../../../../test/fixtures";
 import { PostgresTestInstance, startPostgres } from "../../../../test/postgres";
 import { todayInStudio, nextOccurrence } from "../../../classes/domain/occurrences";
+import { createEnrollment } from "../../../students/services/enrollments";
+import { getComposition } from "../composition";
 import { createBooking, BookingInput } from "../bookings";
 
 describe("bookings", () => {
@@ -144,6 +150,62 @@ describe("bookings", () => {
 
     const [total] = await pg.db.select({ total: count() }).from(bookings);
     expect(Number(total?.total)).toBe(1);
+  });
+
+  it("counts a fixed student once and refuses the duplicate booking", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const date = nextOccurrence({ weekday: 3 }, today);
+    const [student] = await createStudents(pg.db, 1);
+
+    const enrollment = await createEnrollment(pg.db, {
+      studentId: student,
+      classSlotId: slotId,
+      startDate: date,
+    });
+    expect(enrollment.ok).toBe(true);
+
+    // O mesmo aluno nao e reserva na ocorrencia em que ja e fixo
+    const booking = await createBooking(pg.db, {
+      studentId: student,
+      classSlotId: slotId,
+      date,
+      type: "MAKEUP",
+    });
+    expect(booking.ok).toBe(false);
+    if (!booking.ok) {
+      expect(booking.error).toContain("fixo");
+      expect(booking.field).toBe("studentId");
+    }
+
+    const reading = await getComposition(pg.db, { classSlotId: slotId, date });
+    expect(reading.ok).toBe(true);
+    if (reading.ok) {
+      expect(reading.value.fixedCount).toBe(1);
+      expect(reading.value.makeupCount).toBe(0);
+      expect(reading.value.total).toBe(1);
+      expect(reading.value.availableSpots).toBe(7);
+    }
+
+    // Mesmo com uma reserva gravada fora do servico, o aluno conta uma vez
+    const [session] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.classSlotId, slotId));
+    await pg.db.insert(bookings).values({
+      studentId: student,
+      classSessionId: session.id,
+      bookingType: "MAKEUP",
+      status: "ATIVA",
+    });
+
+    const after = await getComposition(pg.db, { classSlotId: slotId, date });
+    expect(after.ok).toBe(true);
+    if (after.ok) {
+      expect(after.value.fixedCount).toBe(1);
+      expect(after.value.makeupCount).toBe(0);
+      expect(after.value.total).toBe(1);
+      expect(after.value.availableSpots).toBe(7);
+    }
   });
 
   it("second class on the same day with admin", async () => {

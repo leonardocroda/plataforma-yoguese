@@ -6,13 +6,13 @@ import { PostgresTestInstance, startPostgres } from "../../../../test/postgres";
 import { todayInStudio, nextOccurrence } from "../../domain/occurrences";
 import { createEnrollment } from "../../../students/services/enrollments";
 import { createBooking } from "../../../bookings/services/bookings";
+import { getComposition } from "../../../bookings/services/composition";
 import {
   createClassType,
   createSlot,
   deactivateSlot,
   updateClassType,
   updateSlot,
-  getComposition,
 } from "../classes";
 
 describe("classes", () => {

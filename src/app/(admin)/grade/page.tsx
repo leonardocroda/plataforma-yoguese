@@ -5,6 +5,8 @@ import {
 } from "../../../modules/classes/domain/occurrences";
 import {
   getComposition,
+} from "../../../modules/bookings/services/composition";
+import {
   listActiveSlots,
 } from "../../../modules/classes/services/classes";
 import { listActiveStudents } from "../../../modules/students/services/students";

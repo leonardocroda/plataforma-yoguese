@@ -10,7 +10,7 @@ import {
   materializeSession,
   Session,
 } from "../../bookings/services/sessions";
-import { occurrenceOccupancy } from "../../bookings/services/bookings";
+import { getOccurrenceComposition } from "../../bookings/services/composition";
 
 export type { DbClient };
 
@@ -79,8 +79,13 @@ export async function createEnrollment(
       .where(eq(classSessions.id, session.id))
       .for("update");
 
-    const occupancy = await occurrenceOccupancy(tx, session);
-    if (occupancy >= slot.capacity) {
+    const composition = await getOccurrenceComposition(tx, {
+      classSlotId: slot.id,
+      sessionId: session.id,
+      date: session.sessionDate,
+      capacity: slot.capacity,
+    });
+    if (composition.availableSpots <= 0) {
       return { ok: false, error: "sem vaga disponivel nesta ocorrencia" };
     }
 

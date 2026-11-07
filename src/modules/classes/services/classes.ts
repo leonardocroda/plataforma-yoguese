@@ -1,7 +1,5 @@
-import { and, asc, eq, isNull, lte, or, gt, count } from "drizzle-orm";
-import * as schema from "../../../db/schema";
+import { and, asc, eq, gt } from "drizzle-orm";
 import {
-  bookings,
   classSessions,
   classSlots,
   classTypes,
@@ -12,15 +10,8 @@ import {
   validateSlot,
 } from "../domain/validators";
 import { todayInStudio, nextOccurrence } from "../domain/occurrences";
-import {
-  Composition,
-  calculateComposition,
-} from "../../bookings/domain/composition";
-import {
-  DbClient,
-  materializeSession,
-  Session,
-} from "../../bookings/services/sessions";
+import { DbClient } from "../../bookings/services/sessions";
+import { getOccurrenceComposition } from "../../bookings/services/composition";
 
 export type { DbClient };
 
@@ -156,6 +147,7 @@ export async function updateSlot(
       current.id,
       current.weekday,
       today,
+      current.capacity,
     );
     if (mostAffected && mostAffected.occupancy > merged.capacity) {
       return {
@@ -171,6 +163,7 @@ export async function updateSlot(
     .set({ ...merged, ...withStatus(patch.status), updatedAt: now })
     .where(eq(classSlots.id, id))
     .returning();
+
   return edited
     ? { ok: true, value: edited }
     : { ok: false, error: "falha ao editar turma" };
@@ -205,7 +198,8 @@ export type SlotWithType = {
 
 /**
  * Turmas ativas com o nome da modalidade - base da grade do painel e da
- * agenda publica. Turma inativa nao aparece em nenhuma das duas.
+ * agenda publica. Turma inativa e modalidade inativa nao aparecem em nenhuma
+ * das duas (RES-05, AD-014).
  */
 export async function listActiveSlots(db: DbClient): Promise<SlotWithType[]> {
   return db
@@ -224,79 +218,6 @@ export async function listActiveSlots(db: DbClient): Promise<SlotWithType[]> {
     .orderBy(asc(classSlots.startTime));
 }
 
-export type OccurrenceComposition = Composition & {
-  classSlotId: string;
-  date: string;
-  sessionId: string;
-  sessionStatus: "AGENDADA" | "BLOQUEADA" | "CANCELADA";
-};
-
-/**
- * Composicao/vagas de uma ocorrencia por (slot, data) - toda leitura de
- * painel, agendamento e site passa por aqui (RES-27). Data no futuro/today
- * materializa (get-or-create, RES-06); data no passado e somente leitura
- * (RES-10).
- */
-export async function getComposition(
-  db: DbClient,
-  input: { classSlotId: string; date: string },
-  now: Date = new Date(),
-): Promise<Result<OccurrenceComposition>> {
-  const today = todayInStudio(now);
-
-  const [slot] = await db
-    .select()
-    .from(classSlots)
-    .where(eq(classSlots.id, input.classSlotId));
-  if (!slot) return { ok: false, error: "turma nao encontrada" };
-
-  const isPast = input.date < today;
-
-  let session: Session | undefined;
-  if (isPast) {
-    // Leitura apenas: nada de materializacao no passado (RES-10 AC5)
-    [session] = await db
-      .select()
-      .from(classSessions)
-      .where(
-        and(
-          eq(classSessions.classSlotId, input.classSlotId),
-          eq(classSessions.sessionDate, input.date),
-        ),
-      );
-    if (!session) {
-      return { ok: false, error: "ocorrencia passada nao existe para leitura" };
-    }
-  } else {
-    const materialized = await materializeSession(db, input, now);
-    if (!materialized.ok) {
-      return {
-        ok: false,
-        error: materialized.error,
-        field: materialized.field,
-      };
-    }
-    session = materialized.value;
-  }
-
-  const counts = await occurrenceCounts(db, session, input.classSlotId);
-  const composition = calculateComposition({
-    capacity: slot.capacity,
-    ...counts,
-  });
-
-  return {
-    ok: true,
-    value: {
-      ...composition,
-      classSlotId: input.classSlotId,
-      date: input.date,
-      sessionId: session.id,
-      sessionStatus: session.status,
-    },
-  };
-}
-
 // ---- internos ----
 
 function validationError(errors: SlotValidationError[]): string {
@@ -305,46 +226,6 @@ function validationError(errors: SlotValidationError[]): string {
 
 function withStatus(status?: "ATIVA" | "INATIVA") {
   return status ? { status } : {};
-}
-
-type Counts = { fixedCount: number; makeupCount: number; experimentalCount: number };
-
-/** Fixos derivados (AD-008): enrollments ativos na data + FIXED bookings. */
-async function occurrenceCounts(
-  db: DbClient,
-  session: Pick<Session, "id" | "classSlotId" | "sessionDate">,
-  classSlotId: string,
-): Promise<Counts> {
-  const [{ total: fixedEnrollmentsCount }] = await db
-    .select({ total: count() })
-    .from(schema.fixedEnrollments)
-    .where(
-      and(
-        eq(schema.fixedEnrollments.classSlotId, classSlotId),
-        eq(schema.fixedEnrollments.status, "ATIVA"),
-        lte(schema.fixedEnrollments.startDate, session.sessionDate),
-        or(
-          isNull(schema.fixedEnrollments.endDate),
-          gt(schema.fixedEnrollments.endDate, session.sessionDate),
-        ),
-      ),
-    );
-
-  const bookingsByType = await db
-    .select({ type: bookings.bookingType, total: count() })
-    .from(bookings)
-    .where(
-      and(eq(bookings.classSessionId, session.id), eq(bookings.status, "ATIVA")),
-    )
-    .groupBy(bookings.bookingType);
-
-  const byType = new Map(bookingsByType.map((b) => [b.type, Number(b.total)]));
-
-  return {
-    fixedCount: Number(fixedEnrollmentsCount) + (byType.get("FIXED") ?? 0),
-    makeupCount: byType.get("MAKEUP") ?? 0,
-    experimentalCount: byType.get("EXPERIMENTAL") ?? 0,
-  };
 }
 
 type AffectedOccurrence = { date: string; occupancy: number };
@@ -360,6 +241,7 @@ async function mostAffectedOccurrence(
   classSlotId: string,
   weekday: number,
   today: string,
+  capacity: number,
 ): Promise<AffectedOccurrence | null> {
   const materialized = await db
     .select({ id: classSessions.id, date: classSessions.sessionDate })
@@ -375,7 +257,7 @@ async function mostAffectedOccurrence(
 
   let mostAffected: AffectedOccurrence | null = null;
   for (const date of candidates) {
-    const occupancy = await occupancyOnDate(db, classSlotId, date);
+    const occupancy = await occupancyOnDate(db, classSlotId, date, capacity);
     if (!mostAffected || occupancy > mostAffected.occupancy) {
       mostAffected = { date, occupancy };
     }
@@ -383,11 +265,12 @@ async function mostAffectedOccurrence(
   return mostAffected;
 }
 
-/** Ocupacao de uma data: bookings ativos da ocorrencia (se materializada) + fixos. */
+/** Ocupacao de uma data: reservas ativas da ocorrencia (se materializada) + fixos. */
 async function occupancyOnDate(
   db: DbClient,
   classSlotId: string,
   date: string,
+  capacity: number,
 ): Promise<number> {
   const [session] = await db
     .select({ id: classSessions.id })
@@ -396,31 +279,13 @@ async function occupancyOnDate(
       and(eq(classSessions.classSlotId, classSlotId), eq(classSessions.sessionDate, date)),
     );
 
-  let activeBookings = 0;
-  if (session) {
-    const [{ total }] = await db
-      .select({ total: count() })
-      .from(bookings)
-      .where(
-        and(eq(bookings.classSessionId, session.id), eq(bookings.status, "ATIVA")),
-      );
-    activeBookings = Number(total);
-  }
+  // Mesma fonte unica do agendamento (RES-27)
+  const composition = await getOccurrenceComposition(db, {
+    classSlotId,
+    sessionId: session?.id ?? null,
+    date,
+    capacity,
+  });
 
-  const [{ total: fixed }] = await db
-    .select({ total: count() })
-    .from(schema.fixedEnrollments)
-    .where(
-      and(
-        eq(schema.fixedEnrollments.classSlotId, classSlotId),
-        eq(schema.fixedEnrollments.status, "ATIVA"),
-        lte(schema.fixedEnrollments.startDate, date),
-        or(
-          isNull(schema.fixedEnrollments.endDate),
-          gt(schema.fixedEnrollments.endDate, date),
-        ),
-      ),
-    );
-
-  return activeBookings + Number(fixed);
+  return composition.total;
 }

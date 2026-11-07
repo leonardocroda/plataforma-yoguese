@@ -1,12 +1,13 @@
-import { and, count, eq, gt, isNull, lte, or } from "drizzle-orm";
-import * as schema from "../../../db/schema";
-import { bookings, classSessions, classSlots } from "../../../db/schema";
-import { todayInStudio, isDatePast } from "../../classes/domain/occurrences";
+import { and, eq, gt, isNull, lte, or } from "drizzle-orm";
 import {
-  DbClient,
-  materializeSession,
-  Session,
-} from "./sessions";
+  bookings,
+  classSessions,
+  classSlots,
+  fixedEnrollments,
+} from "../../../db/schema";
+import { todayInStudio, isDatePast } from "../../classes/domain/occurrences";
+import { DbClient, materializeSession } from "./sessions";
+import { getOccurrenceComposition } from "./composition";
 
 export type { DbClient };
 
@@ -30,6 +31,8 @@ export type BookingInput = {
  * marcacao e admin-only, sem auth (AD-010): FIXED na ocorrencia especifica,
  * MAKEUP ou EXPERIMENTAL. Mesmo aluno em SEGUNDA turma no mesmo dia e
  * permitido (AD-011); duplicado e so bloqueado na MESMA ocorrencia (RES-17).
+ * O mesmo aluno nao pode ser fixo e reserva na mesma ocorrencia: ele contaria
+ * duas vezes na mesma vaga.
  * Capacidade e garantida no servidor com SELECT FOR UPDATE na ocorrencia:
  * N reservas concorrentes na ultima vaga geram exatamente 1 confirmada
  * (RES-16). Enrollment ativo conta como fixo ate a data encerrada (RES-23).
@@ -99,8 +102,39 @@ export async function createBooking(
       };
     }
 
-    const occupancy = await occurrenceOccupancy(tx, session);
-    if (occupancy >= slot.capacity) {
+    // O aluno fixo desta turma ja ocupa a vaga na ocorrencia: a reserva seria
+    // a mesma pessoa duas vezes no mesmo lugar (RES-17).
+    const [fixed] = await tx
+      .select({ id: fixedEnrollments.id })
+      .from(fixedEnrollments)
+      .where(
+        and(
+          eq(fixedEnrollments.classSlotId, input.classSlotId),
+          eq(fixedEnrollments.studentId, input.studentId),
+          eq(fixedEnrollments.status, "ATIVA"),
+          lte(fixedEnrollments.startDate, session.sessionDate),
+          or(
+            isNull(fixedEnrollments.endDate),
+            gt(fixedEnrollments.endDate, session.sessionDate),
+          ),
+        ),
+      );
+    if (fixed) {
+      return {
+        ok: false,
+        error: "aluno ja e horario fixo nesta ocorrencia",
+        field: "studentId",
+      };
+    }
+
+    // Composicao pela fonte unica do modulo (RES-27)
+    const composition = await getOccurrenceComposition(tx, {
+      classSlotId: input.classSlotId,
+      sessionId: session.id,
+      date: session.sessionDate,
+      capacity: slot.capacity,
+    });
+    if (composition.availableSpots <= 0) {
       return { ok: false, error: "sem vaga disponivel nesta ocorrencia" };
     }
 
@@ -118,38 +152,4 @@ export async function createBooking(
       ? { ok: true, value: created }
       : { ok: false, error: "falha ao gravar reserva" };
   });
-}
-
-/**
- * Ocupacao de uma ocorrencia: bookings ativos (qualquer tipo) + enrollments
- * ativos cobrindo a data (fixos derivados, AD-008).
- */
-export async function occurrenceOccupancy(
-  db: DbClient,
-  session: Pick<Session, "id" | "classSlotId" | "sessionDate">,
-): Promise<number> {
-  const [activeBookings] = await db
-    .select({ total: count() })
-    .from(bookings)
-    .where(
-      and(eq(bookings.classSessionId, session.id), eq(bookings.status, "ATIVA")),
-    );
-
-  const [fixed] = await db
-    .select({ total: count() })
-    .from(schema.fixedEnrollments)
-    .where(
-      and(
-        eq(schema.fixedEnrollments.classSlotId, session.classSlotId),
-        eq(schema.fixedEnrollments.status, "ATIVA"),
-        // Cobre a data: startDate <= data < endDate encerrado (RES-23 AC4)
-        lte(schema.fixedEnrollments.startDate, session.sessionDate),
-        or(
-          isNull(schema.fixedEnrollments.endDate),
-          gt(schema.fixedEnrollments.endDate, session.sessionDate),
-        ),
-      ),
-    );
-
-  return Number(activeBookings?.total ?? 0) + Number(fixed?.total ?? 0);
 }

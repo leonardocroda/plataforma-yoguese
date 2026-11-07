@@ -3,6 +3,8 @@ import {
 } from "../../../../modules/classes/domain/occurrences";
 import {
   getComposition,
+} from "../../../../modules/bookings/services/composition";
+import {
   listActiveSlots,
 } from "../../../../modules/classes/services/classes";
 
@@ -21,8 +23,9 @@ export type AgendaOccurrence = {
 /**
  * Agenda publica (RES-25, RES-26): dias, horarios, modalidade e vagas
  * disponiveis de um periodo. Nunca devolve nome nem dado pessoal de aluno -
- * a composicao vem por numero (fonte unica, RES-27). Turma inativa nao
- * aparece.
+ * a composicao vem por numero (fonte unica, RES-27). Turma inativa e
+ * modalidade inativa nao aparecem, e ocorrencia bloqueada por feriado/recesso
+ * ou cancelada tambem nao (AD-014).
  */
 export async function GET(request: Request): Promise<Response> {
   const { searchParams } = new URL(request.url);

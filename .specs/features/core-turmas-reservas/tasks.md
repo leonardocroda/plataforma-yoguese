@@ -371,6 +371,8 @@ T17 → T19
 
 - [x] Integration test de concorrencia: reservas paralelas disputam a ultima vaga -> exatamente 1 confirmada, demais recusadas
 - [x] Dedup, passado, auditoria e same-day admin com testes verdes
+- [x] Aluno fixo e reserva na mesma ocorrencia contam uma vez: a reserva do aluno fixo e recusada como duplicada
+- [x] A ocupacao vem do servico unico de composicao (RES-27), sem conta paralela
 
 **Tests**: integration
 **Gate**: full
@@ -409,6 +411,7 @@ T17 → T19
 **Done when**:
 
 - [x] Integration tests: CRUD com validacoes e leitura de composicao verdes
+- [x] Servico unico de composicao (`getOccurrenceComposition` em src/modules/bookings/services/composition.ts) usado pelo agendamento, pela leitura e pela agenda publica (RES-27)
 
 **Tests**: integration
 **Gate**: full
@@ -580,7 +583,8 @@ Proof: run int | ✓ agenda > returns the period without personal data
 **C27** - Slot inativo ausente da agenda publica (RES-26, AC 2)
 Proof: run int | ✓ agenda > omits an inactive slot from the list
 
-(RES-27, AC 1 - servico unico: exercitado por C8 e C26; sem teste proprio)
+**C31** - Servico unico de composicao: o agendamento e a leitura devolvem os mesmos numeros (RES-27, AC 1)
+Proof: run int | ✓ occurrence composition > the single composition service feeds the booking and the reading paths
 
 ---
 
