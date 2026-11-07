@@ -592,6 +592,7 @@ The feature's live state, written as it happens - a compaction gives no warning.
 **Dispatched:** batch A (fase 1 restante: T2-T9) at HEAD 1cc7e73 - sent 2026-11-06; returned: 2026-11-06, T2-T9 todos commitados, gates verdes vitest 5/5 + build + lint, desvios: auto-correção de fuminha próprio do T8, seed fixado em 4 alunos (spec-precision gap registrado), sem script db:seed
 Batch B (fases 2-3: T10-T16) at HEAD e3b0cfa - sent 2026-11-06; returned: 2026-11-06, PASS: 7/7 tasks, 52 testes verdes (unit+int), build+lint limpos; desvios: composicao = capacity-total (alinhado ao exemplo binding do PRD, AC do spec corrigido em seguida), end_date exclusive (conta até vésperas da data), horizonte de ocorrências em aberto = materializadas futuras + próxima (assumption "n" no spec), CRUD de feriados/recessos sem dona -> T20 aberta
 Normalização AD-012 (identifiers -> ingles) at HEAD 2f24221 - dispatched 2026-11-06 (T20 permanece aberta para o batch C); returned: 2026-11-06, PASS: schema, modulos, servicos, fixtures e suites renomeados para ingles (identifiers, imports, paths e nomes de describe/it), 52 testes verdes (unit 20 + int 32), build+lint limpos; desvio: o `Run int` (`"**/*.int.test.ts"`) nao selecionava nenhum arquivo e foi corrigido para `int.test`
+Batch C (fase 4: T20, T17, T18, T19) at HEAD 750543c - sent 2026-11-06; returned: pending
 **Walked:** none yet
 
 ---
