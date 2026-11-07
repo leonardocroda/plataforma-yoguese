@@ -10,7 +10,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-export const statusModalidadeEnum = pgEnum("status_turma", [
+export const classStatusEnum = pgEnum("status_turma", [
   "ATIVA",
   "INATIVA",
 ]);
@@ -18,7 +18,7 @@ export const statusModalidadeEnum = pgEnum("status_turma", [
 export const classTypes = pgTable("class_types", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull().unique(),
-  status: statusModalidadeEnum("status").notNull().default("ATIVA"),
+  status: classStatusEnum("status").notNull().default("ATIVA"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -38,7 +38,7 @@ export const classSlots = pgTable(
     startTime: time("start_time").notNull(),
     endTime: time("end_time").notNull(),
     capacity: integer("capacity").notNull().default(8),
-    status: statusModalidadeEnum("status").notNull().default("ATIVA"),
+    status: classStatusEnum("status").notNull().default("ATIVA"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

@@ -16,36 +16,36 @@ describe("seed", () => {
     await pg.container.stop();
   });
 
-  it("migration aplica sobre o container vazio", async () => {
-    const migradas = await pg.db.execute<{ count: number }>(
+  it("migration applies on the empty container", async () => {
+    const migrated = await pg.db.execute<{ count: number }>(
       sql`select count(*)::int as count from drizzle.__drizzle_migrations`,
     );
-    expect(migradas.rows[0].count).toBeGreaterThan(0);
+    expect(migrated.rows[0].count).toBeGreaterThan(0);
   });
 
-  it("duas modalidades do PRD", async () => {
+  it("the two PRD class types", async () => {
     await seed(pg.db);
 
-    const modalidades = await pg.db.select().from(classTypes);
-    const nomes = modalidades.map((m) => m.name).sort();
+    const classTypesRows = await pg.db.select().from(classTypes);
+    const names = classTypesRows.map((m) => m.name).sort();
 
-    expect(nomes).toEqual(["Superioga Clássico", "Superioga Intenso"]);
-    for (const modalidade of modalidades) {
-      expect(modalidade.status).toBe("ATIVA");
+    expect(names).toEqual(["Superioga Clássico", "Superioga Intenso"]);
+    for (const classType of classTypesRows) {
+      expect(classType.status).toBe("ATIVA");
     }
   });
 
-  it("alunos de teste carregados", async () => {
+  it("test students are loaded", async () => {
     await seed(pg.db);
 
-    const alunos = await pg.db.select().from(students);
-    const nomes = alunos.map((a) => a.name);
+    const studentsRows = await pg.db.select().from(students);
+    const names = studentsRows.map((a) => a.name);
 
     for (let i = 1; i <= 4; i++) {
-      expect(nomes).toContain(`Aluno Teste ${i}`);
+      expect(names).toContain(`Aluno Teste ${i}`);
     }
-    for (const aluno of alunos) {
-      expect(aluno.status).toBe("ATIVO");
+    for (const student of studentsRows) {
+      expect(student.status).toBe("ATIVO");
     }
   });
 });

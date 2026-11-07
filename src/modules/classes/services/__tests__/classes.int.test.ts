@@ -1,0 +1,307 @@
+import { eq } from "drizzle-orm";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { classSessions, classSlots, classTypes } from "../../../../db/schema";
+import { createStudents, createTestClass, clearTables } from "../../../../test/fixtures";
+import { PostgresTestInstance, startPostgres } from "../../../../test/postgres";
+import { todayInStudio, nextOccurrence } from "../../domain/occurrences";
+import { createEnrollment } from "../../../students/services/enrollments";
+import { createBooking } from "../../../bookings/services/bookings";
+import {
+  createClassType,
+  createSlot,
+  deactivateSlot,
+  updateClassType,
+  updateSlot,
+  getComposition,
+} from "../classes";
+
+describe("classes", () => {
+  let pg: PostgresTestInstance;
+  let today: string;
+  let day: string; // proxima data de terca do slot 19h (futura)
+  let nextDay: string; // terca da semana seguinte
+
+  beforeAll(async () => {
+    pg = await startPostgres();
+  }, 180_000);
+
+  beforeEach(async () => {
+    await clearTables(pg.db);
+    today = todayInStudio(new Date());
+    day = nextOccurrence({ weekday: 3 }, today);
+    nextDay = nextOccurrence({ weekday: 3 }, next(day));
+  });
+
+  afterAll(async () => {
+    await pg.pool.end();
+    await pg.container.stop();
+  });
+
+  function next(date: string): string {
+    return nextOccurrence({ weekday: 3 }, addDays(date, 1));
+  }
+
+  it("default capacity is eight", async () => {
+    const { classTypeId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+
+    const withoutCapacity = await createSlot(pg.db, {
+      classTypeId,
+      weekday: 5,
+      startTime: "07:00:00",
+      endTime: "08:00:00",
+    });
+    expect(withoutCapacity.ok).toBe(true);
+    if (withoutCapacity.ok) {
+      expect(withoutCapacity.value.capacity).toBe(8);
+      expect(withoutCapacity.value.status).toBe("ATIVA");
+      expect(withoutCapacity.value.classTypeId).toBe(classTypeId);
+    }
+
+    // Capacidade informada e respeitada e pode ser alterada depois (RES-02)
+    const withCapacity = await createSlot(pg.db, {
+      classTypeId,
+      weekday: 6,
+      startTime: "09:00:00",
+      endTime: "10:00:00",
+      capacity: 5,
+    });
+    expect(withCapacity.ok).toBe(true);
+    if (withCapacity.ok) {
+      expect(withCapacity.value.capacity).toBe(5);
+      const changed = await updateSlot(pg.db, withCapacity.value.id, { capacity: 12 });
+      expect(changed.ok).toBe(true);
+      if (changed.ok) expect(changed.value.capacity).toBe(12);
+    }
+  });
+
+  it("rejects an invalid slot on the server", async () => {
+    const { classTypeId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+
+    const equalEnd = await createSlot(pg.db, {
+      classTypeId,
+      weekday: 3,
+      startTime: "19:00:00",
+      endTime: "19:00:00",
+    });
+    expect(equalEnd.ok).toBe(false);
+    if (!equalEnd.ok) {
+      expect(equalEnd.field).toBe("endTime");
+      expect(equalEnd.error).toContain("endTime");
+    }
+
+    const earlierEnd = await createSlot(pg.db, {
+      classTypeId,
+      weekday: 3,
+      startTime: "20:00:00",
+      endTime: "19:00:00",
+    });
+    expect(earlierEnd.ok).toBe(false);
+
+    const weekdayOut = await createSlot(pg.db, {
+      classTypeId,
+      weekday: 8,
+      startTime: "19:00:00",
+      endTime: "20:00:00",
+    });
+    expect(weekdayOut.ok).toBe(false);
+    if (!weekdayOut.ok) expect(weekdayOut.field).toBe("weekday");
+
+    // Nenhuma das recusas gravou: segue existindo apenas a turma do fixture
+    const classes = await pg.db.select().from(classSlots);
+    expect(classes).toHaveLength(1);
+    expect(classes[0].weekday).toBe(3);
+  });
+
+  it("creates, edits and deactivates a class type", async () => {
+    const created = await createClassType(pg.db, { name: "Superioga Fluide" });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+    expect(created.value.status).toBe("ATIVA");
+
+    const edited = await updateClassType(pg.db, created.value.id, { name: "Superioga Fluide 2" });
+    expect(edited.ok).toBe(true);
+    if (edited.ok) expect(edited.value.name).toBe("Superioga Fluide 2");
+
+    const deactivated = await updateClassType(pg.db, created.value.id, { status: "INATIVA" });
+    expect(deactivated.ok).toBe(true);
+    if (deactivated.ok) expect(deactivated.value.status).toBe("INATIVA");
+
+    const [row] = await pg.db
+      .select()
+      .from(classTypes)
+      .where(eq(classTypes.id, created.value.id));
+    expect(row.name).toBe("Superioga Fluide 2");
+    expect(row.status).toBe("INATIVA");
+  });
+
+  it("deactivating a class affects future occurrences", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+
+    // Ocorrencia futura existente continua com composicao legivel
+    const before = await getComposition(pg.db, { classSlotId: slotId, date: day });
+    expect(before.ok).toBe(true);
+    if (!before.ok) return;
+    expect(before.value.sessionStatus).toBe("AGENDADA");
+
+    const deactivated = await deactivateSlot(pg.db, slotId);
+    expect(deactivated.ok).toBe(true);
+
+    // A partir da alteracao, novas ocorrencias futuras nao sao geradas
+    const after = await getComposition(pg.db, { classSlotId: slotId, date: nextDay });
+    expect(after.ok).toBe(false);
+    if (!after.ok) {
+      expect(after.error).toContain("inativa");
+    }
+  });
+
+  it("rejects a capacity below the occupancy of a future occurrence", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const students = await createStudents(pg.db, 5);
+    for (const student of students) {
+      const fixed = await createEnrollment(pg.db, {
+        studentId: student,
+        classSlotId: slotId,
+        startDate: day,
+      });
+      expect(fixed.ok).toBe(true);
+    }
+
+    const rejected = await updateSlot(pg.db, slotId, { capacity: 4 });
+    expect(rejected.ok).toBe(false);
+    if (!rejected.ok) {
+      expect(rejected.field).toBe("capacity");
+      expect(rejected.error).toContain("ocupacao 5");
+      expect(rejected.error).toContain(day); // informa a ocorrencia mais afetada
+    }
+
+    // Aumento e permitido
+    const enlarged = await updateSlot(pg.db, slotId, { capacity: 10 });
+    expect(enlarged.ok).toBe(true);
+  });
+
+  it("accepts editing valid required class data", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+
+    const edited = await updateSlot(pg.db, slotId, {
+      weekday: 5,
+      startTime: "18:00:00",
+      endTime: "19:00:00",
+    });
+    expect(edited.ok).toBe(true);
+    if (edited.ok) {
+      expect(edited.value.weekday).toBe(5);
+      expect(edited.value.startTime).toBe("18:00:00");
+      expect(edited.value.endTime).toBe("19:00:00");
+    }
+  });
+});
+
+function addDays(date: string, days: number): string {
+  const d = new Date(`${date}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+describe("composition", () => {
+  let pg: PostgresTestInstance;
+  let today: string;
+  let day: string;
+
+  beforeAll(async () => {
+    pg = await startPostgres();
+  }, 180_000);
+
+  beforeEach(async () => {
+    await clearTables(pg.db);
+    today = todayInStudio(new Date());
+    day = nextOccurrence({ weekday: 3 }, today);
+  });
+
+  afterAll(async () => {
+    await pg.pool.end();
+    await pg.container.stop();
+  });
+
+  it("PRD example 5+2+1 cap 8 with zero spots left", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+
+    const fixed = await createStudents(pg.db, 5);
+    for (const student of fixed) {
+      const enrollment = await createEnrollment(pg.db, {
+        studentId: student,
+        classSlotId: slotId,
+        startDate: day,
+      });
+      expect(enrollment.ok).toBe(true);
+    }
+
+    // 2 posicoes de reposicao e 1 de experimentais criadas como bookings
+    const casual = await createStudents(pg.db, 3);
+    for (let i = 0; i < 2; i++) {
+      const booking = await createBooking(pg.db, {
+        studentId: casual[i],
+        classSlotId: slotId,
+        date: day,
+        type: "MAKEUP",
+      });
+      expect(booking.ok).toBe(true);
+    }
+    const experimental = await createBooking(pg.db, {
+      studentId: casual[2],
+      classSlotId: slotId,
+      date: day,
+      type: "EXPERIMENTAL",
+    });
+    expect(experimental.ok).toBe(true);
+
+    const reading = await getComposition(pg.db, { classSlotId: slotId, date: day });
+    expect(reading.ok).toBe(true);
+    if (reading.ok) {
+      expect(reading.value.fixedCount).toBe(5);
+      expect(reading.value.makeupCount).toBe(2);
+      expect(reading.value.experimentalCount).toBe(1);
+      expect(reading.value.total).toBe(8);
+      expect(reading.value.availableSpots).toBe(0);
+      expect(reading.value.classSlotId).toBe(slotId);
+      expect(reading.value.date).toBe(day);
+      expect(reading.value.sessionId).toBeTruthy();
+      expect(reading.value.sessionStatus).toBe("AGENDADA");
+    }
+  });
+
+  it("an occurrence with no data returns zero total and every spot", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+
+    const reading = await getComposition(pg.db, { classSlotId: slotId, date: day });
+    expect(reading.ok).toBe(true);
+    if (reading.ok) {
+      expect(reading.value.fixedCount).toBe(0);
+      expect(reading.value.makeupCount).toBe(0);
+      expect(reading.value.experimentalCount).toBe(0);
+      expect(reading.value.total).toBe(0);
+      expect(reading.value.availableSpots).toBe(8);
+    }
+  });
+
+  it("reading a past date does not materialize", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+
+    // Materializa a futura primeiro
+    const future = await getComposition(pg.db, { classSlotId: slotId, date: day });
+    expect(future.ok).toBe(true);
+
+    const past = await getComposition(pg.db, {
+      classSlotId: slotId,
+      date: "2024-01-02", // terca ja passada
+    });
+    expect(past.ok).toBe(false);
+    if (!past.ok) {
+      expect(past.error).toContain("passada");
+    }
+
+    // Nada foi materializado alem da ocorrencia futura
+    const rows = await pg.db.select().from(classSessions);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].sessionDate).toBe(day);
+  });
+});

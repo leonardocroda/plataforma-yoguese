@@ -6,9 +6,9 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
-import { classSlots } from "./turmas";
+import { classSlots } from "./classes";
 
-export const statusAlunoEnum = pgEnum("status_aluno", ["ATIVO", "INATIVO"]);
+export const studentStatusEnum = pgEnum("status_aluno", ["ATIVO", "INATIVO"]);
 
 export const statusEnrollmentEnum = pgEnum("status_enrollment", [
   "ATIVA",
@@ -18,7 +18,7 @@ export const statusEnrollmentEnum = pgEnum("status_enrollment", [
 export const students = pgTable("students", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull().unique(),
-  status: statusAlunoEnum("status").notNull().default("ATIVO"),
+  status: studentStatusEnum("status").notNull().default("ATIVO"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

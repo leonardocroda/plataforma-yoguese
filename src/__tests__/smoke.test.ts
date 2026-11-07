@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 describe("smoke", () => {
-  it("roda o runner", () => {
+  it("runs the runner", () => {
     expect(1 + 1).toBe(2);
   });
 });

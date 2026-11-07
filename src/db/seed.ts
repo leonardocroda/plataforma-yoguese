@@ -6,9 +6,9 @@ export type SeedDatabase = NodePgDatabase<typeof schema>;
 
 // Assumption do spec ("Alunos e modalidades iniciais"): seed com as duas
 // modalidades do PRD e alunos de teste para exercitar contagens/vagas.
-const MODALIDADES = ["Superioga Clássico", "Superioga Intenso"];
+const CLASS_TYPES = ["Superioga Clássico", "Superioga Intenso"];
 
-const ALUNOS_TESTE = [
+const TEST_STUDENTS = [
   "Aluno Teste 1",
   "Aluno Teste 2",
   "Aluno Teste 3",
@@ -18,11 +18,11 @@ const ALUNOS_TESTE = [
 export async function seed(db: SeedDatabase): Promise<void> {
   await db
     .insert(classTypes)
-    .values(MODALIDADES.map((name) => ({ name })))
+    .values(CLASS_TYPES.map((name) => ({ name })))
     .onConflictDoNothing({ target: classTypes.name });
 
   await db
     .insert(students)
-    .values(ALUNOS_TESTE.map((name) => ({ name })))
+    .values(TEST_STUDENTS.map((name) => ({ name })))
     .onConflictDoNothing({ target: students.name });
 }

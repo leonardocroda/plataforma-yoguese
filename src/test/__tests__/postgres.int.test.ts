@@ -16,10 +16,10 @@ describe("testcontainer postgres", () => {
     await pg.container.stop();
   });
 
-  it("sobe container e consulta postgres", async () => {
-    const result = await pg.db.execute<{ um: number }>(sql`select 1 as um`);
+  it("starts the container and queries postgres", async () => {
+    const result = await pg.db.execute<{ one: number }>(sql`select 1 as one`);
 
     expect(result.rows).toHaveLength(1);
-    expect(result.rows[0].um).toBe(1);
+    expect(result.rows[0].one).toBe(1);
   });
 });

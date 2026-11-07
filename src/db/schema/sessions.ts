@@ -6,22 +6,22 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
-import { classSlots } from "./turmas";
-import { students } from "./alunos";
+import { classSlots } from "./classes";
+import { students } from "./students";
 
-export const statusSessaoEnum = pgEnum("status_sessao", [
+export const sessionStatusEnum = pgEnum("status_sessao", [
   "AGENDADA",
   "BLOQUEADA",
   "CANCELADA",
 ]);
 
-export const tipoReservaEnum = pgEnum("tipo_reserva", [
+export const bookingTypeEnum = pgEnum("tipo_reserva", [
   "FIXED",
   "MAKEUP",
   "EXPERIMENTAL",
 ]);
 
-export const statusReservaEnum = pgEnum("status_reserva", [
+export const bookingStatusEnum = pgEnum("status_reserva", [
   "ATIVA",
   "CANCELADA",
 ]);
@@ -34,7 +34,7 @@ export const classSessions = pgTable(
       .notNull()
       .references(() => classSlots.id),
     sessionDate: date("session_date").notNull(),
-    status: statusSessaoEnum("status").notNull().default("AGENDADA"),
+    status: sessionStatusEnum("status").notNull().default("AGENDADA"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -58,8 +58,8 @@ export const bookings = pgTable("bookings", {
   classSessionId: uuid("class_session_id")
     .notNull()
     .references(() => classSessions.id),
-  bookingType: tipoReservaEnum("booking_type").notNull(),
-  status: statusReservaEnum("status").notNull().default("ATIVA"),
+  bookingType: bookingTypeEnum("booking_type").notNull(),
+  status: bookingStatusEnum("status").notNull().default("ATIVA"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

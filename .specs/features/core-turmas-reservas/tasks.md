@@ -13,7 +13,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 **Approved**: 2026-11-06 - user: "sim"
 **Build**: `npm run build; npm run lint`
 **Run unit**: `npx vitest run --reporter=verbose --exclude "**/*.int.test.ts"`
-**Run int**: `npx vitest run --reporter=verbose "**/*.int.test.ts"`
+**Run int**: `npx vitest run --reporter=verbose int.test`
 
 ---
 
@@ -23,8 +23,8 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 | Code Layer | Required Test Type | Coverage Expectation | Location Pattern | Run Command |
 | ---------- | ------------------ | -------------------- | ---------------- | ----------- |
-| Dominio (datas, validadores, composicao) | unit | Todos os branches; 1:1 com os ACs do spec; cada edge case com teste | `src/**/__tests__/*.test.ts` | Run unit |
-| Servicos (sessoes, reservas, enrollments, turmas) | integration | Cada AC do servico, incl. concorrencia | `src/**/__tests__/*.int.test.ts` | Run int |
+| Dominio (datas, validators, composition) | unit | Todos os branches; 1:1 com os ACs do spec; cada edge case com teste | `src/**/__tests__/*.test.ts` | Run unit |
+| Servicos (sessions, bookings, enrollments, classes) | integration | Cada AC do servico, incl. concorrencia | `src/**/__tests__/*.int.test.ts` | Run int |
 | Migrations / schema | integration | Migration aplica limpo em Postgres vazio; seed carrega | `src/**/__tests__/*.int.test.ts` | Run int |
 | Server actions / route publico | integration | Rota/acaaaa em escopo: happy + erro | `src/**/__tests__/*.int.test.ts` | Run int |
 | UI admin minima | none | Julgada pelo walk (browser) + build gate; os ACs por tras dela sao testados nos servicos | - | walk + Build |
@@ -168,7 +168,7 @@ T17 → T19
 ### T4: Schema de turmas
 
 **What**: tabelas `class_types` e `class_slots` (weekday 1-7, start/end time, capacity >= 1, status) conforme PRD 12
-**Where**: `src/db/schema/turmas.ts`
+**Where**: `src/db/schema/classes.ts`
 **Depends on**: T3
 **Reuses**: -
 **Requirement**: RES-01, RES-02
@@ -188,7 +188,7 @@ T17 → T19
 ### T5: Schema de alunos e enrollments
 
 **What**: tabelas `students` (campos minimos para FK e seed) e `fixed_enrollments` (start_date, end_date, status) conforme PRD 12
-**Where**: `src/db/schema/alunos.ts`
+**Where**: `src/db/schema/students.ts`
 **Depends on**: T3
 **Reuses**: -
 **Requirement**: RES-20
@@ -207,7 +207,7 @@ T17 → T19
 ### T6: Schema de sessoes e reservas
 
 **What**: tabelas `class_sessions` (session_date, status, unica por slot+data) e `bookings` (student, session, tipo, status, timestamps) conforme PRD 12
-**Where**: `src/db/schema/sessoes.ts`
+**Where**: `src/db/schema/sessions.ts`
 **Depends on**: T3, T5
 **Reuses**: -
 **Requirement**: RES-14 a RES-19
@@ -227,7 +227,7 @@ T17 → T19
 ### T7: Schema de feriados e recessos
 
 **What**: tabelas `holidays` (unica por data) e `studio_closures` (periodo) conforme PRD 12
-**Where**: `src/db/schema/bloqueios.ts`
+**Where**: `src/db/schema/blocks.ts`
 **Depends on**: T3
 **Reuses**: -
 **Requirement**: RES-11 a RES-13
@@ -286,7 +286,7 @@ T17 → T19
 ### T10: Date utils do estudio (dominio)
 
 **What**: funcoes puras de America/Sao_Paulo: datas de ocorrencia de um slot entre duas datas, proxima ocorrencia, teste de data passada/hoje
-**Where**: `src/modules/turmas/domain/ocorrencias.ts`
+**Where**: `src/modules/classes/domain/occurrences.ts`
 **Depends on**: T1
 **Reuses**: -
 **Requirement**: RES-06, RES-10
@@ -305,7 +305,7 @@ T17 → T19
 ### T11: Validadores de turma (dominio)
 
 **What**: funcoes puras de validacao de slot: fim > inicio, weekday 1-7, capacity >= 1, mensagem por campo
-**Where**: `src/modules/turmas/domain/validadores.ts`
+**Where**: `src/modules/classes/domain/validators.ts`
 **Depends on**: None
 **Reuses**: -
 **Requirement**: RES-03, RES-04
@@ -324,7 +324,7 @@ T17 → T19
 ### T12: Calculadora de composicao (dominio)
 
 **What**: funcao pura que recebe (capacity, enrollments ativos na data, bookings ativos por tipo) e devolve {fixos, reposicoes, experimentais, total, vagas}
-**Where**: `src/modules/reservas/domain/composicao.ts`
+**Where**: `src/modules/bookings/domain/composition.ts`
 **Depends on**: T10
 **Reuses**: -
 **Requirement**: RES-08, RES-09
@@ -343,7 +343,7 @@ T17 → T19
 ### T13: Servico get-or-create de sessoes
 
 **What**: servico que materializa `class_sessions` sob demanda (idempotente), marca BLOQUEADA em feriado/recesso e recusa materializar para agendamento em data passada
-**Where**: `src/modules/reservas/services/sessoes.ts`
+**Where**: `src/modules/bookings/services/sessions.ts`
 **Depends on**: T9, T10, T12
 **Reuses**: `src/test/postgres.ts`
 **Requirement**: RES-06, RES-07, RES-10
@@ -362,7 +362,7 @@ T17 → T19
 ### T14: Servico de reserva transacional
 
 **What**: criar reserva (FIXED individual, MAKEUP ou EXPERIMENTAL) em transacao: capacidade no servidor, recusa sem vaga, dedup por aluno+sessao, segunda aula do aluno no mesmo dia permitida ao admin
-**Where**: `src/modules/reservas/services/reservas.ts`
+**Where**: `src/modules/bookings/services/bookings.ts`
 **Depends on**: T13
 **Reuses**: `src/test/postgres.ts`
 **Requirement**: RES-14 a RES-19
@@ -382,7 +382,7 @@ T17 → T19
 ### T15: Servico de enrollments
 
 **What**: criar enrollment com checagem de vagas na proxima ocorrencia; encerrar por data/status; recusa em turma cheia; historico por aluno
-**Where**: `src/modules/alunos/services/enrollments.ts`
+**Where**: `src/modules/students/services/enrollments.ts`
 **Depends on**: T13, T14
 **Reuses**: `src/test/postgres.ts`
 **Requirement**: RES-20 a RES-24
@@ -401,9 +401,9 @@ T17 → T19
 ### T16: CRUD turmas/modalidades + servico de composicao
 
 **What**: servico CRUD de class_types/class_slots com validacoes (RES-03/04/05) e o servico unico de leitura de composicao por (slot, data)
-**Where**: `src/modules/turmas/services/turmas.ts`
+**Where**: `src/modules/classes/services/classes.ts`
 **Depends on**: T13, T12
-**Reuses**: `src/modules/reservas/domain/composicao.ts`, `src/test/postgres.ts`
+**Reuses**: `src/modules/bookings/domain/composition.ts`, `src/test/postgres.ts`
 **Requirement**: RES-01, RES-02, RES-05, RES-27
 
 **Done when**:
@@ -420,7 +420,7 @@ T17 → T19
 ### T20: Servico de feriados e recessos
 
 **What**: servico de CRUD de holidays (criar com unique por data, recusar duplicado) e studio_closures (periodo com extremos inclusos), dono dos checks C11-C13 - aberto pelo finding do batch B (testes anteriores so inseriam bloqueios via fixture)
-**Where**: `src/modules/turmas/services/bloqueios.ts`
+**Where**: `src/modules/classes/services/blocks.ts`
 **Depends on**: T7
 **Reuses**: `src/test/postgres.ts`, `src/test/fixtures.ts`
 **Requirement**: RES-11, RES-12, RES-13
@@ -438,7 +438,7 @@ T17 → T19
 
 ### T17: Server actions do admin
 **What**: server actions finas para turma, modalidade, reserva e enrollment que chamam os servicos (sem auth nesta slice) e devolvem erros de validacao
-**Where**: `src/modules/turmas/actions.ts`
+**Where**: `src/modules/classes/actions.ts`
 **Depends on**: T14, T15, T16
 **Reuses**: servicos dos modulos
 **Requirement**: RES-03 (Propagate), RES-14
@@ -497,37 +497,37 @@ T17 → T19
 ## Checks
 
 **Run unit**: `npx vitest run --reporter=verbose --exclude "**/*.int.test.ts"`
-**Run int**: `npx vitest run --reporter=verbose "**/*.int.test.ts"`
+**Run int**: `npx vitest run --reporter=verbose int.test`
 
 **C1** - Turma criada pelo admin fica ativa com dia/horario/modalidade (RES-01, AC 1)
-Proof: run unit | ✓ validadores > aceita turma valida
+Proof: run unit | ✓ validators > accepts a valid class
 
 **C2** - Turma sem capacidade gravada recebe 8 (RES-02, AC 2)
-Proof: run int | ✓ turmas > capacidade default e oito
+Proof: run int | ✓ classes > default capacity is eight
 
 **C3** - Fim<=inicio, weekday fora de 1-7 ou capacidade < 1 recusam com o campo apontado (RES-03, AC 3)
-Proof: run unit | ✓ validadores > recusa fim menor ou igual ao inicio
+Proof: run unit | ✓ validators > rejects an end time less than or equal to the start
 
 **C4** - Editar/desativar turma reflete nas ocorrencias futuras (RES-04, AC 4)
-Proof: run int | ✓ turmas > desativar turma altera ocorrencias futuras
+Proof: run int | ✓ classes > deactivating a class affects future occurrences
 
 **C5** - Duas modalidades do PRD seedadas (RES-05, AC 5)
-Proof: run int | ✓ seed > duas modalidades do PRD
+Proof: run int | ✓ seed > the two PRD class types
 
 **C6** - Get-or-create materializa a ocorrencia de (slot, data) sob demanda (RES-06, AC 1)
-Proof: run int | ✓ sessoes > cria na primeira consulta e reconsulta sem duplicar
+Proof: run int | ✓ sessions > creates on the first query and re-queries without duplicating
 
 **C7** - Feriado/recesso deixa a ocorrencia BLOQUEADA e recusa reservas (RES-07, AC 2)
-Proof: run int | ✓ sessoes > feriado bloqueia a ocorrencia
+Proof: run int | ✓ sessions > a holiday blocks the occurrence
 
 **C8** - Composicao da ocorrencia: fixos/reposicoes/experimentais/total/vagas (RES-08, AC 3)
-Proof: run int | ✓ composicao > exemplo do PRD 5+2+1 cap 8 vagas zero
+Proof: run int | ✓ composition > PRD example 5+2+1 cap 8 with zero spots left
 
 **C9** - Enrollment ativo conta como fixo; encerrado deixa de contar (RES-09, AC 4)
-Proof: run int | ✓ enrollments > encerrado sai do contador da data
+Proof: run int | ✓ enrollments > an ended enrollment leaves the date count
 
 **C10** - Data passada: apenas leitura (RES-10, AC 5)
-Proof: run int | ✓ sessoes > recusa materializar data passada
+Proof: run int | ✓ sessions > rejects materializing a past date
 
 **C11** - Feriado cadastrado bloqueia as ocorrencias da data (RES-11, AC 1)
 Proof: run int | ✓ feriados > cria bloqueio da data
@@ -539,40 +539,40 @@ Proof: run int | ✓ feriados > recesso inclui extremos
 Proof: run int | ✓ feriados > recusa data repetida
 
 **C14** - Reserva manual em ocorrencia com vaga confirma e ocupa a vaga (RES-14, AC 1)
-Proof: run int | ✓ reservas > confirma com vaga disponivel
+Proof: run int | ✓ bookings > confirms when a spot is available
 
 **C15** - Ocorrencia sem vaga recusa sem estado parcial (RES-15, AC 2)
-Proof: run int | ✓ reservas > recusa sem vaga com mensagem clara
+Proof: run int | ✓ bookings > rejects when full with a clear message and no partial state
 
 **C16** - Reservas concorrentes na ultima vaga: exatamente uma confirmada (RES-16, AC 3; teste do PRD)
-Proof: run int | ✓ reservas > concorrencia na ultima vaga confirma uma
+Proof: run int | ✓ bookings > concurrency on the last spot confirms one
 
 **C17** - Reserva duplicada mesmo aluno+sessao recusada (RES-17, AC 4)
-Proof: run int | ✓ reservas > recusa duplicada na mesma sessao
+Proof: run int | ✓ bookings > rejects a duplicate in the same session
 
 **C18** - Reserva em data passada recusada (RES-18, AC 5)
-Proof: run int | ✓ reservas > recusa data passada
+Proof: run int | ✓ bookings > rejects a past date
 
 **C19** - Reserva confirmada registrada com student, session, tipo, status e timestamps (RES-19, AC 6)
-Proof: run int | ✓ reservas > registra dados de auditoria
+Proof: run int | ✓ bookings > records audit data
 
 **C20** - Admin marca segunda aula do aluno no mesmo dia (RES-16, AC 5; AD-011)
-Proof: run int | ✓ reservas > segunda aula no mesmo dia com admin
+Proof: run int | ✓ bookings > second class on the same day with admin
 
 **C21** - Enrollment criado com vaga fica ativo a partir da data inicial (RES-20, AC 1)
-Proof: run int | ✓ enrollments > cria e conta do start_date
+Proof: run int | ✓ enrollments > creates and counts from the start_date
 
 **C22** - Enrollment sem vaga na proxima ocorrencia recusado (RES-21, AC 2)
-Proof: run int | ✓ enrollments > recusa turma cheia na proxima ocorrencia
+Proof: run int | ✓ enrollments > rejects a full class at the next occurrence
 
 **C23** - Composicao excedente recusada antes de persistir (RES-22, AC 3)
-Proof: run int | ✓ enrollments > capacidade checada antes de gravar
+Proof: run int | ✓ enrollments > capacity is checked before writing
 
 **C24** - end_date/inativo deixa de contar a partir da data (RES-23, AC 4)
-Proof: run int | ✓ enrollments > end_date remove contagem apos o fim
+Proof: run int | ✓ enrollments > end_date removes the count after the end
 
 **C25** - Historico de enrollments consulta por aluno (RES-24, AC 5)
-Proof: run int | ✓ enrollments > historico do aluno
+Proof: run int | ✓ enrollments > student history
 
 **C26** - Agenda publica: data/horario/modalidade/vagas sem dados pessoais (RES-25, AC 1)
 Proof: run int | ✓ agenda > periodo sem dados pessoais
@@ -591,7 +591,7 @@ The feature's live state, written as it happens - a compaction gives no warning.
 **Settled mid-build:** 2026-11-06 - user autorizou T1 como desbloqueio do build gate ("T1 primeiro, gate depois") e 3 batch workers para o restante ("3 batch workers"); 2026-11-06 - user determinou identifiers em ingles no codigo ("voce ta dando varios nomes de variavel em portugues, precisa traduzir pra ingles isso ai" - AD-012: normalizacao apos o batch B retornar, obrigatoria a partir do batch C)
 **Dispatched:** batch A (fase 1 restante: T2-T9) at HEAD 1cc7e73 - sent 2026-11-06; returned: 2026-11-06, T2-T9 todos commitados, gates verdes vitest 5/5 + build + lint, desvios: auto-correção de fuminha próprio do T8, seed fixado em 4 alunos (spec-precision gap registrado), sem script db:seed
 Batch B (fases 2-3: T10-T16) at HEAD e3b0cfa - sent 2026-11-06; returned: 2026-11-06, PASS: 7/7 tasks, 52 testes verdes (unit+int), build+lint limpos; desvios: composicao = capacity-total (alinhado ao exemplo binding do PRD, AC do spec corrigido em seguida), end_date exclusive (conta até vésperas da data), horizonte de ocorrências em aberto = materializadas futuras + próxima (assumption "n" no spec), CRUD de feriados/recessos sem dona -> T20 aberta
-Normalização AD-012 (identifiers -> ingles) at HEAD - dispatched once T20/docs commitada; returned: pending
+Normalização AD-012 (identifiers -> ingles) at HEAD 2f24221 - dispatched 2026-11-06 (T20 permanece aberta para o batch C); returned: 2026-11-06, PASS: schema, modulos, servicos, fixtures e suites renomeados para ingles (identifiers, imports, paths e nomes de describe/it), 52 testes verdes (unit 20 + int 32), build+lint limpos; desvio: o `Run int` (`"**/*.int.test.ts"`) nao selecionava nenhum arquivo e foi corrigido para `int.test`
 **Walked:** none yet
 
 ---
