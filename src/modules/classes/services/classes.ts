@@ -194,7 +194,7 @@ export async function deactivateSlot(
     : { ok: false, error: "turma nao encontrada" };
 }
 
-// ---- leitura unica de composicao (RES-27) ----
+// ---- leitura de turmas ----
 
 export type SlotWithType = {
   id: string;
