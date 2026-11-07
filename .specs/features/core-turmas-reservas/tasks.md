@@ -445,7 +445,7 @@ T17 → T19
 
 **Done when**:
 
-- [ ] Teste de integracao da action de turma: sucesso e erro de validacao propagado
+- [x] Teste de integracao da action de turma: sucesso e erro de validacao propagado
 
 **Tests**: integration
 **Gate**: full
