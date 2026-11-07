@@ -65,6 +65,10 @@ export async function GET(request: Request): Promise<Response> {
         // e uma turma desativada no meio da leitura nao gera ocorrencia.
         continue;
       }
+      // A agenda publica nao publica ocorrencia bloqueada nem cancelada
+      if (composition.value.sessionStatus !== "AGENDADA") {
+        continue;
+      }
       occurrences.push({
         date,
         startTime: slot.startTime,

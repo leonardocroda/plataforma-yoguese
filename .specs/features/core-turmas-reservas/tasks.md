@@ -472,6 +472,7 @@ T17 → T19
 
 - [x] Integration test do route: happy path, slot inativo ausente, nomes ausentes
 - [x] Turma de modalidade inativa ausente da agenda publica
+- [x] Ocorrencia bloqueada por feriado/recesso ou cancelada ausente da agenda publica (AD-014)
 
 **Tests**: integration
 **Gate**: full

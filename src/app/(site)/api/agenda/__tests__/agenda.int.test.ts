@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { classSlots, classTypes, students } from "../../../../../db/schema";
+import { classSlots, classTypes, holidays, students } from "../../../../../db/schema";
 import { createTestClass, clearTables } from "../../../../../test/fixtures";
 import { PostgresTestInstance, startPostgres } from "../../../../../test/postgres";
 import { nextOccurrence, todayInStudio } from "../../../../../modules/classes/domain/occurrences";
@@ -109,6 +109,21 @@ describe("agenda", () => {
 
     const raw = JSON.stringify(body);
     expect(raw).not.toContain(inactiveType.name);
+  });
+
+  it("omits a blocked occurrence from the list", async () => {
+    await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const date = nextOccurrence({ weekday: 3 }, today);
+    await pg.db.insert(holidays).values({ date, name: "Feriado Municipal" });
+
+    const response = await GET(
+      new Request(`http://localhost/api/agenda?from=${date}&to=${date}`),
+    );
+    expect(response.status).toBe(200);
+
+    // A ocorrencia bloqueada nao e publicada: o servidor recusa reserva nela
+    const body = await response.json();
+    expect(body.occurrences).toHaveLength(0);
   });
 
   it("omits a class with an inactive class type from the list", async () => {
