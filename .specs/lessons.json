@@ -1,0 +1,207 @@
+{
+  "schema": 1,
+  "promote_threshold": 2,
+  "window_days": 45,
+  "quarantine_threshold": 2,
+  "next_id": 12,
+  "lessons": [
+    {
+      "id": "L-001",
+      "key": "weak_test::a criterion that says the system persists a state is proven only by a test that reads the stored row never by a validator only unit test",
+      "text": "A criterion that says the system persists a state is proven only by a test that reads the stored row, never by a validator-only unit test.",
+      "signal": "weak_test",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "core-turmas-reservas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C1 (src/modules/classes/__tests__/actions.int.test.ts:46) (tests)"
+      ],
+      "created": "2026-11-07T11:24:38Z",
+      "last_seen": "2026-11-07T11:24:38Z"
+    },
+    {
+      "id": "L-002",
+      "key": "weak_test::a proof line must name a test that asserts every case the check names so one test covers the whole claim",
+      "text": "A proof line must name a test that asserts every case the check names, so one test covers the whole claim.",
+      "signal": "weak_test",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "core-turmas-reservas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C3, C7, C9, C10 (tests)"
+      ],
+      "created": "2026-11-07T11:24:38Z",
+      "last_seen": "2026-11-07T11:24:38Z"
+    },
+    {
+      "id": "L-003",
+      "key": "ac_gap::any path that returns an existing occurrence re checks the slot and class type status first because get or create short circuits before the write path validates",
+      "text": "Any path that returns an existing occurrence re-checks the slot and class type status first, because get-or-create short-circuits before the write path validates.",
+      "signal": "ac_gap",
+      "scope": "bookings",
+      "status": "candidate",
+      "features": [
+        "core-turmas-reservas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "RES-04 (src/modules/bookings/services/sessions.ts:50) (bookings)"
+      ],
+      "created": "2026-11-07T11:24:39Z",
+      "last_seen": "2026-11-07T11:24:39Z"
+    },
+    {
+      "id": "L-004",
+      "key": "ac_gap::editing the weekday or time of a recurring slot cancels the future occurrences of the old schedule because materialized rows survive a slot update",
+      "text": "Editing the weekday or time of a recurring slot cancels the future occurrences of the old schedule, because materialized rows survive a slot update.",
+      "signal": "ac_gap",
+      "scope": "classes",
+      "status": "candidate",
+      "features": [
+        "core-turmas-reservas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "AD-013 (src/modules/classes/services/classes.ts:169) (classes)"
+      ],
+      "created": "2026-11-07T11:24:39Z",
+      "last_seen": "2026-11-07T11:24:39Z"
+    },
+    {
+      "id": "L-005",
+      "key": "ac_gap::derived numbers such as occupancy and available spots come from one shared service because two derivations drift apart and one of them stays untested",
+      "text": "Derived numbers such as occupancy and available spots come from one shared service, because two derivations drift apart and one of them stays untested.",
+      "signal": "ac_gap",
+      "scope": "bookings",
+      "status": "candidate",
+      "features": [
+        "core-turmas-reservas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "RES-27 (src/modules/bookings/services/bookings.ts:127) (bookings)"
+      ],
+      "created": "2026-11-07T11:24:40Z",
+      "last_seen": "2026-11-07T11:24:40Z"
+    },
+    {
+      "id": "L-006",
+      "key": "ac_gap::a status column the product exposes is read by every listing that publishes the entity because writing it alone changes nothing",
+      "text": "A status column the product exposes is read by every listing that publishes the entity, because writing it alone changes nothing.",
+      "signal": "ac_gap",
+      "scope": "classes",
+      "status": "candidate",
+      "features": [
+        "core-turmas-reservas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "RES-05 (src/modules/classes/services/classes.ts:210) (classes)"
+      ],
+      "created": "2026-11-07T11:24:41Z",
+      "last_seen": "2026-11-07T11:24:41Z"
+    },
+    {
+      "id": "L-007",
+      "key": "ac_gap::materializing an occurrence validates the requested date against the slot weekday because the key alone accepts any date",
+      "text": "Materializing an occurrence validates the requested date against the slot weekday, because the key alone accepts any date.",
+      "signal": "ac_gap",
+      "scope": "bookings",
+      "status": "candidate",
+      "features": [
+        "core-turmas-reservas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/modules/bookings/services/sessions.ts:79 (bookings)"
+      ],
+      "created": "2026-11-07T11:24:41Z",
+      "last_seen": "2026-11-07T11:24:41Z"
+    },
+    {
+      "id": "L-008",
+      "key": "ac_gap::composition counts distinct people because summing enrollments and bookings counts the same student twice",
+      "text": "Composition counts distinct people, because summing enrollments and bookings counts the same student twice.",
+      "signal": "ac_gap",
+      "scope": "bookings",
+      "status": "candidate",
+      "features": [
+        "core-turmas-reservas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/modules/bookings/services/bookings.ts:84 (bookings)"
+      ],
+      "created": "2026-11-07T11:24:42Z",
+      "last_seen": "2026-11-07T11:24:42Z"
+    },
+    {
+      "id": "L-009",
+      "key": "weak_test::every rule the source document states gets its own check because behavior that is correct only by probe breaks silently when no test names it",
+      "text": "Every rule the source document states gets its own check, because behavior that is correct only by probe breaks silently when no test names it.",
+      "signal": "weak_test",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "core-turmas-reservas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C28, C29, C30 (tests)"
+      ],
+      "created": "2026-11-07T11:24:42Z",
+      "last_seen": "2026-11-07T11:24:42Z"
+    },
+    {
+      "id": "L-010",
+      "key": "spec_precision_gap::a rule gets its own requirement id before the checks cite it because two rules under one id make the traceability ambiguous",
+      "text": "A rule gets its own requirement ID before the checks cite it, because two rules under one ID make the traceability ambiguous.",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "core-turmas-reservas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "spec.md:176 (RES-17 collision) (spec)"
+      ],
+      "created": "2026-11-07T11:24:42Z",
+      "last_seen": "2026-11-07T11:24:42Z"
+    },
+    {
+      "id": "L-011",
+      "key": "ac_gap::a public listing publishes only the occurrences the server accepts bookings for because a published blocked occurrence shows availability that does not exist",
+      "text": "A public listing publishes only the occurrences the server accepts bookings for, because a published blocked occurrence shows availability that does not exist.",
+      "signal": "ac_gap",
+      "scope": "agenda",
+      "status": "candidate",
+      "features": [
+        "core-turmas-reservas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/app/(site)/api/agenda/route.ts:56 (agenda)"
+      ],
+      "created": "2026-11-07T11:24:43Z",
+      "last_seen": "2026-11-07T11:24:43Z"
+    }
+  ]
+}

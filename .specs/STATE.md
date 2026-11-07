@@ -123,7 +123,10 @@ Snapshot - updated when work pauses.
   C28-C31 foram acrescentados. Criterios RES-28 e RES-29 acrescentados ao spec
   (regra da edicao de capacidade e da edicao de dia/horario).
 - Suite: 78 testes verdes (unit 21 + integration 57), build e lint limpos,
-  `check_proofs.py` com 33 pass / 0 fail.
+  `check_proofs.py` com 33 pass / 0 fail e `validate_verification.py` com 0 erro
+  e 0 warning (feature fechada).
+- 11 licoes destiladas dos achados do Verifier em `.specs/lessons.json` (todas
+  `candidate`; viram `confirmed` quando reaparecerem em outra feature).
 - Decisoes do usuario que valem para as proximas features: AD-013 (editar dia/horario
   cancela as ocorrencias futuras antigas e as reservas delas - na feature de creditos
   isso vira credito automatico) e AD-014 (agenda publica omite bloqueadas e inativas;
