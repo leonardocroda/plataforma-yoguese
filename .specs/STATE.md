@@ -110,6 +110,17 @@ publish occurrences blocked by a holiday or closure, nor slots or class
 types that are inactive. The admin grade still shows them, marked as
 BLOQUEADA.
 
+### AD-015 - ACTIVE - Local development database: docker compose + db scripts (2026-11-07)
+
+The local database is Postgres in docker compose (`docker compose up -d`,
+container `yoguese-db`, port 55432, volume `yoguese-pgdata`). The connection
+string lives in `.env.local` (copied from `.env.example`; the git ignores it).
+The `db:migrate` and `db:seed` scripts run on plain node, so they read that
+file themselves through `src/db/env.ts` - Next.js only loads it inside the app
+runtime. The seed writes the two PRD class types and the four test students
+and is idempotent. Integration tests do not use this database: Testcontainers
+brings its own Postgres, so the local one can stay up while the suite runs.
+
 ## Handoff
 
 Snapshot - updated when work pauses.
@@ -133,6 +144,10 @@ Snapshot - updated when work pauses.
   a grade admin mostra BLOQUEADA).
 - `proofs.md` e artefato gerado: fica regenerado no HEAD de fechamento (por isso
   aparece como modificacao local depois do ultimo commit).
+- Setup local (AD-015): `docker compose up -d` -> `npm run db:migrate` ->
+  `npm run db:seed` -> `npm run dev`; o `README.md` da raiz traz o passo a passo.
+  O Postgres local fica na 55432 e o container antigo do walk (`yoguese-walk`) usa
+  a mesma porta - pare um dos dois antes de subir o outro.
 - Deferred to later features: auth/profiles, credits + 24h rule (a AD-013 vira
   credito automatico la), experimental approval flow, student-area UI, institutional
   site, notifications, payments, reports, agenda (validacao de `from`/`to`).
