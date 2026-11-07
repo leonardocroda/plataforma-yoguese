@@ -264,6 +264,13 @@ describe("classes", () => {
       expect(rejected.error).toContain(day); // informa a ocorrencia mais afetada
     }
 
+    // Recusa sem estado parcial: a capacidade continua 8
+    const [row] = await pg.db
+      .select()
+      .from(classSlots)
+      .where(eq(classSlots.id, slotId));
+    expect(row.capacity).toBe(8);
+
     // Aumento e permitido
     const enlarged = await updateSlot(pg.db, slotId, { capacity: 10 });
     expect(enlarged.ok).toBe(true);

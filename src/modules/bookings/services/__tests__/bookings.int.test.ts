@@ -143,6 +143,40 @@ describe("bookings", () => {
     expect(Number(total?.total)).toBe(1);
   });
 
+  it("a class with eight bookings refuses the ninth", async () => {
+    // Teste de aceitacao do PRD: "Turma com 8 reservas nao permite uma nona"
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const date = nextOccurrence({ weekday: 3 }, today);
+    const students = await createStudents(pg.db, 9);
+
+    for (const studentId of students.slice(0, 8)) {
+      const booking = await createBooking(pg.db, {
+        studentId,
+        classSlotId: slotId,
+        date,
+        type: "MAKEUP",
+      });
+      expect(booking.ok).toBe(true);
+    }
+
+    const ninth = await createBooking(pg.db, {
+      studentId: students[8],
+      classSlotId: slotId,
+      date,
+      type: "MAKEUP",
+    });
+    expect(ninth.ok).toBe(false);
+    if (!ninth.ok) {
+      expect(ninth.error).toContain("sem vaga");
+    }
+
+    const [total] = await pg.db
+      .select({ total: count() })
+      .from(bookings)
+      .where(eq(bookings.status, "ATIVA"));
+    expect(Number(total?.total)).toBe(8);
+  });
+
   it("rejects a duplicate in the same session", async () => {
     const input = await setup();
 

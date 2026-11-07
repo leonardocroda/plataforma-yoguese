@@ -1,9 +1,10 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { holidays } from "../../../../db/schema";
-import { createTestClass, clearTables } from "../../../../test/fixtures";
+import { bookings, classSessions, holidays } from "../../../../db/schema";
+import { createStudents, createTestClass, clearTables } from "../../../../test/fixtures";
 import { PostgresTestInstance, startPostgres } from "../../../../test/postgres";
 import { addDays, nextOccurrence, todayInStudio } from "../../domain/occurrences";
 import { materializeSession } from "../../../bookings/services/sessions";
+import { createBooking } from "../../../bookings/services/bookings";
 import { createHoliday, createStudioClosure } from "../blocks";
 
 describe("blocks", () => {
@@ -82,6 +83,54 @@ describe("blocks", () => {
     });
     expect(after.ok).toBe(true);
     if (after.ok) expect(after.value.status).toBe("AGENDADA");
+  });
+
+  it("a holiday and a closure on the same date block one single occurrence", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const date = nextOccurrence({ weekday: 3 }, today);
+    const students = await createStudents(pg.db, 1);
+
+    const holiday = await createHoliday(pg.db, { date, name: "Feriado Municipal" });
+    expect(holiday.ok).toBe(true);
+    const closure = await createStudioClosure(pg.db, {
+      startDate: date,
+      endDate: date,
+      reason: "Recesso de Inverno",
+    });
+    expect(closure.ok).toBe(true);
+
+    const occurrence = await materializeSession(pg.db, {
+      classSlotId: slotId,
+      date,
+    });
+    expect(occurrence.ok).toBe(true);
+    if (occurrence.ok) {
+      expect(occurrence.value.status).toBe("BLOQUEADA");
+    }
+
+    // Uma ocorrencia so para a data, mesmo com os dois bloqueios
+    const again = await materializeSession(pg.db, { classSlotId: slotId, date });
+    expect(again.ok).toBe(true);
+    if (again.ok && occurrence.ok) {
+      expect(again.value.id).toBe(occurrence.value.id);
+    }
+    const sessions = await pg.db.select().from(classSessions);
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0].status).toBe("BLOQUEADA");
+
+    // E a ocorrencia bloqueada recusa reserva
+    const booking = await createBooking(pg.db, {
+      studentId: students[0],
+      classSlotId: slotId,
+      date,
+      type: "MAKEUP",
+    });
+    expect(booking.ok).toBe(false);
+    if (!booking.ok) {
+      expect(booking.error).toContain("bloqueada");
+    }
+    const created = await pg.db.select().from(bookings);
+    expect(created).toHaveLength(0);
   });
 
   it("refuses a holiday on a date already registered", async () => {

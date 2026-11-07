@@ -375,6 +375,7 @@ T17 → T19
 - [x] Dedup, passado, auditoria e same-day admin com testes verdes
 - [x] Aluno fixo e reserva na mesma ocorrencia contam uma vez: a reserva do aluno fixo e recusada como duplicada
 - [x] A ocupacao vem do servico unico de composicao (RES-27), sem conta paralela
+- [x] Teste do PRD: turma com 8 reservas nao aceita a nona
 
 **Tests**: integration
 **Gate**: full
@@ -416,6 +417,7 @@ T17 → T19
 - [x] Servico unico de composicao (`getOccurrenceComposition` em src/modules/bookings/services/composition.ts) usado pelo agendamento, pela leitura e pela agenda publica (RES-27)
 - [x] Modalidade inativa esconde as turmas dela da grade e da agenda publica
 - [x] Editar dia ou horario cancela as ocorrencias futuras da grade antiga e libera as reservas delas (AD-013)
+- [x] Reduzir a capacidade abaixo da ocupacao de uma ocorrencia futura e recusado, citando a ocorrencia mais afetada
 
 **Tests**: integration
 **Gate**: full
@@ -435,6 +437,7 @@ T17 → T19
 **Done when**:
 
 - [x] Integration tests: feriado cria bloqueio da data; recesso inclui extremos; data repetida recusada - os tres com dono
+- [x] Feriado e recesso na mesma data: uma unica ocorrencia bloqueada, que recusa reserva
 
 **Tests**: integration
 **Gate**: full
@@ -589,6 +592,15 @@ Proof: run int | ✓ agenda > returns the period without personal data
 
 **C27** - Slot inativo ausente da agenda publica (RES-26, AC 2)
 Proof: run int | ✓ agenda > omits an inactive slot from the list
+
+**C28** - Turma com 8 reservas nao permite uma nona reserva (RES-14, RES-15; teste de aceitacao do PRD)
+Proof: run int | ✓ bookings > a class with eight bookings refuses the ninth
+
+**C29** - Editar a capacidade abaixo da ocupacao de uma ocorrencia futura e recusado, citando a ocorrencia mais afetada (RES-04; edge case do spec)
+Proof: run int | ✓ classes > rejects a capacity below the occupancy of a future occurrence
+
+**C30** - Feriado e recesso na mesma data produzem uma unica ocorrencia bloqueada, que recusa reservas (RES-07, RES-11, RES-12; edge case do spec)
+Proof: run int | ✓ blocks > a holiday and a closure on the same date block one single occurrence
 
 **C31** - Servico unico de composicao: o agendamento e a leitura devolvem os mesmos numeros (RES-27, AC 1)
 Proof: run int | ✓ occurrence composition > the single composition service feeds the booking and the reading paths
