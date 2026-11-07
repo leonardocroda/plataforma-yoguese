@@ -68,6 +68,69 @@ describe("validators", () => {
     }
   });
 
+  it("rejects every invalid field naming the offending one", () => {
+    // fim menor ou igual ao inicio
+    for (const endTime of ["18:00:00", "19:00:00"]) {
+      const result = validateSlot({
+        weekday: 3,
+        startTime: "19:00:00",
+        endTime,
+        capacity: 8,
+      });
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.errors.map((e) => e.field)).toEqual(["endTime"]);
+        expect(result.errors[0].message).toContain("endTime");
+      }
+    }
+
+    // dia da semana fora de 1-7
+    for (const weekday of [0, 8, -1]) {
+      const result = validateSlot({
+        weekday,
+        startTime: "19:00:00",
+        endTime: "20:00:00",
+        capacity: 8,
+      });
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.errors.map((e) => e.field)).toEqual(["weekday"]);
+        expect(result.errors[0].message).toContain("weekday");
+      }
+    }
+
+    // capacidade menor que 1
+    for (const capacity of [0, -2]) {
+      const result = validateSlot({
+        weekday: 3,
+        startTime: "19:00:00",
+        endTime: "20:00:00",
+        capacity,
+      });
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.errors.map((e) => e.field)).toEqual(["capacity"]);
+        expect(result.errors[0].message).toContain("capacity");
+      }
+    }
+
+    // os tres campos invalidos ao mesmo tempo, cada um nomeado
+    const all = validateSlot({
+      weekday: 9,
+      startTime: "21:00:00",
+      endTime: "20:00:00",
+      capacity: 0,
+    });
+    expect(all.ok).toBe(false);
+    if (!all.ok) {
+      expect(all.errors.map((e) => e.field)).toEqual([
+        "weekday",
+        "endTime",
+        "capacity",
+      ]);
+    }
+  });
+
   it("points out all invalid fields at once", () => {
     const result = validateSlot({
       weekday: 9,

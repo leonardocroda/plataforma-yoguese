@@ -5,6 +5,7 @@ import { createStudents, createTestClass, clearTables } from "../../../../test/f
 import { PostgresTestInstance, startPostgres } from "../../../../test/postgres";
 import { todayInStudio, nextOccurrence } from "../../../classes/domain/occurrences";
 import { createBooking } from "../../../bookings/services/bookings";
+import { getComposition } from "../../../bookings/services/composition";
 import { createEnrollment, endEnrollment, listEnrollmentsByStudent } from "../enrollments";
 
 describe("enrollments", () => {
@@ -120,6 +121,44 @@ describe("enrollments", () => {
       .select({ total: count() })
       .from(fixedEnrollments);
     expect(Number(total?.total)).toBe(1);
+  });
+
+  it("counts an active enrollment as fixed and stops counting after it ends", async () => {
+    const { slotId, date } = await base(8);
+    const [a] = await createStudents(pg.db, 1);
+
+    const created = await createEnrollment(pg.db, {
+      studentId: a,
+      classSlotId: slotId,
+      startDate: date,
+    });
+    expect(created.ok).toBe(true);
+
+    // Enrollment ativo conta como fixo e ocupa a vaga
+    const active = await getComposition(pg.db, { classSlotId: slotId, date });
+    expect(active.ok).toBe(true);
+    if (active.ok) {
+      expect(active.value.fixedCount).toBe(1);
+      expect(active.value.makeupCount).toBe(0);
+      expect(active.value.total).toBe(1);
+      expect(active.value.availableSpots).toBe(7);
+    }
+
+    // Enrollment encerrado deixa de contar na mesma data
+    const ended = await endEnrollment(pg.db, created.ok ? created.value.id : "");
+    expect(ended.ok).toBe(true);
+    if (ended.ok) {
+      expect(ended.value.status).toBe("INATIVA");
+    }
+
+    const after = await getComposition(pg.db, { classSlotId: slotId, date });
+    expect(after.ok).toBe(true);
+    if (after.ok) {
+      expect(after.value.fixedCount).toBe(0);
+      expect(after.value.makeupCount).toBe(0);
+      expect(after.value.total).toBe(0);
+      expect(after.value.availableSpots).toBe(8);
+    }
   });
 
   it("an ended enrollment leaves the date count", async () => {

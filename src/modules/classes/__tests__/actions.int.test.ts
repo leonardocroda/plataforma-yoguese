@@ -68,10 +68,17 @@ describe("admin actions", () => {
 
     const [storedSlot] = await pg.db.select().from(classSlots);
     expect(storedSlot.classTypeId).toBe(classType.value.id);
+    expect(storedSlot.status).toBe("ATIVA");
+    expect(storedSlot.weekday).toBe(3);
+    expect(storedSlot.startTime).toBe("19:00:00");
+    expect(storedSlot.endTime).toBe("20:00:00");
+    expect(storedSlot.capacity).toBe(8);
+
     const [storedType] = await pg.db
       .select()
       .from(classTypes)
       .where(eq(classTypes.name, classType.value.name));
+    expect(storedType.name).toBe("Superioga Fluide");
     expect(storedType.status).toBe("ATIVA");
   });
 

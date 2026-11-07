@@ -4,10 +4,15 @@ import {
   bookings,
   classSessions,
   holidays,
+  studioClosures,
 } from "../../../../db/schema";
 import { createStudents, createTestClass, clearTables } from "../../../../test/fixtures";
 import { PostgresTestInstance, startPostgres } from "../../../../test/postgres";
-import { todayInStudio, nextOccurrence } from "../../../classes/domain/occurrences";
+import {
+  addDays,
+  todayInStudio,
+  nextOccurrence,
+} from "../../../classes/domain/occurrences";
 import { createEnrollment } from "../../../students/services/enrollments";
 import { deactivateSlot } from "../../../classes/services/classes";
 import { getComposition } from "../composition";
@@ -257,23 +262,49 @@ describe("bookings", () => {
     expect(created).toHaveLength(0);
   });
 
-  it("rejects a booking in a blocked occurrence", async () => {
+  it("rejects a booking in an occurrence blocked by holiday or closure", async () => {
     const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
     const date = nextOccurrence({ weekday: 3 }, today);
-    const students = await createStudents(pg.db, 1);
-    await pg.db.insert(holidays).values({ date, name: "Feriado Teste" });
+    const students = await createStudents(pg.db, 2);
 
-    const result = await createBooking(pg.db, {
+    // A mesma data com feriado e com recesso: uma ocorrencia so, bloqueada
+    await pg.db.insert(holidays).values({ date, name: "Feriado Teste" });
+    await pg.db.insert(studioClosures).values({
+      startDate: date,
+      endDate: date,
+      reason: "Recesso Teste",
+    });
+
+    const blocked = await createBooking(pg.db, {
       studentId: students[0],
       classSlotId: slotId,
       date,
       type: "MAKEUP",
     });
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error).toContain("bloqueada");
+    expect(blocked.ok).toBe(false);
+    if (!blocked.ok) {
+      expect(blocked.error).toContain("bloqueada");
     }
+
+    // Recesso sozinho tambem bloqueia a ocorrencia e recusa a reserva
+    const closureDate = nextOccurrence({ weekday: 3 }, addDays(date, 1));
+    await pg.db.insert(studioClosures).values({
+      startDate: closureDate,
+      endDate: addDays(closureDate, 7),
+      reason: "Recesso de Inverno",
+    });
+
+    const closed = await createBooking(pg.db, {
+      studentId: students[1],
+      classSlotId: slotId,
+      date: closureDate,
+      type: "MAKEUP",
+    });
+    expect(closed.ok).toBe(false);
+    if (!closed.ok) {
+      expect(closed.error).toContain("bloqueada");
+    }
+
     const created = await pg.db.select().from(bookings);
     expect(created).toHaveLength(0);
   });

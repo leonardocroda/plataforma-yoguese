@@ -6,6 +6,7 @@ import { PostgresTestInstance, startPostgres } from "../../../../test/postgres";
 import { todayInStudio, nextOccurrence } from "../../domain/occurrences";
 import { createEnrollment } from "../../../students/services/enrollments";
 import { createBooking } from "../../../bookings/services/bookings";
+import { materializeSession } from "../../../bookings/services/sessions";
 import { getComposition } from "../../../bookings/services/composition";
 import {
   createClassType,
@@ -164,23 +165,82 @@ describe("classes", () => {
     expect(created).toHaveLength(0);
   });
 
-  it("deactivating a class affects future occurrences", async () => {
-    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+  it("editing or deactivating a class affects future occurrences", async () => {
+    const students = await createStudents(pg.db, 1);
+
+    // --- desativar ---
+    const deactivatedClass = await createTestClass(pg.db, {
+      weekday: 3,
+      capacity: 8,
+    });
 
     // Ocorrencia futura existente continua com composicao legivel
-    const before = await getComposition(pg.db, { classSlotId: slotId, date: day });
+    const before = await getComposition(pg.db, {
+      classSlotId: deactivatedClass.slotId,
+      date: day,
+    });
     expect(before.ok).toBe(true);
     if (!before.ok) return;
     expect(before.value.sessionStatus).toBe("AGENDADA");
 
-    const deactivated = await deactivateSlot(pg.db, slotId);
+    const deactivated = await deactivateSlot(pg.db, deactivatedClass.slotId);
     expect(deactivated.ok).toBe(true);
 
     // A partir da alteracao, novas ocorrencias futuras nao sao geradas
-    const after = await getComposition(pg.db, { classSlotId: slotId, date: nextDay });
+    const after = await getComposition(pg.db, {
+      classSlotId: deactivatedClass.slotId,
+      date: nextDay,
+    });
     expect(after.ok).toBe(false);
     if (!after.ok) {
       expect(after.error).toContain("inativa");
+    }
+
+    // A ocorrencia que ja existia nao aceita mais reserva
+    const booking = await createBooking(pg.db, {
+      studentId: students[0],
+      classSlotId: deactivatedClass.slotId,
+      date: day,
+      type: "MAKEUP",
+    });
+    expect(booking.ok).toBe(false);
+    if (!booking.ok) {
+      expect(booking.error).toContain("inativa");
+    }
+    const created = await pg.db.select().from(bookings);
+    expect(created).toHaveLength(0);
+
+    // --- editar o dia ---
+    const editedClass = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const existing = await getComposition(pg.db, {
+      classSlotId: editedClass.slotId,
+      date: day,
+    });
+    expect(existing.ok).toBe(true);
+
+    const edited = await updateSlot(pg.db, editedClass.slotId, {
+      weekday: 4,
+      startTime: "07:00:00",
+      endTime: "08:00:00",
+    });
+    expect(edited.ok).toBe(true);
+
+    // A ocorrencia futura da grade antiga e cancelada
+    const [cancelled] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.classSlotId, editedClass.slotId));
+    expect(cancelled.status).toBe("CANCELADA");
+
+    // E a nova grade materializa na data da nova weekday
+    const newDay = nextOccurrence({ weekday: 4 }, today);
+    const newReading = await getComposition(pg.db, {
+      classSlotId: editedClass.slotId,
+      date: newDay,
+    });
+    expect(newReading.ok).toBe(true);
+    if (newReading.ok) {
+      expect(newReading.value.sessionStatus).toBe("AGENDADA");
     }
   });
 
@@ -380,6 +440,69 @@ describe("composition", () => {
       expect(reading.value.total).toBe(0);
       expect(reading.value.availableSpots).toBe(8);
     }
+  });
+
+  it("reads a materialized past occurrence and refuses creating a new one", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const pastDate = "2024-01-02"; // terca ja passada
+    const students = await createStudents(pg.db, 1);
+
+    // Ocorrencia materializada no passado: a leitura e liberada
+    const [session] = await pg.db
+      .insert(classSessions)
+      .values({
+        classSlotId: slotId,
+        sessionDate: pastDate,
+        status: "AGENDADA",
+      })
+      .returning();
+    await pg.db.insert(bookings).values({
+      studentId: students[0],
+      classSessionId: session.id,
+      bookingType: "MAKEUP",
+      status: "ATIVA",
+    });
+
+    const reading = await getComposition(pg.db, {
+      classSlotId: slotId,
+      date: pastDate,
+    });
+    expect(reading.ok).toBe(true);
+    if (reading.ok) {
+      expect(reading.value.sessionStatus).toBe("AGENDADA");
+      expect(reading.value.makeupCount).toBe(1);
+      expect(reading.value.total).toBe(1);
+      expect(reading.value.availableSpots).toBe(7);
+    }
+
+    // Data passada nova: nem materializa nem aceita reserva
+    const newPastDate = "2024-01-09"; // outra terca ja passada
+    const materialized = await materializeSession(pg.db, {
+      classSlotId: slotId,
+      date: newPastDate,
+    });
+    expect(materialized.ok).toBe(false);
+    if (!materialized.ok) {
+      expect(materialized.error).toContain("data passada");
+      expect(materialized.field).toBe("date");
+    }
+
+    const booking = await createBooking(pg.db, {
+      studentId: students[0],
+      classSlotId: slotId,
+      date: newPastDate,
+      type: "MAKEUP",
+    });
+    expect(booking.ok).toBe(false);
+    if (!booking.ok) {
+      expect(booking.error).toContain("data passada");
+      expect(booking.field).toBe("date");
+    }
+
+    // Nenhuma ocorrencia nova no passado
+    const sessions = await pg.db.select().from(classSessions);
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0].sessionDate).toBe(pastDate);
   });
 
   it("reading a past date does not materialize", async () => {

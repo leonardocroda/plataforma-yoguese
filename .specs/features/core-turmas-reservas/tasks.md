@@ -313,6 +313,7 @@ T17 → T19
 **Done when**:
 
 - [x] Cada regra com unit test verde no Run unit
+- [x] Um unico unit test recusa fim<=inicio, weekday fora de 1-7 e capacidade < 1, nomeando cada campo invalido
 
 **Tests**: unit
 **Gate**: quick
@@ -452,6 +453,7 @@ T17 → T19
 **Done when**:
 
 - [x] Teste de integracao da action de turma: sucesso e erro de validacao propagado
+- [x] A action de turma persiste a turma com status ativo, dia da semana, horarios e modalidade
 
 **Tests**: integration
 **Gate**: full
@@ -508,16 +510,16 @@ T17 → T19
 **Run int**: `npx vitest run --reporter=verbose int.test`
 
 **C1** - Turma criada pelo admin fica ativa com dia/horario/modalidade (RES-01, AC 1)
-Proof: run unit | ✓ validators > accepts a valid class
+Proof: run int | ✓ admin actions > creates a class type and a slot through the actions
 
 **C2** - Turma sem capacidade gravada recebe 8 (RES-02, AC 2)
 Proof: run int | ✓ classes > default capacity is eight
 
 **C3** - Fim<=inicio, weekday fora de 1-7 ou capacidade < 1 recusam com o campo apontado (RES-03, AC 3)
-Proof: run unit | ✓ validators > rejects an end time less than or equal to the start
+Proof: run unit | ✓ validators > rejects every invalid field naming the offending one
 
 **C4** - Editar/desativar turma reflete nas ocorrencias futuras (RES-04, AC 4)
-Proof: run int | ✓ classes > deactivating a class affects future occurrences
+Proof: run int | ✓ classes > editing or deactivating a class affects future occurrences
 
 **C5** - Duas modalidades do PRD seedadas (RES-05, AC 5)
 Proof: run int | ✓ seed > the two PRD class types
@@ -526,16 +528,16 @@ Proof: run int | ✓ seed > the two PRD class types
 Proof: run int | ✓ sessions > creates on the first query and re-queries without duplicating
 
 **C7** - Feriado/recesso deixa a ocorrencia BLOQUEADA e recusa reservas (RES-07, AC 2)
-Proof: run int | ✓ sessions > a holiday blocks the occurrence
+Proof: run int | ✓ bookings > rejects a booking in an occurrence blocked by holiday or closure
 
 **C8** - Composicao da ocorrencia: fixos/reposicoes/experimentais/total/vagas (RES-08, AC 3)
 Proof: run int | ✓ composition > PRD example 5+2+1 cap 8 with zero spots left
 
 **C9** - Enrollment ativo conta como fixo; encerrado deixa de contar (RES-09, AC 4)
-Proof: run int | ✓ enrollments > an ended enrollment leaves the date count
+Proof: run int | ✓ enrollments > counts an active enrollment as fixed and stops counting after it ends
 
 **C10** - Data passada: apenas leitura (RES-10, AC 5)
-Proof: run int | ✓ sessions > rejects materializing a past date
+Proof: run int | ✓ composition > reads a materialized past occurrence and refuses creating a new one
 
 **C11** - Feriado cadastrado bloqueia as ocorrencias da data (RES-11, AC 1)
 Proof: run int | ✓ blocks > a holiday blocks the occurrence on that date
