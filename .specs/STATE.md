@@ -94,6 +94,22 @@ names, class modality labels), commit-scoped docs and spec prose. Applies
 retroactively via a normalization pass after the current batch returns,
 and is mandatory for Batch C onward.
 
+### AD-013 - ACTIVE - Editing a slot weekday/time cancels its future old occurrences (2026-11-07)
+
+User decision after the Verifier's finding: when the admin edits a class
+slot's weekday or time, the slot's future occurrences under the OLD
+schedule are set to CANCELADA and their bookings are cancelled (spot
+released), preserving the history. No credit is generated - the credits
+module does not exist yet; in that feature the same situation must become
+an automatic credit.
+
+### AD-014 - ACTIVE - Public agenda omits blocked and inactive occurrences (2026-11-07)
+
+User decision after the Verifier's finding: the public agenda does not
+publish occurrences blocked by a holiday or closure, nor slots or class
+types that are inactive. The admin grade still shows them, marked as
+BLOQUEADA.
+
 ## Handoff
 
 Snapshot - updated when work pauses.
