@@ -121,6 +121,77 @@ runtime. The seed writes the two PRD class types and the four test students
 and is idempotent. Integration tests do not use this database: Testcontainers
 brings its own Postgres, so the local one can stay up while the suite runs.
 
+### AD-016 - ACTIVE - Credits feature scope: rules plus minimal admin UI (2026-11-07)
+
+User decision: the credits feature delivers the server rules and a minimal
+admin UI - a student credit screen (grant, return, cancel, transaction
+history) and the studio class cancellation on the `/grade` screen. The
+student buttons ("avisar nao comparecimento", "agendar reposicao", "meus
+creditos") land with the student-area feature; the services they will call
+are built and tested here.
+
+### AD-017 - ACTIVE - One credit per cancelled occurrence on a slot day/time edit (2026-11-07)
+
+AD-013 said the weekday/time edit cancels the future old occurrences and
+that, in the credits module, the same situation must become an automatic
+credit. User decision: each cancelled occurrence gives 1 credit to each
+fixed student affected in it, source CANCELAMENTO_ESTUDIO. Eight cancelled
+occurrences with four fixed students = 32 credits.
+
+### AD-018 - ACTIVE - Credit consumption by schedule, no presence step (2026-11-07)
+
+User decision: the credit of a booked makeup becomes UTILIZADO when the
+class end time passes, with no manual presence marking. Rationale from the
+user: a student who does not notify up to 24h in advance loses the credit,
+so a rule by schedule is enough.
+
+### AD-019 - ACTIVE - Admin manual makeup requires a credit and skips the weekly limit (2026-11-07)
+
+AD-010 deferred credit validation to this feature. User decision: a manual
+booking of type MAKEUP by the admin requires a valid DISPONIVEL credit and
+reserves it, and the limit of two makeups per week applies only to the
+student's self-service booking (same latitude as AD-011).
+
+### AD-020 - ACTIVE - Studio cancellation returns the credit of a booked makeup (2026-11-07)
+
+User decision: when the studio cancels an occurrence that has a booked
+makeup, the reserved credit returns to DISPONIVEL keeping its original
+expiry date.
+
+### AD-021 - ACTIVE - Returning a credit keeps the original expiry date (2026-11-07)
+
+User decision: the admin action "devolver credito" sets the status back to
+DISPONIVEL without touching `expires_at`, and works from RESERVADO,
+UTILIZADO or CANCELADO, recording the transaction (PRD 6.6, PRD 15).
+
+### AD-022 - ACTIVE - Absence and cancellation live in the booking status (2026-11-07)
+
+User decision: the history of absences and cancellations lives in the
+booking status - FALTA for the absence registered by a late notice, CANCELADA
+for the cancellation - with no new table. The per-occurrence record of a
+fixed student's notice is a BOOKING row of type FIXED, exactly as AD-008
+anticipated.
+
+### AD-023 - ACTIVE - Admin registers the non-attendance notice on the student's behalf (2026-11-07)
+
+User decision: with the student area out of scope, the admin registers the
+"aviso de nao comparecimento" on behalf of the student; the 24h rule is
+computed on the server at the moment of the registration.
+
+### AD-024 - ACTIVE - Weekly makeup limit counts the week of the class date (2026-11-07)
+
+User decision: the two-makeups-per-week limit (Monday to Sunday,
+America/Sao_Paulo) counts the active MAKEUP bookings whose occurrence date
+falls in the week of the occurrence being booked, not the week of the
+request.
+
+### AD-025 - ACTIVE - Studio credit even for a student who already notified absence (2026-11-07)
+
+User decision: the studio cancellation gives a credit to every affected
+fixed student, including one who had already notified absence with less
+than 24h (no credit yet); a student who already holds a credit for that
+occurrence does not get a second one.
+
 ## Handoff
 
 Snapshot - updated when work pauses.
