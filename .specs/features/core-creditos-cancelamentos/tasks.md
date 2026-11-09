@@ -94,12 +94,12 @@ T15 → T18
 
 **Done when**:
 
-- [ ] Enums `origem_credito` (CANCELAMENTO_AULA_FIXA, CANCELAMENTO_ESTUDIO, CONCESSAO_MANUAL) e `status_credito` (DISPONIVEL, RESERVADO, UTILIZADO, VENCIDO, CANCELADO) exportados
-- [ ] `credits` com FK para `students`, `bookings` e `class_sessions`, `expires_at` e `generated_at` não nulos
-- [ ] `credit_transactions` com `reason` não nulo e `previous_status`/`new_status`
-- [ ] Índice único `(student_id, source, source_booking_id)` e `(student_id, source, source_session_id)` (parcial, quando a coluna não é nula)
-- [ ] Export agregado em `src/db/schema/index.ts` atualizado
-- [ ] Gate check passa: `npm run build; npm run lint`
+- [x] Enums `origem_credito` (CANCELAMENTO_AULA_FIXA, CANCELAMENTO_ESTUDIO, CONCESSAO_MANUAL) e `status_credito` (DISPONIVEL, RESERVADO, UTILIZADO, VENCIDO, CANCELADO) exportados
+- [x] `credits` com FK para `students`, `bookings` e `class_sessions`, `expires_at` e `generated_at` não nulos
+- [x] `credit_transactions` com `reason` não nulo e `previous_status`/`new_status`
+- [x] Índice único `(student_id, source, source_booking_id)` e `(student_id, source, source_session_id)` (parcial, quando a coluna não é nula)
+- [x] Export agregado em `src/db/schema/index.ts` atualizado
+- [x] Gate check passa: `npm run build; npm run lint`
 
 **Tests**: none
 **Gate**: build
