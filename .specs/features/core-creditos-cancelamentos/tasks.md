@@ -162,11 +162,11 @@ T15 → T18
 
 **Done when**:
 
-- [ ] `hoursUntilOccurrence` devolve a diferença em horas entre `now` e o início da ocorrência, no fuso America/Sao_Paulo
-- [ ] `isEligibleForCredit` aceita 24 horas exatas e rejeita 23h59
-- [ ] `creditExpiresAt` devolve a geração + 30 dias
-- [ ] Unit tests cobrem: antecedência medida no fuso do estúdio, 24h exatas elegível, 23h59 não elegível, vencimento em 30 dias
-- [ ] Gate check passa: `npx vitest run --exclude "**/*.int.test.ts"`
+- [x] `hoursUntilOccurrence` devolve a diferença em horas entre `now` e o início da ocorrência, no fuso America/Sao_Paulo
+- [x] `isEligibleForCredit` aceita 24 horas exatas e rejeita 23h59
+- [x] `creditExpiresAt` devolve a geração + 30 dias
+- [x] Unit tests cobrem: antecedência medida no fuso do estúdio, 24h exatas elegível, 23h59 não elegível, vencimento em 30 dias
+- [x] Gate check passa: `npx vitest run --exclude "**/*.int.test.ts"`
 
 **Tests**: unit
 **Gate**: quick
