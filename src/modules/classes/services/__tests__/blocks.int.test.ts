@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { bookings, classSessions, holidays } from "../../../../db/schema";
-import { createStudents, createTestClass, clearTables } from "../../../../test/fixtures";
+import { createStudents, createTestClass, clearTables, grantTestCredit } from "../../../../test/fixtures";
 import { PostgresTestInstance, startPostgres } from "../../../../test/postgres";
 import { addDays, nextOccurrence, todayInStudio } from "../../domain/occurrences";
 import { materializeSession } from "../../../bookings/services/sessions";
@@ -124,6 +124,7 @@ describe("blocks", () => {
       classSlotId: slotId,
       date,
       type: "MAKEUP",
+      creditId: await grantTestCredit(pg.db, students[0]),
     });
     expect(booking.ok).toBe(false);
     if (!booking.ok) {

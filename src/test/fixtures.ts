@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "../db/schema";
 import { classSlots, classTypes, students } from "../db/schema";
+import { grantCredit } from "../modules/credits/services/credits";
 
 export type DbClient = NodePgDatabase<typeof schema>;
 
@@ -64,4 +65,23 @@ export async function createStudents(
     )
     .returning();
   return rows.map((a) => a.id);
+}
+
+/**
+ * Concede um credito manual para o teste. A reposicao exige 1 credito
+ * DISPONIVEL do aluno (CRD-18): o setup dos testes que criam reserva
+ * MAKEUP concede o credito antes.
+ */
+export async function grantTestCredit(
+  db: DbClient,
+  studentId: string,
+): Promise<string> {
+  const granted = await grantCredit(db, {
+    studentId,
+    source: "CONCESSAO_MANUAL",
+    reason: "Credito de teste",
+    adminLabel: "testes",
+  });
+  if (!granted.ok) throw new Error(granted.error);
+  return granted.value.credit.id;
 }

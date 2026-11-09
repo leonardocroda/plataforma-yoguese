@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { classSessions } from "../../../../db/schema";
-import { createStudents, createTestClass, clearTables } from "../../../../test/fixtures";
+import { createStudents, createTestClass, clearTables, grantTestCredit } from "../../../../test/fixtures";
 import { PostgresTestInstance, startPostgres } from "../../../../test/postgres";
 import { todayInStudio, nextOccurrence } from "../../../classes/domain/occurrences";
 import { createEnrollment } from "../../../students/services/enrollments";
@@ -43,6 +43,7 @@ describe("occurrence composition", () => {
       classSlotId: slotId,
       date,
       type: "MAKEUP",
+      creditId: await grantTestCredit(pg.db, casual),
     });
     expect(booking.ok).toBe(true);
 
@@ -83,6 +84,7 @@ describe("occurrence composition", () => {
       classSlotId: slotId,
       date,
       type: "MAKEUP",
+      creditId: await grantTestCredit(pg.db, extra),
     });
     expect(over.ok).toBe(false);
     if (!over.ok) {

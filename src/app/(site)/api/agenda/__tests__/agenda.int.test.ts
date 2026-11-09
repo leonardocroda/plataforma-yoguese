@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { classSlots, classTypes, holidays, students } from "../../../../../db/schema";
-import { createTestClass, clearTables } from "../../../../../test/fixtures";
+import { createTestClass, clearTables, grantTestCredit } from "../../../../../test/fixtures";
 import { PostgresTestInstance, startPostgres } from "../../../../../test/postgres";
 import { nextOccurrence, todayInStudio } from "../../../../../modules/classes/domain/occurrences";
 import { createBooking } from "../../../../../modules/bookings/services/bookings";
@@ -52,6 +52,7 @@ describe("agenda", () => {
       classSlotId: slotId,
       date,
       type: "MAKEUP",
+      creditId: await grantTestCredit(pg.db, student.id),
     });
     expect(booking.ok).toBe(true);
 

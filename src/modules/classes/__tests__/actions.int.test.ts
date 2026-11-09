@@ -6,7 +6,7 @@ import {
   classTypes,
   fixedEnrollments,
 } from "../../../db/schema";
-import { createStudents, createTestClass, clearTables } from "../../../test/fixtures";
+import { createStudents, createTestClass, clearTables, grantTestCredit } from "../../../test/fixtures";
 import { PostgresTestInstance, startPostgres } from "../../../test/postgres";
 import { nextOccurrence, todayInStudio } from "../domain/occurrences";
 import {
@@ -138,6 +138,7 @@ describe("admin actions", () => {
       classSlotId: slotId,
       date,
       type: "MAKEUP",
+      creditId: await grantTestCredit(pg.db, student),
     });
     expect(booking.ok).toBe(true);
     if (booking.ok) {
@@ -164,6 +165,7 @@ describe("admin actions", () => {
       classSlotId: slotId,
       date,
       type: "MAKEUP",
+      creditId: await grantTestCredit(pg.db, students[0]),
     });
     expect(first.ok).toBe(true);
 
@@ -172,6 +174,7 @@ describe("admin actions", () => {
       classSlotId: slotId,
       date,
       type: "MAKEUP",
+      creditId: await grantTestCredit(pg.db, students[1]),
     });
     expect(second.ok).toBe(false);
     if (!second.ok) {

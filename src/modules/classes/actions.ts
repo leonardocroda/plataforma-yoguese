@@ -78,6 +78,8 @@ export async function createBookingAction(input: {
   classSlotId: string;
   date: string;
   type: BookingType;
+  /** Credito da reposicao: obrigatorio quando o tipo e MAKEUP (CRD-18). */
+  creditId?: string | null;
 }) {
   return createBookingService(await dbClient(), input);
 }

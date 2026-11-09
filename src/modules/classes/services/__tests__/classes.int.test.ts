@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { bookings, classSessions, classSlots, classTypes } from "../../../../db/schema";
-import { createStudents, createTestClass, clearTables } from "../../../../test/fixtures";
+import { createStudents, createTestClass, clearTables, grantTestCredit } from "../../../../test/fixtures";
 import { PostgresTestInstance, startPostgres } from "../../../../test/postgres";
 import { todayInStudio, nextOccurrence } from "../../domain/occurrences";
 import { createEnrollment } from "../../../students/services/enrollments";
@@ -156,6 +156,7 @@ describe("classes", () => {
       classSlotId: slotId,
       date,
       type: "MAKEUP",
+      creditId: await grantTestCredit(pg.db, students[0]),
     });
     expect(booking.ok).toBe(false);
     if (!booking.ok) {
@@ -202,6 +203,7 @@ describe("classes", () => {
       classSlotId: deactivatedClass.slotId,
       date: day,
       type: "MAKEUP",
+      creditId: await grantTestCredit(pg.db, students[0]),
     });
     expect(booking.ok).toBe(false);
     if (!booking.ok) {
@@ -302,6 +304,7 @@ describe("classes", () => {
       classSlotId: slotId,
       date: oldDate,
       type: "MAKEUP",
+      creditId: await grantTestCredit(pg.db, students[0]),
     });
     expect(booking.ok).toBe(true);
 
@@ -342,6 +345,7 @@ describe("classes", () => {
       classSlotId: slotId,
       date: oldDate,
       type: "MAKEUP",
+      creditId: await grantTestCredit(pg.db, other),
     });
     expect(refused.ok).toBe(false);
     if (!refused.ok) {
@@ -409,6 +413,7 @@ describe("composition", () => {
         classSlotId: slotId,
         date: day,
         type: "MAKEUP",
+        creditId: await grantTestCredit(pg.db, casual[i]),
       });
       expect(booking.ok).toBe(true);
     }
@@ -499,6 +504,7 @@ describe("composition", () => {
       classSlotId: slotId,
       date: newPastDate,
       type: "MAKEUP",
+      creditId: await grantTestCredit(pg.db, students[0]),
     });
     expect(booking.ok).toBe(false);
     if (!booking.ok) {

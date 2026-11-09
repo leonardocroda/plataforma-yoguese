@@ -6,6 +6,11 @@ import {
   fixedEnrollments,
 } from "../../../db/schema";
 import { todayInStudio, isDatePast } from "../../classes/domain/occurrences";
+import {
+  lockCreditForUse,
+  reserveCredit,
+  type Credit,
+} from "../../credits/services/credits";
 import { DbClient, materializeSession } from "./sessions";
 import { getOccurrenceComposition } from "./composition";
 
@@ -24,6 +29,8 @@ export type BookingInput = {
   classSlotId: string;
   date: string;
   type: BookingType;
+  /** Credito usado na reposicao: obrigatorio no tipo MAKEUP (CRD-18). */
+  creditId?: string | null;
 };
 
 /**
@@ -36,6 +43,8 @@ export type BookingInput = {
  * Capacidade e garantida no servidor com SELECT FOR UPDATE na ocorrencia:
  * N reservas concorrentes na ultima vaga geram exatamente 1 confirmada
  * (RES-16). Enrollment ativo conta como fixo ate a data encerrada (RES-23).
+ * A reposicao (MAKEUP) exige 1 credito DISPONIVEL valido do aluno: o
+ * credito fica RESERVADO e ligado a reserva criada (CRD-17, CRD-18).
  */
 export async function createBooking(
   db: DbClient,
@@ -141,6 +150,33 @@ export async function createBooking(
       return { ok: false, error: "sem vaga disponivel nesta ocorrencia" };
     }
 
+    // A reposicao exige 1 credito DISPONIVEL valido do aluno (CRD-17,
+    // CRD-18). A linha do credito fica travada ate o fim da reserva: duas
+    // reservas concorrentes com o mesmo credito confirmam so uma (CRD-22).
+    let credit: Credit | null = null;
+    if (input.type === "MAKEUP") {
+      if (!input.creditId) {
+        return {
+          ok: false,
+          error: "reposicao exige credito disponivel",
+          field: "creditId",
+        };
+      }
+      const locked = await lockCreditForUse(
+        tx,
+        { creditId: input.creditId, studentId: input.studentId },
+        now,
+      );
+      if (!locked.ok) {
+        return {
+          ok: false,
+          error: locked.error,
+          field: locked.field ?? "creditId",
+        };
+      }
+      credit = locked.value;
+    }
+
     const [created] = await tx
       .insert(bookings)
       .values({
@@ -151,8 +187,29 @@ export async function createBooking(
       })
       .returning();
 
-    return created
-      ? { ok: true, value: created }
-      : { ok: false, error: "falha ao gravar reserva" };
+    if (!created) return { ok: false, error: "falha ao gravar reserva" };
+
+    // A reposicao consome o credito: ele fica RESERVADO e ligado a reserva
+    // (CRD-17)
+    if (credit) {
+      const reserved = await reserveCredit(
+        tx,
+        {
+          creditId: credit.id,
+          studentId: input.studentId,
+          usedBookingId: created.id,
+        },
+        now,
+      );
+      if (!reserved.ok) {
+        return {
+          ok: false,
+          error: reserved.error,
+          field: reserved.field ?? "creditId",
+        };
+      }
+    }
+
+    return { ok: true, value: created };
   });
 }

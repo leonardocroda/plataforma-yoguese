@@ -1,7 +1,7 @@
 import { count } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { fixedEnrollments } from "../../../../db/schema";
-import { createStudents, createTestClass, clearTables } from "../../../../test/fixtures";
+import { createStudents, createTestClass, clearTables, grantTestCredit } from "../../../../test/fixtures";
 import { PostgresTestInstance, startPostgres } from "../../../../test/postgres";
 import { todayInStudio, nextOccurrence } from "../../../classes/domain/occurrences";
 import { createBooking } from "../../../bookings/services/bookings";
@@ -68,6 +68,7 @@ describe("enrollments", () => {
       classSlotId: slotId,
       date,
       type: "MAKEUP",
+      creditId: await grantTestCredit(pg.db, occupant),
     });
     expect(booking.ok).toBe(true);
 
@@ -103,6 +104,7 @@ describe("enrollments", () => {
       classSlotId: slotId,
       date,
       type: "MAKEUP",
+      creditId: await grantTestCredit(pg.db, occupant),
     });
     expect(booking.ok).toBe(true);
 

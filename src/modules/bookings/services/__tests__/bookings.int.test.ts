@@ -3,21 +3,30 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   bookings,
   classSessions,
+  credits,
   holidays,
   studioClosures,
 } from "../../../../db/schema";
-import { createStudents, createTestClass, clearTables } from "../../../../test/fixtures";
+import {
+  createStudents,
+  createTestClass,
+  clearTables,
+  grantTestCredit,
+} from "../../../../test/fixtures";
 import { PostgresTestInstance, startPostgres } from "../../../../test/postgres";
 import {
   addDays,
   todayInStudio,
   nextOccurrence,
 } from "../../../classes/domain/occurrences";
+import { grantCredit } from "../../../credits/services/credits";
 import { createEnrollment } from "../../../students/services/enrollments";
 import { deactivateSlot } from "../../../classes/services/classes";
 import { getComposition } from "../composition";
 import { materializeSession } from "../sessions";
 import { createBooking, BookingInput } from "../bookings";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 describe("bookings", () => {
   let pg: PostgresTestInstance;
@@ -51,11 +60,17 @@ describe("bookings", () => {
     studentIndex = 0,
     type: BookingInput["type"] = "MAKEUP",
   ) {
+    // A reposicao exige credito: o setup concede um antes de reservar
+    const creditId =
+      type === "MAKEUP"
+        ? await grantTestCredit(pg.db, input.students[studentIndex])
+        : undefined;
     return createBooking(pg.db, {
       studentId: input.students[studentIndex],
       classSlotId: input.slotId,
       date: input.date,
       type,
+      creditId,
     });
   }
 
@@ -89,6 +104,7 @@ describe("bookings", () => {
       classSlotId: slotId,
       date,
       type: "MAKEUP",
+      creditId: await grantTestCredit(pg.db, students[0]),
     });
     expect(first.ok).toBe(true);
 
@@ -97,6 +113,7 @@ describe("bookings", () => {
       classSlotId: slotId,
       date,
       type: "MAKEUP",
+      creditId: await grantTestCredit(pg.db, students[1]),
     });
     expect(second.ok).toBe(false);
     if (!second.ok) {
@@ -114,8 +131,14 @@ describe("bookings", () => {
     const students = await createStudents(pg.db, 8);
 
     const attempts = await Promise.allSettled(
-      students.map((studentId) =>
-        createBooking(pg.db, { studentId, classSlotId: slotId, date, type: "MAKEUP" }),
+      students.map(async (studentId) =>
+        createBooking(pg.db, {
+          studentId,
+          classSlotId: slotId,
+          date,
+          type: "MAKEUP",
+          creditId: await grantTestCredit(pg.db, studentId),
+        }),
       ),
     );
 
@@ -155,6 +178,7 @@ describe("bookings", () => {
         classSlotId: slotId,
         date,
         type: "MAKEUP",
+        creditId: await grantTestCredit(pg.db, studentId),
       });
       expect(booking.ok).toBe(true);
     }
@@ -164,6 +188,7 @@ describe("bookings", () => {
       classSlotId: slotId,
       date,
       type: "MAKEUP",
+      creditId: await grantTestCredit(pg.db, students[8]),
     });
     expect(ninth.ok).toBe(false);
     if (!ninth.ok) {
@@ -211,6 +236,7 @@ describe("bookings", () => {
       classSlotId: slotId,
       date,
       type: "MAKEUP",
+      creditId: await grantTestCredit(pg.db, student),
     });
     expect(booking.ok).toBe(false);
     if (!booking.ok) {
@@ -314,6 +340,7 @@ describe("bookings", () => {
       classSlotId: slotId,
       date,
       type: "MAKEUP",
+      creditId: await grantTestCredit(pg.db, students[0]),
     });
     expect(blocked.ok).toBe(false);
     if (!blocked.ok) {
@@ -333,6 +360,7 @@ describe("bookings", () => {
       classSlotId: slotId,
       date: closureDate,
       type: "MAKEUP",
+      creditId: await grantTestCredit(pg.db, students[1]),
     });
     expect(closed.ok).toBe(false);
     if (!closed.ok) {
@@ -360,6 +388,7 @@ describe("bookings", () => {
       classSlotId: slotId,
       date,
       type: "MAKEUP",
+      creditId: await grantTestCredit(pg.db, students[0]),
     });
 
     expect(result.ok).toBe(false);
@@ -380,6 +409,7 @@ describe("bookings", () => {
       classSlotId: slotId,
       date,
       type: "MAKEUP",
+      creditId: await grantTestCredit(pg.db, students[0]),
     });
 
     expect(result.ok).toBe(false);
@@ -387,6 +417,104 @@ describe("bookings", () => {
       expect(result.error).toContain("dia da semana");
       expect(result.field).toBe("date");
     }
+    const created = await pg.db.select().from(bookings);
+    expect(created).toHaveLength(0);
+  });
+
+  it("reserves the credit and links it to the booking", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const date = nextOccurrence({ weekday: 3 }, today);
+    const [student] = await createStudents(pg.db, 1);
+    const creditId = await grantTestCredit(pg.db, student);
+
+    const result = await createBooking(pg.db, {
+      studentId: student,
+      classSlotId: slotId,
+      date,
+      type: "MAKEUP",
+      creditId,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const [credit] = await pg.db
+      .select()
+      .from(credits)
+      .where(eq(credits.id, creditId));
+    expect(credit.status).toBe("RESERVADO");
+    expect(credit.usedBookingId).toBe(result.value.id);
+
+    // O mesmo credito nao serve para uma segunda reserva, nem em outra turma
+    const other = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const second = await createBooking(pg.db, {
+      studentId: student,
+      classSlotId: other.slotId,
+      date,
+      type: "MAKEUP",
+      creditId,
+    });
+    expect(second.ok).toBe(false);
+    if (!second.ok) {
+      expect(second.error).toContain("credito");
+    }
+  });
+
+  it("requires a valid credit for a makeup booking", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const date = nextOccurrence({ weekday: 3 }, today);
+    const [student, other] = await createStudents(pg.db, 2);
+
+    // Sem credito: a reserva e recusada
+    const withoutCredit = await createBooking(pg.db, {
+      studentId: student,
+      classSlotId: slotId,
+      date,
+      type: "MAKEUP",
+    });
+    expect(withoutCredit.ok).toBe(false);
+    if (!withoutCredit.ok) {
+      expect(withoutCredit.error).toContain("credito");
+      expect(withoutCredit.field).toBe("creditId");
+    }
+
+    // Credito de outro aluno: recusado
+    const foreign = await createBooking(pg.db, {
+      studentId: student,
+      classSlotId: slotId,
+      date,
+      type: "MAKEUP",
+      creditId: await grantTestCredit(pg.db, other),
+    });
+    expect(foreign.ok).toBe(false);
+    if (!foreign.ok) {
+      expect(foreign.error).toContain("outro aluno");
+    }
+
+    // Credito vencido: recusado
+    const expired = await grantCredit(pg.db, {
+      studentId: student,
+      source: "CONCESSAO_MANUAL",
+      reason: "Credito vencido",
+      adminLabel: "testes",
+      generatedAt: new Date(Date.now() - 40 * DAY_MS),
+    });
+    expect(expired.ok).toBe(true);
+    if (expired.ok) {
+      const withExpired = await createBooking(pg.db, {
+        studentId: student,
+        classSlotId: slotId,
+        date,
+        type: "MAKEUP",
+        creditId: expired.value.credit.id,
+      });
+      expect(withExpired.ok).toBe(false);
+      if (!withExpired.ok) {
+        expect(withExpired.error).toContain("vencido");
+      }
+    }
+
+    // Nenhuma reserva foi criada
     const created = await pg.db.select().from(bookings);
     expect(created).toHaveLength(0);
   });

@@ -302,12 +302,12 @@ T15 → T18
 
 **Done when**:
 
-- [ ] Reserva MAKEUP sem `creditId` é recusada, sem criar reserva
-- [ ] Reserva MAKEUP com crédito DISPONIVEL válido cria a reserva, marca o crédito RESERVADO e liga `used_booking_id`
-- [ ] Crédito vencido ou já reservado é recusado
-- [ ] Reservas FIXED e EXPERIMENTAL seguem sem exigir crédito (regressão do core)
-- [ ] Testes de integração cobrem: sem crédito, com crédito válido, crédito vencido e os tipos sem crédito
-- [ ] Gate check passa: `npx vitest run`
+- [x] Reserva MAKEUP sem `creditId` é recusada, sem criar reserva
+- [x] Reserva MAKEUP com crédito DISPONIVEL válido cria a reserva, marca o crédito RESERVADO e liga `used_booking_id`
+- [x] Crédito vencido ou já reservado é recusado
+- [x] Reservas FIXED e EXPERIMENTAL seguem sem exigir crédito (regressão do core)
+- [x] Testes de integração cobrem: sem crédito, com crédito válido, crédito vencido e os tipos sem crédito
+- [x] Gate check passa: `npx vitest run`
 
 **Tests**: integration
 **Gate**: full
