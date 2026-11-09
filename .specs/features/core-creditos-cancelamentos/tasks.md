@@ -228,10 +228,10 @@ T15 → T18
 
 **Done when**:
 
-- [ ] `recordCreditTransaction` grava crédito, ação, estado anterior, novo estado, motivo, responsável e data
-- [ ] Alteração manual com motivo vazio é recusada, sem gravar nada
-- [ ] Testes de integração cobrem: transação com estado anterior e novo estado, recusa sem motivo
-- [ ] Gate check passa: `npx vitest run`
+- [x] `recordCreditTransaction` grava crédito, ação, estado anterior, novo estado, motivo, responsável e data
+- [x] Alteração manual com motivo vazio é recusada, sem gravar nada
+- [x] Testes de integração cobrem: transação com estado anterior e novo estado, recusa sem motivo
+- [x] Gate check passa: `npx vitest run`
 
 **Tests**: integration
 **Gate**: full
@@ -659,7 +659,8 @@ Proof: run unit | ✓ credit status > reports a reserved credit whose class ende
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** 2026-11-09 - user aprovou o spec ("Aprovar o spec") e as tasks ("Aprovar as tasks"); 2026-11-09 - user escolheu executar com sub-agents ("Usar 3 sub-agents (Recomendado)")
-**Dispatched:** Batch 1 (Fases 1-2: T1-T6 - schema, migration e dominio puro) at HEAD 6e5f77f - sent 2026-11-09; returned: -
+**Dispatched:** Batch 1 (Fases 1-2: T1-T6 - schema, migration e dominio puro) at HEAD 6e5f77f - sent 2026-11-09; returned: 2026-11-09, PASS: 6 tasks commitados (17bc0db schema de creditos, 17e9716 status FALTA/cancelamento em bookings, 1af4501 migration + teste dos indices unicos, 50bee5f regras 24h/validade, fc0b85f status efetivo, f837b03 semana e contagem), 99 testes verdes (unit 37 + int 62), build+lint limpos; desvios: commit extra f12b9ba docs(spec) versionando spec/context/tasks/STATE.md que estavam sem commit
+Batch 2 (Fases 3-4: T7-T14 - ledger, transacoes, nao comparecimento, reposicao, cancelamento do estudio, integracao com reservas) at HEAD f837b03 - sent 2026-11-09; returned: -
 **Walked:** [each story's Independent Test as you did it - what the screen showed, and how the user reaches each state: sign-in, data, path]
 
 ---
