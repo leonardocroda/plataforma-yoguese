@@ -348,16 +348,16 @@ T15 → T18
 
 **Done when**:
 
-- [ ] `getMakeupEligibility` informa crédito válido disponível e se a semana da ocorrência ainda comporta reposição
-- [ ] `listMakeupTargets` devolve só turmas com vaga
-- [ ] Autoatendimento recusa a terceira reposição da semana, contando as reservas MAKEUP ativas da semana da ocorrência
-- [ ] Agendamento pelo admin funciona com a semana já cheia
-- [ ] Duas reservas concorrentes com o mesmo crédito confirmam exatamente uma, com o crédito reservado uma única vez
-- [ ] Reposição funciona em qualquer modalidade de turma
-- [ ] Cancelamento com 24h ou mais devolve o crédito a DISPONIVEL com o vencimento original; com menos de 24h cancela o crédito definitivamente
-- [ ] Cancelar uma reposição não gera crédito novo
-- [ ] Testes de integração cobrem todos esses casos
-- [ ] Gate check passa: `npx vitest run`
+- [x] `getMakeupEligibility` informa crédito válido disponível e se a semana da ocorrência ainda comporta reposição
+- [x] `listMakeupTargets` devolve só turmas com vaga
+- [x] Autoatendimento recusa a terceira reposição da semana, contando as reservas MAKEUP ativas da semana da ocorrência
+- [x] Agendamento pelo admin funciona com a semana já cheia
+- [x] Duas reservas concorrentes com o mesmo crédito confirmam exatamente uma, com o crédito reservado uma única vez
+- [x] Reposição funciona em qualquer modalidade de turma
+- [x] Cancelamento com 24h ou mais devolve o crédito a DISPONIVEL com o vencimento original; com menos de 24h cancela o crédito definitivamente
+- [x] Cancelar uma reposição não gera crédito novo
+- [x] Testes de integração cobrem todos esses casos
+- [x] Gate check passa: `npx vitest run`
 
 **Tests**: integration
 **Gate**: full

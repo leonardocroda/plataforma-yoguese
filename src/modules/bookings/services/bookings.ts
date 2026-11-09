@@ -31,6 +31,8 @@ export type BookingInput = {
   type: BookingType;
   /** Credito usado na reposicao: obrigatorio no tipo MAKEUP (CRD-18). */
   creditId?: string | null;
+  /** Responsavel pela reserva do credito (rotulo enquanto nao ha auth). */
+  adminLabel?: string;
 };
 
 /**
@@ -198,6 +200,7 @@ export async function createBooking(
           creditId: credit.id,
           studentId: input.studentId,
           usedBookingId: created.id,
+          adminLabel: input.adminLabel,
         },
         now,
       );
