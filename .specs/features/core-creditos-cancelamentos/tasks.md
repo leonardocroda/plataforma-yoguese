@@ -277,15 +277,15 @@ T15 → T18
 
 **Done when**:
 
-- [ ] `registerNonAttendance` cria o registro do aluno na ocorrência e libera a vaga
-- [ ] Antecedência de 24h ou mais registra cancelamento; menos de 24h registra falta
-- [ ] Antecedência de 24h ou mais gera 1 crédito DISPONIVEL de origem CANCELAMENTO_AULA_FIXA com vencimento +30 dias
-- [ ] 24h exatas geram crédito; 23h59 registram falta e não geram crédito
-- [ ] Segundo aviso na mesma ocorrência é recusado, sem crédito novo e sem histórico duplicado
-- [ ] O enrollment fixo do aluno continua ativo e o aluno segue contando como fixo nas ocorrências futuras
-- [ ] O histórico do aluno guarda o cancelamento ou a falta com data, hora, ocorrência, antecedência e responsável
-- [ ] Testes de integração cobrem todos esses casos
-- [ ] Gate check passa: `npx vitest run`
+- [x] `registerNonAttendance` cria o registro do aluno na ocorrência e libera a vaga
+- [x] Antecedência de 24h ou mais registra cancelamento; menos de 24h registra falta
+- [x] Antecedência de 24h ou mais gera 1 crédito DISPONIVEL de origem CANCELAMENTO_AULA_FIXA com vencimento +30 dias
+- [x] 24h exatas geram crédito; 23h59 registram falta e não geram crédito
+- [x] Segundo aviso na mesma ocorrência é recusado, sem crédito novo e sem histórico duplicado
+- [x] O enrollment fixo do aluno continua ativo e o aluno segue contando como fixo nas ocorrências futuras
+- [x] O histórico do aluno guarda o cancelamento ou a falta com data, hora, ocorrência, antecedência e responsável
+- [x] Testes de integração cobrem todos esses casos
+- [x] Gate check passa: `npx vitest run`
 
 **Tests**: integration
 **Gate**: full

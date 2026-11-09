@@ -100,20 +100,24 @@ export async function grantCredit(
 
     let created: Credit | undefined;
     try {
-      [created] = await tx
-        .insert(credits)
-        .values({
-          studentId: input.studentId,
-          source: input.source,
-          sourceBookingId: input.sourceBookingId ?? null,
-          sourceSessionId: input.sourceSessionId ?? null,
-          generatedAt,
-          expiresAt,
-          status: "DISPONIVEL",
-          adminUserId: input.adminUserId ?? null,
-          adminLabel: input.adminLabel,
-        })
-        .returning();
+      // Savepoint: um conflito de origem nao aborta a transacao toda
+      const rows = await tx.transaction(async (sp) =>
+        sp
+          .insert(credits)
+          .values({
+            studentId: input.studentId,
+            source: input.source,
+            sourceBookingId: input.sourceBookingId ?? null,
+            sourceSessionId: input.sourceSessionId ?? null,
+            generatedAt,
+            expiresAt,
+            status: "DISPONIVEL",
+            adminUserId: input.adminUserId ?? null,
+            adminLabel: input.adminLabel,
+          })
+          .returning(),
+      );
+      created = rows[0];
     } catch (error) {
       // Corrida entre duas concessoes da mesma origem: o indice unico decide
       if (isUniqueViolation(error)) {
