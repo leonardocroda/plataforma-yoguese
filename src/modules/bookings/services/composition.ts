@@ -1,4 +1,4 @@
-import { and, eq, gt, isNull, lte, or } from "drizzle-orm";
+import { and, eq, gt, inArray, isNull, lte, or } from "drizzle-orm";
 import { bookings, classSessions, classSlots, fixedEnrollments } from "../../../db/schema";
 import {
   Composition,
@@ -27,7 +27,9 @@ export type OccurrenceCompositionInput = {
  *
  * Fixos derivam dos enrollments ativos que cobrem a data (AD-008). Um aluno
  * fixo conta uma vez, como fixo: a reserva dele na mesma ocorrencia nao soma
- * uma segunda vaga (a reserva e recusada como duplicada na origem).
+ * uma segunda vaga (a reserva e recusada como duplicada na origem). Aluno
+ * fixo com cancelamento ou falta na ocorrencia nao conta nela: a vaga volta
+ * (CRD-09).
  */
 export async function getOccurrenceComposition(
   db: DbClient,
@@ -49,9 +51,21 @@ export async function getOccurrenceComposition(
       ),
     );
 
+  // Aluno fixo que cancelou ou faltou na ocorrencia nao conta como fixo
+  // nela: a vaga volta (CRD-09, AD-022).
+  const absent = input.sessionId
+    ? await absentStudents(db, input.sessionId)
+    : new Set<string>();
+
   // Cada aluno conta uma vez: o fixo manda no tipo da ocorrencia
-  const counted = new Set(fixedStudents.map((row) => row.studentId));
-  let fixedCount = counted.size;
+  const counted = new Set<string>();
+  let fixedCount = 0;
+  for (const row of fixedStudents) {
+    if (counted.has(row.studentId)) continue;
+    if (absent.has(row.studentId)) continue;
+    counted.add(row.studentId);
+    fixedCount += 1;
+  }
   let makeupCount = 0;
   let experimentalCount = 0;
 
@@ -89,6 +103,27 @@ export type OccurrenceComposition = Composition & {
   sessionId: string;
   sessionStatus: "AGENDADA" | "BLOQUEADA" | "CANCELADA";
 };
+
+/**
+ * Alunos com registro de cancelamento ou falta na ocorrencia (CRD-09). O
+ * registro e a linha BOOKING do tipo FIXED criada pelo aviso (AD-022).
+ */
+async function absentStudents(
+  db: DbClient,
+  sessionId: string,
+): Promise<Set<string>> {
+  const rows = await db
+    .select({ studentId: bookings.studentId })
+    .from(bookings)
+    .where(
+      and(
+        eq(bookings.classSessionId, sessionId),
+        eq(bookings.bookingType, "FIXED"),
+        inArray(bookings.status, ["CANCELADA", "FALTA"]),
+      ),
+    );
+  return new Set(rows.map((row) => row.studentId));
+}
 
 export type CompositionResult =
   | { ok: true; value: OccurrenceComposition }

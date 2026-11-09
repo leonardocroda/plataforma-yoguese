@@ -326,10 +326,10 @@ T15 → T18
 
 **Done when**:
 
-- [ ] Aluno fixo com registro CANCELADA ou FALTA na ocorrência não conta como fixo na composição daquela ocorrência
-- [ ] O mesmo aluno segue contando como fixo nas ocorrências futuras
-- [ ] Testes de integração cobrem: fixo cancelado fora da composição, vaga liberada e aluno fixo nas ocorrências seguintes
-- [ ] Gate check passa: `npx vitest run`
+- [x] Aluno fixo com registro CANCELADA ou FALTA na ocorrência não conta como fixo na composição daquela ocorrência
+- [x] O mesmo aluno segue contando como fixo nas ocorrências futuras
+- [x] Testes de integração cobrem: fixo cancelado fora da composição, vaga liberada e aluno fixo nas ocorrências seguintes
+- [x] Gate check passa: `npx vitest run`
 
 **Tests**: integration
 **Gate**: full
