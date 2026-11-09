@@ -185,9 +185,9 @@ T15 → T18
 
 **Done when**:
 
-- [ ] `effectiveCreditStatus` aplica a ordem CANCELADO > UTILIZADO persistido > RESERVADO encerrado > VENCIDO > status persistido
-- [ ] Unit tests cobrem: crédito vencido como VENCIDO, reserva com ocorrência encerrada como UTILIZADO, CANCELADO terminal, crédito válido como DISPONIVEL
-- [ ] Gate check passa: `npx vitest run --exclude "**/*.int.test.ts"`
+- [x] `effectiveCreditStatus` aplica a ordem CANCELADO > UTILIZADO persistido > RESERVADO encerrado > VENCIDO > status persistido
+- [x] Unit tests cobrem: crédito vencido como VENCIDO, reserva com ocorrência encerrada como UTILIZADO, CANCELADO terminal, crédito válido como DISPONIVEL
+- [x] Gate check passa: `npx vitest run --exclude "**/*.int.test.ts"`
 
 **Tests**: unit
 **Gate**: quick
