@@ -250,15 +250,15 @@ T15 → T18
 
 **Done when**:
 
-- [ ] `grantCredit` cria crédito DISPONIVEL com vencimento +30 dias e registra a transação
-- [ ] `returnCredit` volta o status a DISPONIVEL mantendo o `expires_at` original, a partir de RESERVADO, UTILIZADO ou CANCELADO
-- [ ] `cancelCredit` marca CANCELADO e registra a transação
-- [ ] `listStudentCredits` devolve geração, vencimento, status, origem e as transações de cada crédito
-- [ ] `listCreditsExpiringSoon` devolve só os DISPONIVEL que vencem nos próximos 7 dias
-- [ ] Segunda crédito com a mesma origem é recusado (índice único + trava de linha)
-- [ ] Crédito vencido é recusado para uso
-- [ ] Testes de integração cobrem: conceder, devolver, cancelar, listar por aluno, vencimentos próximos, origem duplicada e crédito vencido bloqueado
-- [ ] Gate check passa: `npx vitest run`
+- [x] `grantCredit` cria crédito DISPONIVEL com vencimento +30 dias e registra a transação
+- [x] `returnCredit` volta o status a DISPONIVEL mantendo o `expires_at` original, a partir de RESERVADO, UTILIZADO ou CANCELADO
+- [x] `cancelCredit` marca CANCELADO e registra a transação
+- [x] `listStudentCredits` devolve geração, vencimento, status, origem e as transações de cada crédito
+- [x] `listCreditsExpiringSoon` devolve só os DISPONIVEL que vencem nos próximos 7 dias
+- [x] Segunda crédito com a mesma origem é recusado (índice único + trava de linha)
+- [x] Crédito vencido é recusado para uso
+- [x] Testes de integração cobrem: conceder, devolver, cancelar, listar por aluno, vencimentos próximos, origem duplicada e crédito vencido bloqueado
+- [x] Gate check passa: `npx vitest run`
 
 **Tests**: integration
 **Gate**: full
