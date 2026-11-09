@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   date,
   pgEnum,
@@ -24,6 +25,12 @@ export const bookingTypeEnum = pgEnum("tipo_reserva", [
 export const bookingStatusEnum = pgEnum("status_reserva", [
   "ATIVA",
   "CANCELADA",
+  "FALTA",
+]);
+
+export const bookingCancelledByEnum = pgEnum("cancelado_por", [
+  "ALUNO",
+  "ESTUDIO",
 ]);
 
 export const classSessions = pgTable(
@@ -50,20 +57,32 @@ export const classSessions = pgTable(
   ],
 );
 
-export const bookings = pgTable("bookings", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  studentId: uuid("student_id")
-    .notNull()
-    .references(() => students.id),
-  classSessionId: uuid("class_session_id")
-    .notNull()
-    .references(() => classSessions.id),
-  bookingType: bookingTypeEnum("booking_type").notNull(),
-  status: bookingStatusEnum("status").notNull().default("ATIVA"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const bookings = pgTable(
+  "bookings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id),
+    classSessionId: uuid("class_session_id")
+      .notNull()
+      .references(() => classSessions.id),
+    bookingType: bookingTypeEnum("booking_type").notNull(),
+    status: bookingStatusEnum("status").notNull().default("ATIVA"),
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+    cancelledBy: bookingCancelledByEnum("cancelled_by"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    // Um registro por aluno e ocorrencia quando a reserva e fixa: o aviso
+    // de falta/cancelamento do fixo e uma linha FIXED (AD-022, CRD-07).
+    uniqueIndex("bookings_aluno_ocorrencia_fixa_unica")
+      .on(t.studentId, t.classSessionId)
+      .where(sql`${t.bookingType} = 'FIXED'`),
+  ],
+);

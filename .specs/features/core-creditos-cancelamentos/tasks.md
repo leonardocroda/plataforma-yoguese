@@ -118,10 +118,10 @@ T15 → T18
 
 **Done when**:
 
-- [ ] `bookingStatusEnum` aceita `FALTA`
-- [ ] `cancelled_at` e `cancelled_by` presentes em `bookings`
-- [ ] Índice único parcial para `booking_type = FIXED` criado
-- [ ] Gate check passa: `npm run build; npm run lint`
+- [x] `bookingStatusEnum` aceita `FALTA`
+- [x] `cancelled_at` e `cancelled_by` presentes em `bookings`
+- [x] Índice único parcial para `booking_type = FIXED` criado
+- [x] Gate check passa: `npm run build; npm run lint`
 
 **Tests**: none
 **Gate**: build
