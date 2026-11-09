@@ -3,15 +3,22 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   classSessions,
   classSlots,
+  credits,
   holidays,
   studioClosures,
 } from "../../../../db/schema";
-import { createTestClass, clearTables } from "../../../../test/fixtures";
+import {
+  createStudents,
+  createTestClass,
+  clearTables,
+} from "../../../../test/fixtures";
 import {
   PostgresTestInstance,
   startPostgres,
 } from "../../../../test/postgres";
 import { todayInStudio, nextOccurrence } from "../../../classes/domain/occurrences";
+import { createEnrollment } from "../../../students/services/enrollments";
+import { updateSlot } from "../../../classes/services/classes";
 import { materializeSession } from "../sessions";
 
 describe("sessions", () => {
@@ -139,6 +146,65 @@ describe("sessions", () => {
     }
     const created = await pg.db.select().from(classSessions);
     expect(created).toHaveLength(0);
+  });
+
+  it("grants one credit per fixed student per cancelled future occurrence on a schedule edit", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const students = await createStudents(pg.db, 4);
+
+    // Oito ocorrencias futuras da grade antiga
+    const dates: string[] = [];
+    let current = nextOccurrence({ weekday: 3 }, today);
+    for (let i = 0; i < 8; i++) {
+      dates.push(current);
+      const materialized = await materializeSession(pg.db, {
+        classSlotId: slotId,
+        date: current,
+      });
+      expect(materialized.ok).toBe(true);
+      current = daysAfter(current, 7);
+    }
+
+    // Quatro alunos fixos da turma
+    for (const studentId of students) {
+      const enrollment = await createEnrollment(pg.db, {
+        studentId,
+        classSlotId: slotId,
+        startDate: dates[0],
+      });
+      expect(enrollment.ok).toBe(true);
+    }
+
+    // Editar o dia da turma cancela as ocorrencias futuras antigas
+    const edited = await updateSlot(pg.db, slotId, {
+      weekday: 4,
+      startTime: "07:00:00",
+      endTime: "08:00:00",
+    });
+    expect(edited.ok).toBe(true);
+
+    // Nenhuma ocorrencia futura antiga sobrevive
+    const oldSessions = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.classSlotId, slotId));
+    expect(oldSessions).toHaveLength(8);
+    expect(oldSessions.every((row) => row.status === "CANCELADA")).toBe(true);
+
+    // Oito ocorrencias x quatro fixos = 32 creditos do estudio
+    const stored = await pg.db.select().from(credits);
+    expect(stored).toHaveLength(32);
+    expect(stored.every((row) => row.source === "CANCELAMENTO_ESTUDIO")).toBe(
+      true,
+    );
+    expect(stored.every((row) => row.status === "DISPONIVEL")).toBe(true);
+
+    for (const studentId of students) {
+      const own = stored.filter((row) => row.studentId === studentId);
+      expect(own).toHaveLength(8);
+      // Um credito por ocorrencia cancelada
+      expect(new Set(own.map((row) => row.sourceSessionId)).size).toBe(8);
+    }
   });
 });
 

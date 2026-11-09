@@ -1,8 +1,7 @@
-import { and, eq, gte, inArray, lte } from "drizzle-orm";
+import { and, eq, gte, lte } from "drizzle-orm";
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "../../../db/schema";
 import {
-  bookings,
   classSessions,
   classSlots,
   classTypes,
@@ -16,6 +15,7 @@ import {
   isDatePast,
   weekdayOf,
 } from "../../classes/domain/occurrences";
+import { cancelOccurrenceByStudio } from "../../credits/services/cancellations";
 
 export type DbClient = NodePgDatabase<typeof schema>;
 
@@ -148,8 +148,9 @@ export async function materializeSession(
 /**
  * Cancela as ocorrencias futuras agendadas de uma turma e libera as vagas das
  * reservas ativas delas (AD-013). O historico e preservado: as reservas ficam
- * CANCELADA, nao sao apagadas, e nenhum credito e gerado (modulo de creditos
- * ainda nao existe).
+ * CANCELADA, nao sao apagadas. Cada ocorrencia cancelada gera 1 credito
+ * CANCELAMENTO_ESTUDIO por aluno fixo afetado (AD-017, CRD-32), pelo mesmo
+ * caminho do cancelamento de aula pelo estudio.
  */
 export async function cancelFutureSessions(
   db: DbClient,
@@ -169,22 +170,15 @@ export async function cancelFutureSessions(
 
   if (sessions.length === 0) return 0;
 
-  const sessionIds = sessions.map((session) => session.id);
-
-  await db
-    .update(classSessions)
-    .set({ status: "CANCELADA", updatedAt: now })
-    .where(inArray(classSessions.id, sessionIds));
-
-  await db
-    .update(bookings)
-    .set({ status: "CANCELADA", updatedAt: now })
-    .where(
-      and(
-        inArray(bookings.classSessionId, sessionIds),
-        eq(bookings.status, "ATIVA"),
-      ),
+  // O cancelamento pelo estudio cancela a ocorrencia, as reservas e devolve
+  // o credito das reposicoes, e da o credito do estudio aos fixos afetados
+  for (const session of sessions) {
+    await cancelOccurrenceByStudio(
+      db,
+      { classSessionId: session.id },
+      now,
     );
+  }
 
   return sessions.length;
 }

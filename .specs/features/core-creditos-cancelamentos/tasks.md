@@ -401,10 +401,10 @@ T15 → T18
 
 **Done when**:
 
-- [ ] Editar o dia ou o horário da turma cancela as ocorrências futuras antigas, cancela as reservas delas e gera 1 crédito por fixo afetado em cada ocorrência cancelada
-- [ ] O crédito gerado tem origem CANCELAMENTO_ESTUDIO e vencimento +30 dias
-- [ ] Testes de integração cobrem: 8 ocorrências x 4 fixos = 32 créditos, e nenhuma ocorrência futura antiga sobrevive
-- [ ] Gate check passa: `npx vitest run`
+- [x] Editar o dia ou o horário da turma cancela as ocorrências futuras antigas, cancela as reservas delas e gera 1 crédito por fixo afetado em cada ocorrência cancelada
+- [x] O crédito gerado tem origem CANCELAMENTO_ESTUDIO e vencimento +30 dias
+- [x] Testes de integração cobrem: 8 ocorrências x 4 fixos = 32 créditos, e nenhuma ocorrência futura antiga sobrevive
+- [x] Gate check passa: `npx vitest run`
 
 **Tests**: integration
 **Gate**: full
