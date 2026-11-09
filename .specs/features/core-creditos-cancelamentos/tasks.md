@@ -376,13 +376,13 @@ T15 → T18
 
 **Done when**:
 
-- [ ] A ocorrência passa a CANCELADA e as reservas ativas dela são canceladas
-- [ ] Cada aluno fixo afetado recebe 1 crédito DISPONIVEL de origem CANCELAMENTO_ESTUDIO com vencimento +30 dias
-- [ ] O crédito de uma reposição cancelada volta a DISPONIVEL com o vencimento original
-- [ ] Repetir o cancelamento da mesma ocorrência não gera créditos duplicados
-- [ ] Aluno que já avisou falta (sem crédito) recebe o crédito do estúdio; aluno que já tem crédito daquela ocorrência não recebe um segundo
-- [ ] Testes de integração cobrem todos esses casos
-- [ ] Gate check passa: `npx vitest run`
+- [x] A ocorrência passa a CANCELADA e as reservas ativas dela são canceladas
+- [x] Cada aluno fixo afetado recebe 1 crédito DISPONIVEL de origem CANCELAMENTO_ESTUDIO com vencimento +30 dias
+- [x] O crédito de uma reposição cancelada volta a DISPONIVEL com o vencimento original
+- [x] Repetir o cancelamento da mesma ocorrência não gera créditos duplicados
+- [x] Aluno que já avisou falta (sem crédito) recebe o crédito do estúdio; aluno que já tem crédito daquela ocorrência não recebe um segundo
+- [x] Testes de integração cobrem todos esses casos
+- [x] Gate check passa: `npx vitest run`
 
 **Tests**: integration
 **Gate**: full

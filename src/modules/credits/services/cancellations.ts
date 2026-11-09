@@ -3,18 +3,24 @@
 // mexe em bookings/credits direto do schema: nao importa os servicos do
 // modulo de reservas.
 
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, isNull, lte, ne, or } from "drizzle-orm";
 import {
   bookings,
   classSessions,
   classSlots,
+  credits,
+  fixedEnrollments,
 } from "../../../db/schema";
 import type { DbClient } from "../../bookings/services/sessions";
 import {
   hoursUntilOccurrence,
   isEligibleForCredit,
 } from "../domain/credit-rules";
-import { grantCredit, type Credit } from "./credits";
+import {
+  grantCredit,
+  returnCredit,
+  type Credit,
+} from "./credits";
 
 export type { DbClient };
 
@@ -237,4 +243,190 @@ export async function listStudentAttendanceHistory(
     cancelledBy: row.booking.cancelledBy,
     createdAt: row.booking.createdAt,
   }));
+}
+
+export type StudioCancellationInput = {
+  classSessionId: string;
+  /** Rotulo do responsavel pelo cancelamento (AD-016). */
+  adminLabel?: string;
+};
+
+export type StudioCancellationResult =
+  | {
+      ok: true;
+      value: {
+        session: typeof classSessions.$inferSelect;
+        cancelledBookings: number;
+        returnedCredits: number;
+        grantedCredits: number;
+      };
+    }
+  | { ok: false; error: string; field?: string };
+
+/**
+ * Cancela uma ocorrencia pelo estudio (CRD-28): a ocorrencia passa a
+ * CANCELADA e as reservas ativas dela sao canceladas. O credito de uma
+ * reposicao cancelada volta a DISPONIVEL com o vencimento original
+ * (AD-020, CRD-30) e cada aluno fixo afetado recebe 1 credito
+ * CANCELAMENTO_ESTUDIO (CRD-29). Repetir o cancelamento nao duplica credito
+ * (CRD-31) e quem ja tem credito da ocorrencia nao recebe um segundo
+ * (CRD-33).
+ */
+export async function cancelOccurrenceByStudio(
+  db: DbClient,
+  input: StudioCancellationInput,
+  now: Date = new Date(),
+): Promise<StudioCancellationResult> {
+  const adminLabel = input.adminLabel ?? "admin";
+
+  return db.transaction(async (tx): Promise<StudioCancellationResult> => {
+    // Trava a ocorrencia: dois cancelamentos simultaneos nao se cruzam
+    const [session] = await tx
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.id, input.classSessionId))
+      .for("update");
+    if (!session) {
+      return {
+        ok: false,
+        error: "ocorrencia nao encontrada",
+        field: "classSessionId",
+      };
+    }
+
+    const [slot] = await tx
+      .select()
+      .from(classSlots)
+      .where(eq(classSlots.id, session.classSlotId));
+    if (!slot) {
+      return { ok: false, error: "turma nao encontrada" };
+    }
+
+    await tx
+      .update(classSessions)
+      .set({ status: "CANCELADA", updatedAt: now })
+      .where(eq(classSessions.id, session.id));
+
+    // As reservas ativas da ocorrencia sao canceladas
+    const activeBookings = await tx
+      .select()
+      .from(bookings)
+      .where(
+        and(
+          eq(bookings.classSessionId, session.id),
+          eq(bookings.status, "ATIVA"),
+        ),
+      );
+
+    let cancelledBookings = 0;
+    let returnedCredits = 0;
+    for (const booking of activeBookings) {
+      const [cancelled] = await tx
+        .update(bookings)
+        .set({
+          status: "CANCELADA",
+          cancelledAt: now,
+          cancelledBy: "ESTUDIO",
+          updatedAt: now,
+        })
+        .where(eq(bookings.id, booking.id))
+        .returning();
+      if (!cancelled) continue;
+      cancelledBookings += 1;
+
+      // O credito da reposicao cancelada volta a DISPONIVEL (AD-020)
+      const [credit] = await tx
+        .select()
+        .from(credits)
+        .where(eq(credits.usedBookingId, booking.id));
+      if (credit && credit.status === "RESERVADO") {
+        const returned = await returnCredit(
+          tx,
+          {
+            creditId: credit.id,
+            reason: "Aula cancelada pelo estudio",
+            adminLabel,
+          },
+          now,
+        );
+        if (returned.ok) returnedCredits += 1;
+      }
+    }
+
+    // Alunos fixos afetados: os do vinculo fixo e os da reserva fixa da
+    // ocorrencia (inclusive quem ja avisou falta)
+    const fixedStudents = await tx
+      .select({ studentId: fixedEnrollments.studentId })
+      .from(fixedEnrollments)
+      .where(
+        and(
+          eq(fixedEnrollments.classSlotId, slot.id),
+          eq(fixedEnrollments.status, "ATIVA"),
+          lte(fixedEnrollments.startDate, session.sessionDate),
+          or(
+            isNull(fixedEnrollments.endDate),
+            gt(fixedEnrollments.endDate, session.sessionDate),
+          ),
+        ),
+      );
+
+    const fixedBookings = await tx
+      .select({ studentId: bookings.studentId })
+      .from(bookings)
+      .where(
+        and(
+          eq(bookings.classSessionId, session.id),
+          eq(bookings.bookingType, "FIXED"),
+        ),
+      );
+
+    const affected = new Set<string>();
+    for (const row of fixedStudents) affected.add(row.studentId);
+    for (const row of fixedBookings) affected.add(row.studentId);
+
+    let grantedCredits = 0;
+    for (const studentId of affected) {
+      // Quem ja tem credito da ocorrencia nao recebe um segundo (CRD-33)
+      const existing = await tx
+        .select({ id: credits.id })
+        .from(credits)
+        .where(
+          and(
+            eq(credits.studentId, studentId),
+            eq(credits.sourceSessionId, session.id),
+            ne(credits.status, "CANCELADO"),
+          ),
+        );
+      if (existing.length > 0) continue;
+
+      const granted = await grantCredit(
+        tx,
+        {
+          studentId,
+          source: "CANCELAMENTO_ESTUDIO",
+          sourceSessionId: session.id,
+          reason: "Aula cancelada pelo estudio",
+          adminLabel,
+          generatedAt: now,
+        },
+        now,
+      );
+      if (granted.ok) grantedCredits += 1;
+    }
+
+    const [cancelled] = await tx
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.id, session.id));
+
+    return {
+      ok: true,
+      value: {
+        session: cancelled,
+        cancelledBookings,
+        returnedCredits,
+        grantedCredits,
+      },
+    };
+  });
 }
