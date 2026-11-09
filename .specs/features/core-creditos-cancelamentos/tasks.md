@@ -206,10 +206,10 @@ T15 → T18
 
 **Done when**:
 
-- [ ] `weekKey` devolve o mesmo valor para as sete datas da mesma semana e valores diferentes para a semana seguinte
-- [ ] `countWeeklyMakeups` conta só as reservas MAKEUP ativas cuja data de ocorrência cai na semana informada
-- [ ] Unit tests cobrem: início da semana na segunda, virada de semana, contagem ignorando reposições de outra semana e reservas canceladas
-- [ ] Gate check passa: `npx vitest run --exclude "**/*.int.test.ts"`
+- [x] `weekKey` devolve o mesmo valor para as sete datas da mesma semana e valores diferentes para a semana seguinte
+- [x] `countWeeklyMakeups` conta só as reservas MAKEUP ativas cuja data de ocorrência cai na semana informada
+- [x] Unit tests cobrem: início da semana na segunda, virada de semana, contagem ignorando reposições de outra semana e reservas canceladas
+- [x] Gate check passa: `npx vitest run --exclude "**/*.int.test.ts"`
 
 **Tests**: unit
 **Gate**: quick
