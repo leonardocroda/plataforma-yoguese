@@ -140,10 +140,10 @@ T15 → T18
 
 **Done when**:
 
-- [ ] `npm run db:generate` gera a migration e `npm run db:migrate` aplica sobre Postgres vazio sem erro
-- [ ] Teste de integração sobe o container, aplica as migrations e confirma que o índice único de `bookings` FIXED rejeita duas linhas do mesmo aluno na mesma ocorrência
-- [ ] Teste de integração confirma que o índice único de origem do crédito rejeita dois créditos com a mesma origem
-- [ ] Gate check passa: `npx vitest run`
+- [x] `npm run db:generate` gera a migration e `npm run db:migrate` aplica sobre Postgres vazio sem erro
+- [x] Teste de integração sobe o container, aplica as migrations e confirma que o índice único de `bookings` FIXED rejeita duas linhas do mesmo aluno na mesma ocorrência
+- [x] Teste de integração confirma que o índice único de origem do crédito rejeita dois créditos com a mesma origem
+- [x] Gate check passa: `npx vitest run`
 
 **Tests**: integration
 **Gate**: full

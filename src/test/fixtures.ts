@@ -8,7 +8,7 @@ export type DbClient = NodePgDatabase<typeof schema>;
 /** Recria o banco de teste vazio entre os testes de uma mesma suite. */
 export async function clearTables(db: DbClient): Promise<void> {
   await db.execute(
-    sql`truncate table bookings, class_sessions, fixed_enrollments, class_slots, class_types, students, holidays, studio_closures`,
+    sql`truncate table credit_transactions, credits, bookings, class_sessions, fixed_enrollments, class_slots, class_types, students, holidays, studio_closures`,
   );
 }
 
