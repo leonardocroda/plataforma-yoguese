@@ -403,6 +403,30 @@ describe("credits", () => {
       },
       now,
     );
+    // Vence em exatamente 7 dias: a borda entra
+    const onLimit = await grantCredit(
+      pg.db,
+      {
+        studentId: student,
+        source: "CONCESSAO_MANUAL",
+        reason: "Vence na borda",
+        adminLabel: "admin",
+        generatedAt: new Date(now.getTime() - 23 * DAY_MS),
+      },
+      now,
+    );
+    // Vence 1 segundo depois da borda: fica de fora
+    await grantCredit(
+      pg.db,
+      {
+        studentId: student,
+        source: "CONCESSAO_MANUAL",
+        reason: "Vence depois da borda",
+        adminLabel: "admin",
+        generatedAt: new Date(now.getTime() - 23 * DAY_MS + 1000),
+      },
+      now,
+    );
     // Vence em 2 dias, mas esta reservado
     const reserved = await grantCredit(
       pg.db,
@@ -426,8 +450,13 @@ describe("credits", () => {
     }
 
     const expiring = await listCreditsExpiringSoon(pg.db, now);
-    expect(expiring).toHaveLength(1);
-    expect(expiring[0].id).toBe(soon.ok ? soon.value.credit.id : "");
+    expect(expiring).toHaveLength(2);
+    expect(expiring.map((credit) => credit.id)).toContain(
+      soon.ok ? soon.value.credit.id : "",
+    );
+    expect(expiring.map((credit) => credit.id)).toContain(
+      onLimit.ok ? onLimit.value.credit.id : "",
+    );
   });
 
   it("settles a reserved credit as UTILIZADO after the class ends", async () => {
