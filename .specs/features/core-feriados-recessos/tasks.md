@@ -109,15 +109,15 @@ T7 → T8
 
 **Done when**:
 
-- [ ] `reconcileBlockedOccurrences` marca BLOQUEADA as ocorrências AGENDADA cobertas da janela e cancela as reservas ativas delas com `cancelled_by = ESTUDIO`
-- [ ] O crédito RESERVADO de uma reposição cancelada volta a DISPONIVEL com o `expires_at` original e a transação registrada com motivo
-- [ ] Nenhuma linha de crédito é criada pelo reconcílio (fixos não recebem crédito)
-- [ ] Ocorrência no passado e ocorrência CANCELADA não são alteradas
-- [ ] Ocorrência BLOQUEADA descoberta volta a AGENDADA; se outro bloqueio ainda cobre a data, permanece BLOQUEADA; no passado permanece BLOQUEADA; se o dia da semana da turma mudou, permanece BLOQUEADA
-- [ ] Desbloquear não restaura nenhuma reserva cancelada
-- [ ] Rodar duas vezes não muda nada na segunda
-- [ ] Testes de integração cobrem todos esses casos (10 testes)
-- [ ] Gate check passa: `npx vitest run`
+- [x] `reconcileBlockedOccurrences` marca BLOQUEADA as ocorrências AGENDADA cobertas da janela e cancela as reservas ativas delas com `cancelled_by = ESTUDIO`
+- [x] O crédito RESERVADO de uma reposição cancelada volta a DISPONIVEL com o `expires_at` original e a transação registrada com motivo
+- [x] Nenhuma linha de crédito é criada pelo reconcílio (fixos não recebem crédito)
+- [x] Ocorrência no passado e ocorrência CANCELADA não são alteradas
+- [x] Ocorrência BLOQUEADA descoberta volta a AGENDADA; se outro bloqueio ainda cobre a data, permanece BLOQUEADA; no passado permanece BLOQUEADA; se o dia da semana da turma mudou, permanece BLOQUEADA
+- [x] Desbloquear não restaura nenhuma reserva cancelada
+- [x] Rodar duas vezes não muda nada na segunda
+- [x] Testes de integração cobrem todos esses casos (10 testes)
+- [x] Gate check passa: `npx vitest run`
 
 **Tests**: integration
 **Gate**: full
