@@ -471,10 +471,10 @@ T15 → T18
 
 **Done when**:
 
-- [ ] Cada ocorrência da grade lista os participantes: fixos e reservas
-- [ ] O resultado das novas actions aparece na página (crédito gerado, falta sem crédito, reservas canceladas, quantidade de créditos)
-- [ ] Rotas visitadas no walk (browser) sem erro de render
-- [ ] Gate check passa: `npm run build; npm run lint`
+- [x] Cada ocorrência da grade lista os participantes: fixos e reservas
+- [x] O resultado das novas actions aparece na página (crédito gerado, falta sem crédito, reservas canceladas, quantidade de créditos)
+- [x] Rotas visitadas no walk (browser) sem erro de render
+- [x] Gate check passa: `npm run build; npm run lint`
 
 **Tests**: none
 **Gate**: build
