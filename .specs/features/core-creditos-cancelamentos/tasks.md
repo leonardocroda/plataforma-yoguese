@@ -423,14 +423,14 @@ T15 → T18
 
 **Done when**:
 
-- [ ] Action de conceder crédito devolve o novo status e a transação registrada
-- [ ] Action de devolver crédito devolve o novo status; action de cancelar crédito devolve o novo status
-- [ ] Alteração manual sem motivo é recusada pela action
-- [ ] Action de não comparecimento devolve o resultado do registro (crédito gerado ou falta sem crédito)
-- [ ] Action de cancelar aula devolve as reservas canceladas e a quantidade de créditos gerados
-- [ ] Action de reposição manual sem crédito escolhido é recusada; com crédito válido confirma
-- [ ] Testes de integração cobrem: action de conceder, action sem motivo, action de não comparecimento, action de cancelar aula e action de reposição manual
-- [ ] Gate check passa: `npx vitest run`
+- [x] Action de conceder crédito devolve o novo status e a transação registrada
+- [x] Action de devolver crédito devolve o novo status; action de cancelar crédito devolve o novo status
+- [x] Alteração manual sem motivo é recusada pela action
+- [x] Action de não comparecimento devolve o resultado do registro (crédito gerado ou falta sem crédito)
+- [x] Action de cancelar aula devolve as reservas canceladas e a quantidade de créditos gerados
+- [x] Action de reposição manual sem crédito escolhido é recusada; com crédito válido confirma
+- [x] Testes de integração cobrem: action de conceder, action sem motivo, action de não comparecimento, action de cancelar aula e action de reposição manual
+- [x] Gate check passa: `npx vitest run`
 
 **Tests**: integration
 **Gate**: full
@@ -660,8 +660,9 @@ The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** 2026-11-09 - user aprovou o spec ("Aprovar o spec") e as tasks ("Aprovar as tasks"); 2026-11-09 - user escolheu executar com sub-agents ("Usar 3 sub-agents (Recomendado)")
 **Dispatched:** Batch 1 (Fases 1-2: T1-T6 - schema, migration e dominio puro) at HEAD 6e5f77f - sent 2026-11-09; returned: 2026-11-09, PASS: 6 tasks commitados (17bc0db schema de creditos, 17e9716 status FALTA/cancelamento em bookings, 1af4501 migration + teste dos indices unicos, 50bee5f regras 24h/validade, fc0b85f status efetivo, f837b03 semana e contagem), 99 testes verdes (unit 37 + int 62), build+lint limpos; desvios: commit extra f12b9ba docs(spec) versionando spec/context/tasks/STATE.md que estavam sem commit
-Batch 2 (Fases 3-4: T7-T14 - ledger, transacoes, nao comparecimento, reposicao, cancelamento do estudio, integracao com reservas) at HEAD f837b03 - sent 2026-11-09; returned: -
+Batch 2 (Fases 3-4: T7-T14 - ledger, transacoes, nao comparecimento, reposicao, cancelamento do estudio, integracao com reservas) at HEAD f837b03 - sent 2026-11-09; returned: 2026-11-10, PASS: 8 tasks commitados (99c1f00 transacoes de credito, d2b8f10 ledger de creditos, 5aa5453 aviso de nao comparecimento, ee82071 reposicao exige credito, 754b6ce composicao desconta o fixo cancelado, de89898 agendamento e cancelamento de reposicao, c87ce66 cancelamento de aula pelo estudio, a18e846 edicao de dia e horario gera credito), 137 testes verdes (unit 37 + int 100), todas as linhas de prova do Batch 2 conferidas na saida verbose, build+lint limpos; desvio: 7 arquivos de teste do core adaptados no setup para conceder credito antes da reserva MAKEUP (CRD-18/CRD-21/AD-019), com as asserções originais preservadas
 **Walked:** [each story's Independent Test as you did it - what the screen showed, and how the user reaches each state: sign-in, data, path]
+Batch 3 (Fase 5: T15-T18 - server actions de creditos, forms da grade, pagina da grade e tela de creditos do aluno) at HEAD a18e846 - sent 2026-11-10; returned: -
 
 ---
 
