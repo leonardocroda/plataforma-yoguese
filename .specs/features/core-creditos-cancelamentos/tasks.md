@@ -547,6 +547,8 @@ Proof: run int | ✓ non attendance > records the notice in the student history
 
 **C11** - O crédito persiste aluno, origem, geração, vencimento, status e as referências de origem e de uso (CRD-11, AC 1)
 Proof: run int | ✓ credits > grants a manual credit with a 30 day expiry and a transaction
+Proof: run int | ✓ non attendance > grants a credit when the notice is 24 hours or more
+Proof: run int | ✓ bookings > reserves the credit and links it to the booking
 
 **C12** - As origens e os status do crédito são os do PRD 6.2 (CRD-12, AC 2)
 Proof: run int | ✓ credits > keeps the documented origins and statuses
@@ -639,9 +641,11 @@ Proof: walk - a tela de creditos do aluno lista os creditos do aluno com geracao
 Proof: run int | ✓ credit actions > grants a credit from the admin action and returns the new status
 Proof: run int | ✓ credit actions > returns a credit from the admin action and returns the new status
 Proof: run int | ✓ credit actions > cancels a credit from the admin action and returns the new status
+Proof: run int | ✓ credit actions > refuses a manual credit change without a reason
 
 **C41** - Registrar o aviso de não comparecimento pela grade mostra o resultado: crédito gerado ou falta sem crédito (CRD-41, AC 3)
 Proof: run int | ✓ credit actions > registers the non attendance from the admin action and returns the outcome
+Proof: run int | ✓ credit actions > registers the absence from the admin action without a credit
 
 **C42** - Cancelar a aula pela grade mostra as reservas canceladas e a quantidade de créditos gerados (CRD-42, AC 4)
 Proof: run int | ✓ credit actions > cancels the class from the admin action and returns the counts
@@ -651,6 +655,16 @@ Proof: run int | ✓ credit actions > refuses a manual makeup without a credit
 
 **C44** - Passado o horário de término da ocorrência, o crédito da reserva vira UTILIZADO sem etapa manual (CRD-44, AC 7)
 Proof: run unit | ✓ credit status > reports a reserved credit whose class ended as UTILIZADO
+Proof: run int | ✓ credits > settles a reserved credit as UTILIZADO after the class ends
+
+**C45** - O aviso de não comparecimento só é aceito para aluno com vínculo fixo ativo que cubra a ocorrência (CRD-45, AC 11)
+Proof: run int | ✓ non attendance > refuses the notice when the student is not a fixed student
+
+**C46** - O aviso de não comparecimento é recusado em ocorrência já cancelada pelo estúdio (CRD-46, AC 12)
+Proof: run int | ✓ non attendance > refuses the notice when the occurrence was cancelled by the studio
+
+**C47** - O aviso de não comparecimento é recusado em ocorrência que já aconteceu (CRD-47, AC 13)
+Proof: run int | ✓ non attendance > refuses the notice when the occurrence is in the past
 
 ---
 
@@ -661,8 +675,9 @@ The feature's live state, written as it happens - a compaction gives no warning.
 **Settled mid-build:** 2026-11-09 - user aprovou o spec ("Aprovar o spec") e as tasks ("Aprovar as tasks"); 2026-11-09 - user escolheu executar com sub-agents ("Usar 3 sub-agents (Recomendado)")
 **Dispatched:** Batch 1 (Fases 1-2: T1-T6 - schema, migration e dominio puro) at HEAD 6e5f77f - sent 2026-11-09; returned: 2026-11-09, PASS: 6 tasks commitados (17bc0db schema de creditos, 17e9716 status FALTA/cancelamento em bookings, 1af4501 migration + teste dos indices unicos, 50bee5f regras 24h/validade, fc0b85f status efetivo, f837b03 semana e contagem), 99 testes verdes (unit 37 + int 62), build+lint limpos; desvios: commit extra f12b9ba docs(spec) versionando spec/context/tasks/STATE.md que estavam sem commit
 Batch 2 (Fases 3-4: T7-T14 - ledger, transacoes, nao comparecimento, reposicao, cancelamento do estudio, integracao com reservas) at HEAD f837b03 - sent 2026-11-09; returned: 2026-11-10, PASS: 8 tasks commitados (99c1f00 transacoes de credito, d2b8f10 ledger de creditos, 5aa5453 aviso de nao comparecimento, ee82071 reposicao exige credito, 754b6ce composicao desconta o fixo cancelado, de89898 agendamento e cancelamento de reposicao, c87ce66 cancelamento de aula pelo estudio, a18e846 edicao de dia e horario gera credito), 137 testes verdes (unit 37 + int 100), todas as linhas de prova do Batch 2 conferidas na saida verbose, build+lint limpos; desvio: 7 arquivos de teste do core adaptados no setup para conceder credito antes da reserva MAKEUP (CRD-18/CRD-21/AD-019), com as asserções originais preservadas
-**Walked:** [each story's Independent Test as you did it - what the screen showed, and how the user reaches each state: sign-in, data, path]
-Batch 3 (Fase 5: T15-T18 - server actions de creditos, forms da grade, pagina da grade e tela de creditos do aluno) at HEAD a18e846 - sent 2026-11-10; returned: -
+**Walked:** 2026-11-10 - browser chromium headless (playwright-core) contra o dev server em http://localhost:3001 (a 3000 estava ocupada por outro container); banco do walk: container docker "yoguese-db" (postgres:17-alpine, porta 55432), DATABASE_URL=postgres://test:test@localhost:55432/test, migrations aplicadas e 4 alunos, 2 turmas (terca 19:00 e quarta 19:00) e vinculos fixos de walk. /creditos devolveu 200 com "Creditos do aluno", o aluno em foco, a lista com Origem, Geracao, Vencimento, Status e Transacoes (creditos CONCESSAO_MANUAL e CANCELAMENTO_AULA_FIXA, status DISPONIVEL) e o campo de motivo com required; "Conceder credito" com motivo "bonificacao do walk" -> "Novo status: DISPONIVEL. Transacao: CONCESSAO (- -> DISPONIVEL) - bonificacao do walk - admin em 10/11/2026"; "Devolver credito" com motivo -> "DEVOLUCAO (RESERVADO -> DISPONIVEL)" com o vencimento 10/12/2026 antes e depois (preservado); "Cancelar credito" com motivo -> "CANCELAMENTO (DISPONIVEL -> CANCELADO)". /grade devolveu 200 com as 2 ocorrencias da semana (terca 2026-11-10 e quarta 2026-11-11), a composicao (Fixos/Reposicoes/Experimentais/Vagas), a lista "Participantes" e o bloco "Resultado"; "Registrar aviso" na terca (Aluno Teste 4, 11h de antecedencia) -> "Falta registrado (11h de antecedencia): sem credito." e o resultado na grade "Aluno Teste 4: falta - sem credito"; "Registrar aviso" na quarta (Aluno Teste 4, 35h) -> "Cancelamento registrado (35h de antecedencia): credito gerado, vence em 10/12/2026."; "Reservar" do tipo Reposicao sem escolher credito -> "Escolha o credito do aluno para a reposicao."; com um credito DISPONIVEL do Aluno Teste 1 -> "Reposicao manual confirmada.", a composicao da quarta passando para Fixos 1 / Reposicoes 1 / Vagas 6 e o participante "Aluno Teste 1 (reposicao)"; "Cancelar aula" na terca -> "Aula cancelada: 1 reservas canceladas, 2 creditos gerados, 0 creditos devolvidos.", a ocorrencia marcada como "Cancelada - a grade da turma mudou" e o resultado "2 reservas canceladas pelo estudio / 2 creditos do estudio gerados" (0 devolvidos porque o credito da reposicao do Aluno Teste 3 ja havia sido devolvido manualmente no walk). Sem erro de render; o unico 404 do console e o /favicon.ico inexistente.
+Verifier (sub-agent independente, author != verifier) - diff f12b9ba..bc1fb55 - sent 2026-11-10; returned: -
+Batch 3 (Fase 5: T15-T18 - server actions de creditos, forms da grade, pagina da grade e tela de creditos do aluno) at HEAD a18e846 - sent 2026-11-10; returned: 2026-11-10, PASS: 4 tasks commitadas (4cc4850 server actions de creditos, 42c7974 forms de credito e cancelamento na grade, bee0f07 grade lista participantes e resultado das acoes, bc1fb55 tela de creditos do aluno), 145 testes verdes (unit 37 + int 108), build+lint limpos, walk no browser com as 2 rotas e as 6 acoes exercitadas; desvios: a reposicao manual entrou como o modo MAKEUP do form "Reserva manual" ja existente (mesma operacao, sem form duplicado) e a tela de creditos ganhou um segundo arquivo (credit-forms.tsx, componente client com useActionState)
 
 ---
 

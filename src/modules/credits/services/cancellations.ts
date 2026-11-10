@@ -102,6 +102,31 @@ export async function registerNonAttendance(
   const eligible = isEligibleForCredit(noticeHours);
   const status: "CANCELADA" | "FALTA" = eligible ? "CANCELADA" : "FALTA";
 
+  // O aviso e do aluno fixo da turma: sem vinculo fixo ativo que cubra a
+  // ocorrencia nao ha cancelamento de aula fixa a compensar (CRD-45).
+  const [fixed] = await db
+    .select({ id: fixedEnrollments.id })
+    .from(fixedEnrollments)
+    .where(
+      and(
+        eq(fixedEnrollments.classSlotId, session.classSlotId),
+        eq(fixedEnrollments.studentId, input.studentId),
+        eq(fixedEnrollments.status, "ATIVA"),
+        lte(fixedEnrollments.startDate, session.sessionDate),
+        or(
+          isNull(fixedEnrollments.endDate),
+          gt(fixedEnrollments.endDate, session.sessionDate),
+        ),
+      ),
+    );
+  if (!fixed) {
+    return {
+      ok: false,
+      error: "aluno nao e horario fixo nesta ocorrencia",
+      field: "studentId",
+    };
+  }
+
   return db.transaction(async (tx): Promise<NonAttendanceResult> => {
     // O indice unico do fixo permite um registro por aluno e ocorrencia: o
     // aviso ocupa a linha do aluno naquela ocorrencia

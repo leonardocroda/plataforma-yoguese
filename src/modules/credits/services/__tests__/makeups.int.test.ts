@@ -9,7 +9,6 @@ import {
 } from "../../../../test/fixtures";
 import { PostgresTestInstance, startPostgres } from "../../../../test/postgres";
 import {
-  addDays,
   nextOccurrence,
   todayInStudio,
 } from "../../../classes/domain/occurrences";
@@ -120,33 +119,63 @@ describe("makeups", () => {
   });
 
   it("counts only the makeups of the occurrence week", async () => {
-    const slots = await createClasses(3);
+    const slots = await createClasses(4);
     const [student] = await createStudents(pg.db, 1);
     const granted = await Promise.all([
       grantTestCredit(pg.db, student),
       grantTestCredit(pg.db, student),
       grantTestCredit(pg.db, student),
+      grantTestCredit(pg.db, student),
     ]);
 
+    // O pedido sai numa terceira semana: o limite nao pode contar a semana do
+    // pedido, e a da ocorrencia (CRD-20)
+    const requestMoment = new Date("2026-11-02T12:00:00Z");
+    const weekA = "2026-11-10"; // terca, semana de 09 a 15 de novembro
+    const weekB = "2026-11-17"; // terca, semana de 16 a 22 de novembro
+
     for (const index of [0, 1]) {
-      const booked = await bookMakeupByStudent(pg.db, {
-        studentId: student,
-        classSlotId: slots[index],
-        date,
-        creditId: granted[index],
-      });
+      const booked = await bookMakeupByStudent(
+        pg.db,
+        {
+          studentId: student,
+          classSlotId: slots[index],
+          date: weekA,
+          creditId: granted[index],
+        },
+        requestMoment,
+      );
       expect(booked.ok).toBe(true);
     }
 
-    // A semana da ocorrencia agenda e outra: o limite nao conta a anterior
-    const nextWeek = addDays(date, 7);
-    const third = await bookMakeupByStudent(pg.db, {
-      studentId: student,
-      classSlotId: slots[2],
-      date: nextWeek,
-      creditId: granted[2],
-    });
-    expect(third.ok).toBe(true);
+    // A terceira reposicao na mesma semana da ocorrencia e bloqueada
+    const third = await bookMakeupByStudent(
+      pg.db,
+      {
+        studentId: student,
+        classSlotId: slots[2],
+        date: weekA,
+        creditId: granted[2],
+      },
+      requestMoment,
+    );
+    expect(third.ok).toBe(false);
+    if (!third.ok) {
+      expect(third.error).toContain("limite");
+    }
+
+    // Na semana seguinte a mesma agenda passa
+    const nextWeek = await bookMakeupByStudent(
+      pg.db,
+      {
+        studentId: student,
+        classSlotId: slots[3],
+        date: weekB,
+        creditId: granted[3],
+      },
+      requestMoment,
+    );
+    expect(nextWeek.ok).toBe(true);
 
     const active = await pg.db.select().from(bookings);
     expect(active).toHaveLength(3);
@@ -302,7 +331,7 @@ describe("makeups", () => {
     const cancelled = await cancelMakeup(
       pg.db,
       { bookingId: booked.value.id },
-      cancelInstant(date, 48),
+      cancelInstant(date, 24),
     );
     expect(cancelled.ok).toBe(true);
     if (cancelled.ok) {
@@ -332,10 +361,11 @@ describe("makeups", () => {
     expect(booked.ok).toBe(true);
     if (!booked.ok) return;
 
+    // 23h59 antes do inicio: um minuto a menos de antecedencia
     const cancelled = await cancelMakeup(
       pg.db,
       { bookingId: booked.value.id },
-      cancelInstant(date, 2),
+      new Date(cancelInstant(date, 24).getTime() + 60 * 1000),
     );
     expect(cancelled.ok).toBe(true);
     if (cancelled.ok) {

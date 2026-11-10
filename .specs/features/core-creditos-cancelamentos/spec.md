@@ -85,6 +85,9 @@ ocorrências futuras antigas, e cada uma delas agora vira crédito.
 8. WHILE o aluno tiver cancelamento ou falta registrado em uma ocorrência THEN o sistema SHALL manter o vínculo fixo do aluno ativo para as ocorrências futuras <!-- state-driven -->
 9. WHEN o aluno cancela ou falta em uma ocorrência THEN o sistema SHALL excluir o aluno da composição daquela ocorrência e as vagas disponíveis SHALL aumentar em 1 <!-- event-driven -->
 10. The system SHALL registrar no histórico do aluno o cancelamento e a falta com data, hora, ocorrência, antecedência e responsável <!-- ubiquitous -->
+11. IF o aluno não tiver vínculo fixo ativo que cubra a ocorrência THEN o sistema SHALL recusar o aviso, sem registrar a ocorrência e sem gerar crédito (CRD-45) <!-- unwanted-behavior -->
+12. IF a ocorrência já estiver CANCELADA THEN o sistema SHALL recusar o aviso (CRD-46) <!-- unwanted-behavior -->
+13. IF a ocorrência já tiver acontecido THEN o sistema SHALL recusar o aviso (CRD-47) <!-- unwanted-behavior -->
 
 **Independent Test**: turma com 2 fixos; admin registra aviso de um deles com 48h de antecedência e vê crédito gerado, vaga liberada e ocorrência com 1 fixo; registra aviso com 23h59 e vê falta sem crédito; repete o registro e vê recusa.
 
@@ -343,6 +346,9 @@ Decisões de desenho conforme AD-004 (monolito modular) e AD-012
 | CRD-42 | P2: Tela mínima do admin | - | Pending |
 | CRD-43 | P2: Tela mínima do admin | - | Pending |
 | CRD-44 | P1: Crédito de reposição | - | Pending |
+| CRD-45 | P1: Aviso de não comparecimento | - | Pending |
+| CRD-46 | P1: Aviso de não comparecimento | - | Pending |
+| CRD-47 | P1: Aviso de não comparecimento | - | Pending |
 
 ---
 

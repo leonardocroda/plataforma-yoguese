@@ -13,6 +13,7 @@ import {
 } from "../../../../test/fixtures";
 import { PostgresTestInstance, startPostgres } from "../../../../test/postgres";
 import { nextOccurrence, todayInStudio } from "../../../classes/domain/occurrences";
+import { bookMakeupByAdmin } from "../makeups";
 import {
   cancelCredit,
   grantCredit,
@@ -427,5 +428,54 @@ describe("credits", () => {
     const expiring = await listCreditsExpiringSoon(pg.db, now);
     expect(expiring).toHaveLength(1);
     expect(expiring[0].id).toBe(soon.ok ? soon.value.credit.id : "");
+  });
+
+  it("settles a reserved credit as UTILIZADO after the class ends", async () => {
+    // A reposicao acontece numa data fixa: 10 de novembro, das 19h as 20h
+    const { slotId } = await createTestClass(pg.db, {
+      weekday: 3,
+      capacity: 8,
+      startTime: "19:00:00",
+      endTime: "20:00:00",
+    });
+    const date = "2026-11-10";
+    const [student] = await createStudents(pg.db, 1);
+    const granted = await grantCredit(
+      pg.db,
+      {
+        studentId: student,
+        source: "CONCESSAO_MANUAL",
+        reason: "Credito da reposicao",
+        adminLabel: "admin",
+      },
+      new Date("2026-11-09T12:00:00Z"),
+    );
+    expect(granted.ok).toBe(true);
+    if (!granted.ok) return;
+    const creditId = granted.value.credit.id;
+
+    const booked = await bookMakeupByAdmin(
+      pg.db,
+      { studentId: student, classSlotId: slotId, date, creditId },
+      new Date("2026-11-09T12:00:00Z"),
+    );
+    expect(booked.ok).toBe(true);
+
+    // Antes do fim da aula o credito segue RESERVADO (19h59 no fuso do estudio)
+    const beforeEnd = await listStudentCredits(
+      pg.db,
+      student,
+      new Date("2026-11-10T22:59:00Z"),
+    );
+    expect(beforeEnd[0].status).toBe("RESERVADO");
+
+    // Passado o fim da aula o credito vira UTILIZADO, sem etapa manual
+    const afterEnd = await listStudentCredits(
+      pg.db,
+      student,
+      new Date("2026-11-10T23:01:00Z"),
+    );
+    expect(afterEnd[0].status).toBe("UTILIZADO");
+    expect(afterEnd[0].persistedStatus).toBe("RESERVADO");
   });
 });

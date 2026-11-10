@@ -257,8 +257,15 @@ describe("credit actions", () => {
   });
 
   it("registers the non attendance from the admin action and returns the outcome", async () => {
-    const { sessionId } = await createOccurrence(48);
+    const { slotId, sessionId, date } = await createOccurrence(48);
     const [student] = await createStudents(pg.db, 1);
+    // O aviso so vale para o aluno fixo da turma (CRD-45)
+    const enrollment = await createEnrollment(pg.db, {
+      studentId: student,
+      classSlotId: slotId,
+      startDate: date,
+    });
+    expect(enrollment.ok).toBe(true);
 
     const result = await registerNonAttendanceAction({
       studentId: student,
@@ -283,8 +290,14 @@ describe("credit actions", () => {
   });
 
   it("registers the absence from the admin action without a credit", async () => {
-    const { sessionId } = await createOccurrence(2);
+    const { slotId, sessionId, date } = await createOccurrence(2);
     const [student] = await createStudents(pg.db, 1);
+    const enrollment = await createEnrollment(pg.db, {
+      studentId: student,
+      classSlotId: slotId,
+      startDate: date,
+    });
+    expect(enrollment.ok).toBe(true);
 
     const result = await registerNonAttendanceAction({
       studentId: student,

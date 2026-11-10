@@ -1,6 +1,11 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { bookings, credits, fixedEnrollments } from "../../../../db/schema";
+import {
+  bookings,
+  classSessions,
+  credits,
+  fixedEnrollments,
+} from "../../../../db/schema";
 import {
   createStudents,
   createTestClass,
@@ -51,6 +56,7 @@ describe("non attendance", () => {
     sessionId: string;
     date: string;
     studentId: string;
+    enrollmentId: string;
   }> {
     const { slotId } = await createTestClass(pg.db, {
       weekday: 3,
@@ -65,11 +71,19 @@ describe("non attendance", () => {
     });
     expect(materialized.ok).toBe(true);
     const [student] = await createStudents(pg.db, 1);
+    // O aviso e do aluno fixo da turma (CRD-01, CRD-45)
+    const enrollment = await createEnrollment(pg.db, {
+      studentId: student,
+      classSlotId: slotId,
+      startDate: date,
+    });
+    expect(enrollment.ok).toBe(true);
     return {
       slotId,
       sessionId: materialized.ok ? materialized.value.id : "",
       date,
       studentId: student,
+      enrollmentId: enrollment.ok ? enrollment.value.id : "",
     };
   }
 
@@ -282,14 +296,8 @@ describe("non attendance", () => {
   });
 
   it("keeps the fixed enrollment active for the next occurrences", async () => {
-    const { slotId, sessionId, date, studentId } = await setupOccurrence();
-
-    const enrollment = await createEnrollment(pg.db, {
-      studentId,
-      classSlotId: slotId,
-      startDate: date,
-    });
-    expect(enrollment.ok).toBe(true);
+    const { slotId, sessionId, date, studentId, enrollmentId } =
+      await setupOccurrence();
 
     const result = await registerNonAttendance(
       pg.db,
@@ -299,15 +307,13 @@ describe("non attendance", () => {
     expect(result.ok).toBe(true);
 
     // O vinculo fixo continua ativo
-    if (enrollment.ok) {
-      const [stored] = await pg.db
-        .select()
-        .from(fixedEnrollments)
-        .where(eq(fixedEnrollments.id, enrollment.value.id));
-      expect(stored.status).toBe("ATIVA");
-      expect(stored.startDate).toBe(date);
-      expect(stored.endDate).toBeNull();
-    }
+    const [stored] = await pg.db
+      .select()
+      .from(fixedEnrollments)
+      .where(eq(fixedEnrollments.id, enrollmentId));
+    expect(stored.status).toBe("ATIVA");
+    expect(stored.startDate).toBe(date);
+    expect(stored.endDate).toBeNull();
 
     // Na proxima ocorrencia o aluno segue contando como fixo (CRD-08)
     const nextDate = nextOccurrence({ weekday: 3 }, addDays(date, 1));
@@ -349,5 +355,92 @@ describe("non attendance", () => {
     expect(entry.cancelledBy).toBe("ALUNO");
     expect(entry.cancelledAt?.toISOString()).toBe(now.toISOString());
     expect(entry.createdAt.toISOString()).toBe(now.toISOString());
+  });
+
+  it("refuses the notice when the student is not a fixed student", async () => {
+    const { sessionId, date } = await setupOccurrence();
+    // Um aluno sem vinculo fixo na turma nao tem aula fixa a cancelar
+    const [outsider] = await createStudents(pg.db, 1);
+
+    const result = await registerNonAttendance(
+      pg.db,
+      { studentId: outsider, classSessionId: sessionId },
+      noticeInstant(date, 48),
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.field).toBe("studentId");
+      expect(result.error).toContain("nao e horario fixo");
+    }
+
+    // Nada foi gravado: sem reserva de aviso e sem credito
+    const storedBookings = await pg.db
+      .select()
+      .from(bookings)
+      .where(eq(bookings.classSessionId, sessionId));
+    expect(storedBookings).toHaveLength(0);
+    const storedCredits = await pg.db.select().from(credits);
+    expect(storedCredits).toHaveLength(0);
+  });
+
+  it("refuses the notice when the occurrence was cancelled by the studio", async () => {
+    const { sessionId, date, studentId } = await setupOccurrence();
+
+    // O estudio cancelou a ocorrencia antes do aviso do aluno
+    await pg.db
+      .update(classSessions)
+      .set({ status: "CANCELADA", updatedAt: new Date() })
+      .where(eq(classSessions.id, sessionId));
+
+    const result = await registerNonAttendance(
+      pg.db,
+      { studentId, classSessionId: sessionId },
+      noticeInstant(date, 48),
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toContain("ocorrencia cancelada");
+    }
+
+    const storedCredits = await pg.db.select().from(credits);
+    expect(storedCredits).toHaveLength(0);
+  });
+
+  it("refuses the notice when the occurrence is in the past", async () => {
+    const { slotId, date } = await setupOccurrence();
+    const pastDate = addDays(date, -7);
+
+    // A ocorrencia passada existe no banco (aula que ja aconteceu)
+    const [session] = await pg.db
+      .insert(classSessions)
+      .values({
+        classSlotId: slotId,
+        sessionDate: pastDate,
+        status: "AGENDADA",
+      })
+      .returning();
+    const [student] = await createStudents(pg.db, 1);
+    const enrollment = await createEnrollment(pg.db, {
+      studentId: student,
+      classSlotId: slotId,
+      startDate: pastDate,
+    });
+    expect(enrollment.ok).toBe(true);
+
+    const result = await registerNonAttendance(
+      pg.db,
+      { studentId: student, classSessionId: session.id },
+      new Date(),
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toContain("passado");
+    }
+
+    const storedCredits = await pg.db.select().from(credits);
+    expect(storedCredits).toHaveLength(0);
   });
 });

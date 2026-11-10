@@ -438,6 +438,12 @@ describe("bookings", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
+    // A reserva criada e do tipo MAKEUP e esta ativa na ocorrencia
+    expect(result.value.bookingType).toBe("MAKEUP");
+    expect(result.value.status).toBe("ATIVA");
+    expect(result.value.studentId).toBe(student);
+    expect(result.value.classSessionId).toBeTruthy();
+
     const [credit] = await pg.db
       .select()
       .from(credits)
