@@ -1,5 +1,7 @@
 import { holidays, studioClosures } from "../../../db/schema";
 import { DbClient } from "../../bookings/services/sessions";
+import { reconcileBlockedOccurrences } from "../../bookings/services/blocks";
+import { todayInStudio } from "../domain/occurrences";
 
 export type Holiday = typeof holidays.$inferSelect;
 export type StudioClosure = typeof studioClosures.$inferSelect;
@@ -12,8 +14,9 @@ export type BlockResult<T> =
  * Cadastro de feriados e recessos (RES-11 a RES-13). O feriado tem data
  * unica: cadastrar a mesma data de novo e recusado em vez de duplicar o
  * bloqueio. O recesso e um periodo com extremos inclusos. O efeito sobre as
- * ocorrencias (status BLOQUEADA) vive no servico de sessoes, que consulta
- * estes registros.
+ * ocorrencias e imediato: toda criacao dispara o reconcilio sobre a janela
+ * da data, clampada para hoje em diante (FER-01, FER-02, FER-06, AD-029) -
+ * a materializacao preguicosa de sessions.ts permanece como retaguarda.
  */
 
 export async function createHoliday(
@@ -27,13 +30,22 @@ export async function createHoliday(
     .onConflictDoNothing({ target: holidays.date })
     .returning();
 
-  return created
-    ? { ok: true, value: created }
-    : {
-        ok: false,
-        error: "ja existe feriado cadastrado para esta data",
-        field: "date",
-      };
+  if (!created) {
+    return {
+      ok: false,
+      error: "ja existe feriado cadastrado para esta data",
+      field: "date",
+    };
+  }
+
+  const today = todayInStudio();
+  await reconcileBlockedOccurrences(db, {
+    // Data passada: a janela fica vazia e nada e alterado (FER-06)
+    fromDate: input.date > today ? input.date : today,
+    toDate: input.date,
+  });
+
+  return { ok: true, value: created };
 }
 
 export async function createStudioClosure(
@@ -49,7 +61,13 @@ export async function createStudioClosure(
   }
 
   const [created] = await db.insert(studioClosures).values(input).returning();
-  return created
-    ? { ok: true, value: created }
-    : { ok: false, error: "falha ao gravar recesso" };
+  if (!created) return { ok: false, error: "falha ao gravar recesso" };
+
+  const today = todayInStudio();
+  await reconcileBlockedOccurrences(db, {
+    fromDate: input.startDate > today ? input.startDate : today,
+    toDate: input.endDate,
+  });
+
+  return { ok: true, value: created };
 }

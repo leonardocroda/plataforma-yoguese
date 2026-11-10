@@ -1,10 +1,12 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { bookings, classSessions, holidays } from "../../../../db/schema";
+import { eq } from "drizzle-orm";
+import { bookings, classSessions, credits, holidays } from "../../../../db/schema";
 import { createStudents, createTestClass, clearTables, grantTestCredit } from "../../../../test/fixtures";
 import { PostgresTestInstance, startPostgres } from "../../../../test/postgres";
 import { addDays, nextOccurrence, todayInStudio } from "../../domain/occurrences";
 import { materializeSession } from "../../../bookings/services/sessions";
 import { createBooking } from "../../../bookings/services/bookings";
+import { createEnrollment } from "../../../students/services/enrollments";
 import { createHoliday, createStudioClosure } from "../blocks";
 
 describe("blocks", () => {
@@ -151,5 +153,133 @@ describe("blocks", () => {
     const rows = await pg.db.select().from(holidays);
     expect(rows).toHaveLength(1);
     expect(rows[0].name).toBe("Feriado Municipal");
+  });
+
+  it("blocks the existing occurrences when the holiday is created (FER-01)", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const date = nextOccurrence({ weekday: 3 }, today);
+    const [student] = await createStudents(pg.db, 1);
+
+    // A ocorrencia ja existe AGENDADA com reserva antes do cadastro
+    const materialized = await materializeSession(pg.db, {
+      classSlotId: slotId,
+      date,
+    });
+    expect(materialized.ok).toBe(true);
+    const booked = await createBooking(pg.db, {
+      studentId: student,
+      classSlotId: slotId,
+      date,
+      type: "FIXED",
+    });
+    expect(booked.ok).toBe(true);
+
+    const created = await createHoliday(pg.db, { date, name: "Feriado Municipal" });
+    expect(created.ok).toBe(true);
+
+    // Efeito imediato: sem nova leitura, a ocorrencia ja esta BLOQUEADA e a
+    // reserva ativa foi cancelada
+    const [session] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.sessionDate, date));
+    expect(session.status).toBe("BLOQUEADA");
+    const [booking] = await pg.db
+      .select()
+      .from(bookings)
+      .where(eq(bookings.id, booked.value!.id));
+    expect(booking.status).toBe("CANCELADA");
+
+    // Data passada: o cadastro e aceito como registro e nao altera nada
+    const pastDate = "2026-01-06"; // terca-feira no passado
+    await pg.db.insert(classSessions).values({
+      classSlotId: slotId,
+      sessionDate: pastDate,
+      status: "AGENDADA",
+    });
+    const past = await createHoliday(pg.db, { date: pastDate, name: "Registro antigo" });
+    expect(past.ok).toBe(true);
+    const [pastSession] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.sessionDate, pastDate));
+    expect(pastSession.status).toBe("AGENDADA");
+  });
+
+  it("blocks every date of the closure range when the closure is created (FER-02)", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const startDate = nextOccurrence({ weekday: 3 }, today);
+    const middleDate = addDays(startDate, 7);
+    const endDate = addDays(startDate, 14);
+    const [student] = await createStudents(pg.db, 1);
+
+    for (const date of [startDate, middleDate, endDate]) {
+      const materialized = await materializeSession(pg.db, {
+        classSlotId: slotId,
+        date,
+      });
+      expect(materialized.ok).toBe(true);
+    }
+    const booked = await createBooking(pg.db, {
+      studentId: student,
+      classSlotId: slotId,
+      date: middleDate,
+      type: "FIXED",
+    });
+    expect(booked.ok).toBe(true);
+
+    const created = await createStudioClosure(pg.db, {
+      startDate,
+      endDate,
+      reason: "Recesso de Inverno",
+    });
+    expect(created.ok).toBe(true);
+
+    const sessions = await pg.db.select().from(classSessions);
+    expect(sessions).toHaveLength(3);
+    expect(sessions.every((session) => session.status === "BLOQUEADA")).toBe(true);
+    const [booking] = await pg.db
+      .select()
+      .from(bookings)
+      .where(eq(bookings.id, booked.value!.id));
+    expect(booking.status).toBe("CANCELADA");
+  });
+
+  it("creates no credit when a block is registered (FER-05, PRD 15)", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const date = nextOccurrence({ weekday: 3 }, today);
+    const students = await createStudents(pg.db, 2);
+
+    // Fixo com vinculo ativo na data + reposicao de outro aluno com credito
+    const enrolled = await createEnrollment(pg.db, {
+      studentId: students[0],
+      classSlotId: slotId,
+      startDate: today,
+    });
+    expect(enrolled.ok).toBe(true);
+    const creditId = await grantTestCredit(pg.db, students[1]);
+    const booked = await createBooking(pg.db, {
+      studentId: students[1],
+      classSlotId: slotId,
+      date,
+      type: "MAKEUP",
+      creditId,
+    });
+    expect(booked.ok).toBe(true);
+
+    const created = await createHoliday(pg.db, { date, name: "Feriado Municipal" });
+    expect(created.ok).toBe(true);
+
+    // Nenhuma linha de credito nova: o fixo nao recebe credito (PRD 7.1) e
+    // o credito da reposicao e o mesmo, devolvido a DISPONIVEL
+    const creditsAfter = await pg.db.select().from(credits);
+    expect(creditsAfter).toHaveLength(1);
+    expect(creditsAfter[0].id).toBe(creditId);
+    expect(creditsAfter[0].status).toBe("DISPONIVEL");
+    const fixedStudentCredits = await pg.db
+      .select()
+      .from(credits)
+      .where(eq(credits.studentId, students[0]));
+    expect(fixedStudentCredits).toHaveLength(0);
   });
 });

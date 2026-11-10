@@ -157,13 +157,13 @@ T7 → T8
 
 **Done when**:
 
-- [ ] Criar o feriado marca BLOQUEADA as ocorrências AGENDADA existentes daquela data (hoje em diante) e cancela as reservas ativas
-- [ ] Criar o recesso marca BLOQUEADA as ocorrências de todas as datas do período, extremos inclusos
-- [ ] Cadastrar bloqueio não cria crédito algum (fixo com vínculo ativo e reposição com crédito reservado: zero linhas de crédito novas)
-- [ ] Feriado/recesso em data passada não altera ocorrência nenhuma
-- [ ] Ocorrência CANCELADA não é tocada pelo cadastro
-- [ ] Testes de integração cobrem todos esses casos pelo caminho do cadastro (3 testes novos)
-- [ ] Gate check passa: `npx vitest run`
+- [x] Criar o feriado marca BLOQUEADA as ocorrências AGENDADA existentes daquela data (hoje em diante) e cancela as reservas ativas
+- [x] Criar o recesso marca BLOQUEADA as ocorrências de todas as datas do período, extremos inclusos
+- [x] Cadastrar bloqueio não cria crédito algum (fixo com vínculo ativo e reposição com crédito reservado: zero linhas de crédito novas)
+- [x] Feriado/recesso em data passada não altera ocorrência nenhuma
+- [x] Ocorrência CANCELADA não é tocada pelo cadastro
+- [x] Testes de integração cobrem todos esses casos pelo caminho do cadastro (3 testes novos)
+- [x] Gate check passa: `npx vitest run`
 
 **Tests**: integration
 **Gate**: full
