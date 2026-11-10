@@ -182,15 +182,15 @@ T7 → T8
 
 **Done when**:
 
-- [ ] `updateHoliday` aplica data e nome novos e reprocessa os bloqueios: a data antiga desbloqueia e a nova bloqueia na mesma operação
-- [ ] Editar o feriado para uma data de outro feriado é recusado, sem alterar nada
-- [ ] `deleteHoliday` e `deleteStudioClosure` removem o registro e desbloqueiam as ocorrências de hoje em diante que não ficam mais cobertas
-- [ ] `updateStudioClosure` valida fim >= início e reprocessa: datas que saíram do período desbloqueiam (respeitando outros bloqueios), datas que entraram bloqueiam
-- [ ] `listHolidays` e `listStudioClosures` devolvem os registros para a tela
-- [ ] Remover um de dois bloqueios sobrepostos mantém a ocorrência BLOQUEADA
-- [ ] Ocorrência bloqueada no passado e com dia da semana alterado permanecem BLOQUEADA; nenhuma reserva cancelada é restaurada
-- [ ] Testes de integração cobrem todos esses casos (8 testes novos)
-- [ ] Gate check passa: `npx vitest run`
+- [x] `updateHoliday` aplica data e nome novos e reprocessa os bloqueios: a data antiga desbloqueia e a nova bloqueia na mesma operação
+- [x] Editar o feriado para uma data de outro feriado é recusado, sem alterar nada
+- [x] `deleteHoliday` e `deleteStudioClosure` removem o registro e desbloqueiam as ocorrências de hoje em diante que não ficam mais cobertas
+- [x] `updateStudioClosure` valida fim >= início e reprocessa: datas que saíram do período desbloqueiam (respeitando outros bloqueios), datas que entraram bloqueiam
+- [x] `listHolidays` e `listStudioClosures` devolvem os registros para a tela
+- [x] Remover um de dois bloqueios sobrepostos mantém a ocorrência BLOQUEADA
+- [x] Ocorrência bloqueada no passado e com dia da semana alterado permanecem BLOQUEADA; nenhuma reserva cancelada é restaurada
+- [x] Testes de integração cobrem todos esses casos (8 testes novos)
+- [x] Gate check passa: `npx vitest run`
 
 **Tests**: integration
 **Gate**: full

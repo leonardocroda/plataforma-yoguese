@@ -1,13 +1,13 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
-import { bookings, classSessions, credits, holidays } from "../../../../db/schema";
+import { bookings, classSessions, credits, holidays, studioClosures } from "../../../../db/schema";
 import { createStudents, createTestClass, clearTables, grantTestCredit } from "../../../../test/fixtures";
 import { PostgresTestInstance, startPostgres } from "../../../../test/postgres";
 import { addDays, nextOccurrence, todayInStudio } from "../../domain/occurrences";
 import { materializeSession } from "../../../bookings/services/sessions";
 import { createBooking } from "../../../bookings/services/bookings";
 import { createEnrollment } from "../../../students/services/enrollments";
-import { createHoliday, createStudioClosure } from "../blocks";
+import { createHoliday, createStudioClosure, updateHoliday, deleteHoliday, updateStudioClosure, deleteStudioClosure, listHolidays, listStudioClosures } from "../blocks";
 
 describe("blocks", () => {
   let pg: PostgresTestInstance;
@@ -281,5 +281,251 @@ describe("blocks", () => {
       .from(credits)
       .where(eq(credits.studentId, students[0]));
     expect(fixedStudentCredits).toHaveLength(0);
+  });
+
+  it("moves the block when the holiday is edited (FER-19)", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const oldDate = nextOccurrence({ weekday: 3 }, today);
+    const newDate = addDays(oldDate, 7);
+
+    const created = await createHoliday(pg.db, { date: oldDate, name: "Feriado" });
+    if (!created.ok) throw new Error(created.error);
+    for (const date of [oldDate, newDate]) {
+      const materialized = await materializeSession(pg.db, {
+        classSlotId: slotId,
+        date,
+      });
+      expect(materialized.ok).toBe(true);
+    }
+
+    const edited = await updateHoliday(pg.db, {
+      id: created.value.id,
+      date: newDate,
+      name: "Feriado Corrigido",
+    });
+    expect(edited.ok).toBe(true);
+
+    // A data antiga desbloqueia e a nova bloqueia na mesma operacao
+    const [oldSession] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.sessionDate, oldDate));
+    expect(oldSession.status).toBe("AGENDADA");
+    const [newSession] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.sessionDate, newDate));
+    expect(newSession.status).toBe("BLOQUEADA");
+  });
+
+  it("refuses to edit a holiday onto another holiday date (FER-20)", async () => {
+    const firstDate = nextOccurrence({ weekday: 3 }, today);
+    const secondDate = addDays(firstDate, 7);
+
+    const first = await createHoliday(pg.db, { date: firstDate, name: "Primeiro" });
+    const second = await createHoliday(pg.db, { date: secondDate, name: "Segundo" });
+    if (!first.ok || !second.ok) throw new Error("fixture falhou");
+
+    const edited = await updateHoliday(pg.db, {
+      id: first.value.id,
+      date: secondDate,
+      name: "Colisao",
+    });
+    expect(edited.ok).toBe(false);
+    if (!edited.ok) {
+      expect(edited.error).toContain("feriado");
+      expect(edited.field).toBe("date");
+    }
+
+    // Nada mudou
+    const rows = await pg.db.select().from(holidays);
+    expect(rows).toHaveLength(2);
+    expect(rows.find((row) => row.id === first.value.id)?.name).toBe("Primeiro");
+  });
+
+  it("unblocks the occurrences when the holiday is deleted (FER-10)", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const date = nextOccurrence({ weekday: 3 }, today);
+
+    const created = await createHoliday(pg.db, { date, name: "Feriado" });
+    if (!created.ok) throw new Error(created.error);
+    await materializeSession(pg.db, { classSlotId: slotId, date });
+
+    const deleted = await deleteHoliday(pg.db, { id: created.value.id });
+    expect(deleted.ok).toBe(true);
+
+    const [session] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.sessionDate, date));
+    expect(session.status).toBe("AGENDADA");
+  });
+
+  it("blocks new dates and releases removed dates when the closure is edited (FER-11, FER-23)", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const firstDate = nextOccurrence({ weekday: 3 }, today);
+    const secondDate = addDays(firstDate, 7);
+    const thirdDate = addDays(firstDate, 14);
+
+    const created = await createStudioClosure(pg.db, {
+      startDate: firstDate,
+      endDate: thirdDate,
+      reason: "Recesso",
+    });
+    if (!created.ok) throw new Error(created.error);
+    for (const date of [firstDate, secondDate, thirdDate]) {
+      const materialized = await materializeSession(pg.db, {
+        classSlotId: slotId,
+        date,
+      });
+      expect(materialized.ok).toBe(true);
+    }
+    let sessions = await pg.db.select().from(classSessions);
+    expect(sessions.every((session) => session.status === "BLOQUEADA")).toBe(true);
+
+    // Encurtado para o primeiro dia: as datas que sairam voltam
+    const shrunk = await updateStudioClosure(pg.db, {
+      id: created.value.id,
+      startDate: firstDate,
+      endDate: firstDate,
+      reason: "Recesso encurtado",
+    });
+    expect(shrunk.ok).toBe(true);
+    const byDate = (date: string) =>
+      pg.db.select().from(classSessions).where(eq(classSessions.sessionDate, date));
+    expect((await byDate(firstDate))[0].status).toBe("BLOQUEADA");
+    expect((await byDate(secondDate))[0].status).toBe("AGENDADA");
+    expect((await byDate(thirdDate))[0].status).toBe("AGENDADA");
+
+    // Estendido ate o segundo dia: a data que entrou bloqueia de novo
+    const extended = await updateStudioClosure(pg.db, {
+      id: created.value.id,
+      startDate: firstDate,
+      endDate: secondDate,
+      reason: "Recesso estendido",
+    });
+    expect(extended.ok).toBe(true);
+    expect((await byDate(secondDate))[0].status).toBe("BLOQUEADA");
+    expect((await byDate(thirdDate))[0].status).toBe("AGENDADA");
+  });
+
+  it("unblocks the occurrences when the closure is deleted (FER-11)", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const date = nextOccurrence({ weekday: 3 }, today);
+
+    const created = await createStudioClosure(pg.db, {
+      startDate: date,
+      endDate: date,
+      reason: "Recesso",
+    });
+    if (!created.ok) throw new Error(created.error);
+    await materializeSession(pg.db, { classSlotId: slotId, date });
+
+    const deleted = await deleteStudioClosure(pg.db, { id: created.value.id });
+    expect(deleted.ok).toBe(true);
+
+    const [session] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.sessionDate, date));
+    expect(session.status).toBe("AGENDADA");
+  });
+
+  it("keeps the occurrence blocked when one of two overlapping blocks is removed (FER-12)", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const date = nextOccurrence({ weekday: 3 }, today);
+
+    const holiday = await createHoliday(pg.db, { date, name: "Feriado" });
+    const closure = await createStudioClosure(pg.db, {
+      startDate: date,
+      endDate: date,
+      reason: "Recesso sobreposto",
+    });
+    if (!holiday.ok || !closure.ok) throw new Error("fixture falhou");
+    await materializeSession(pg.db, { classSlotId: slotId, date });
+
+    // Removido o feriado, o recesso mantem a ocorrencia bloqueada
+    const removedHoliday = await deleteHoliday(pg.db, { id: holiday.value.id });
+    expect(removedHoliday.ok).toBe(true);
+    let [session] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.sessionDate, date));
+    expect(session.status).toBe("BLOQUEADA");
+
+    // Removido o recesso, nenhum bloqueio cobre mais a data
+    const removedClosure = await deleteStudioClosure(pg.db, { id: closure.value.id });
+    expect(removedClosure.ok).toBe(true);
+    [session] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.sessionDate, date));
+    expect(session.status).toBe("AGENDADA");
+  });
+
+  it("refuses a closure whose end is before its start (FER-22)", async () => {
+    const date = nextOccurrence({ weekday: 3 }, today);
+
+    const created = await createStudioClosure(pg.db, {
+      startDate: addDays(date, 7),
+      endDate: date,
+      reason: "Periodo invalido",
+    });
+    expect(created.ok).toBe(false);
+    if (!created.ok) {
+      expect(created.error).toContain("fim do recesso");
+      expect(created.field).toBe("endDate");
+    }
+    const rows = await pg.db.select().from(studioClosures);
+    expect(rows).toHaveLength(0);
+
+    // A recusa vale tambem na edicao
+    const valid = await createStudioClosure(pg.db, {
+      startDate: date,
+      endDate: addDays(date, 7),
+      reason: "Recesso",
+    });
+    if (!valid.ok) throw new Error(valid.error);
+    const edited = await updateStudioClosure(pg.db, {
+      id: valid.value.id,
+      startDate: addDays(date, 14),
+      endDate: date,
+      reason: "Edicao invalida",
+    });
+    expect(edited.ok).toBe(false);
+    if (!edited.ok) {
+      expect(edited.error).toContain("fim do recesso");
+      expect(edited.field).toBe("endDate");
+    }
+  });
+
+  it("lists holidays and studio closures (FER-16)", async () => {
+    const firstDate = nextOccurrence({ weekday: 3 }, today);
+    const secondDate = addDays(firstDate, 14);
+
+    await createStudioClosure(pg.db, {
+      startDate: secondDate,
+      endDate: addDays(secondDate, 3),
+      reason: "Recesso de julho",
+    });
+    await createStudioClosure(pg.db, {
+      startDate: firstDate,
+      endDate: addDays(firstDate, 1),
+      reason: "Recesso de inverno",
+    });
+    await createHoliday(pg.db, { date: secondDate, name: "Natal" });
+    await createHoliday(pg.db, { date: firstDate, name: "Ano Novo" });
+
+    const holidaysList = await listHolidays(pg.db);
+    expect(holidaysList.map((holiday) => holiday.name)).toEqual([
+      "Ano Novo",
+      "Natal",
+    ]);
+
+    const closures = await listStudioClosures(pg.db);
+    expect(closures.map((closure) => closure.reason)).toEqual([
+      "Recesso de inverno",
+      "Recesso de julho",
+    ]);
   });
 });
