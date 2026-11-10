@@ -295,7 +295,10 @@ export type StudioCancellationResult =
  * (AD-020, CRD-30) e cada aluno fixo afetado recebe 1 credito
  * CANCELAMENTO_ESTUDIO (CRD-29). Repetir o cancelamento nao duplica credito
  * (CRD-31) e quem ja tem credito da ocorrencia nao recebe um segundo
- * (CRD-33).
+ * (CRD-33). Ocorrencia BLOQUEADA por feriado/recesso e recusada (FER-09,
+ * AD-031): o bloqueio ja comunica que a aula nao acontece e o PRD 7.1 veda
+ * credito no feriado, entao o cancelamento - que geraria creditos - nao se
+ * aplica.
  */
 export async function cancelOccurrenceByStudio(
   db: DbClient,
@@ -315,6 +318,13 @@ export async function cancelOccurrenceByStudio(
       return {
         ok: false,
         error: "ocorrencia nao encontrada",
+        field: "classSessionId",
+      };
+    }
+    if (session.status === "BLOQUEADA") {
+      return {
+        ok: false,
+        error: "ocorrencia bloqueada por feriado/recesso",
         field: "classSessionId",
       };
     }

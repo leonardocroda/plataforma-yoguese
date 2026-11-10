@@ -209,10 +209,10 @@ T7 → T8
 
 **Done when**:
 
-- [ ] Cancelar pelo estúdio uma ocorrência BLOQUEADA devolve erro, mantém a ocorrência BLOQUEADA e não gera crédito
-- [ ] O caminho da edição de dia/horário (`cancelFutureSessions`, que só seleciona AGENDADA) continua funcionando - regressão da suíte
-- [ ] Teste de integração cobre a recusa (1 teste novo)
-- [ ] Gate check passa: `npx vitest run`
+- [x] Cancelar pelo estúdio uma ocorrência BLOQUEADA devolve erro, mantém a ocorrência BLOQUEADA e não gera crédito
+- [x] O caminho da edição de dia/horário (`cancelFutureSessions`, que só seleciona AGENDADA) continua funcionando - regressão da suíte
+- [x] Teste de integração cobre a recusa (1 teste novo)
+- [x] Gate check passa: `npx vitest run`
 
 **Tests**: integration
 **Gate**: full

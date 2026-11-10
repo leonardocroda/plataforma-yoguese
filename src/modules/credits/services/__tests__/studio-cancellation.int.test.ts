@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { bookings, classSessions, credits } from "../../../../db/schema";
+import { bookings, classSessions, credits, holidays } from "../../../../db/schema";
 import {
   createStudents,
   createTestClass,
@@ -15,6 +15,7 @@ import {
 import { hoursUntilOccurrence } from "../../domain/credit-rules";
 import { createEnrollment } from "../../../students/services/enrollments";
 import { materializeSession } from "../../../bookings/services/sessions";
+import { reconcileBlockedOccurrences } from "../../../bookings/services/blocks";
 import { bookMakeupByStudent } from "../makeups";
 import {
   cancelOccurrenceByStudio,
@@ -309,5 +310,47 @@ describe("studio cancellation", () => {
     );
     expect(studio).toHaveLength(1);
     expect(studio[0].source).toBe("CANCELAMENTO_ESTUDIO");
+  });
+
+  it("refuses the cancellation of a blocked occurrence (FER-09)", async () => {
+    const { slotId, sessionId } = await setupClass();
+    const [makeupStudent] = await createStudents(pg.db, 1);
+
+    const booked = await bookMakeupByStudent(pg.db, {
+      studentId: makeupStudent,
+      classSlotId: slotId,
+      date,
+      creditId: await grantTestCredit(pg.db, makeupStudent),
+    });
+    expect(booked.ok).toBe(true);
+
+    // A ocorrencia fica BLOQUEADA pelo feriado, com a reserva cancelada pelo
+    // reconcilio do bloqueio (FER-03) e o credito devolvido (FER-04)
+    await pg.db.insert(holidays).values({ date, name: "Feriado Teste" });
+    await reconcileBlockedOccurrences(pg.db, { fromDate: date, toDate: date });
+
+    const result = await cancelOccurrenceByStudio(
+      pg.db,
+      { classSessionId: sessionId },
+      cancelNow,
+    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toContain("bloqueada");
+    }
+
+    // Nada mudou: a ocorrencia segue BLOQUEADA, a reserva segue como ficou
+    // e nenhum credito novo foi gerado (PRD 7.1)
+    const [session] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.id, sessionId));
+    expect(session.status).toBe("BLOQUEADA");
+    const bookingRows = await pg.db.select().from(bookings);
+    expect(bookingRows).toHaveLength(1);
+    expect(bookingRows[0].status).toBe("CANCELADA");
+    const creditsAfter = await pg.db.select().from(credits);
+    expect(creditsAfter).toHaveLength(1);
+    expect(creditsAfter[0].status).toBe("DISPONIVEL");
   });
 });
