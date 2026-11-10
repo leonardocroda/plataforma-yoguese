@@ -192,6 +192,60 @@ fixed student, including one who had already notified absence with less
 than 24h (no credit yet); a student who already holds a credit for that
 occurrence does not get a second one.
 
+### AD-026 - ACTIVE - Block registration cancels bookings and returns the reserved makeup credit (2026-11-10)
+
+User decision: when a holiday or closure is registered, the active bookings
+(makeup/experimental) of the covered occurrences are cancelled, the spots are
+freed, and the reserved credit of a cancelled makeup returns to DISPONIVEL
+keeping its original expiry. No new credit is created (PRD 7.1/7.2 stand).
+Rationale: the AD-018 settlement turns a reserved credit UTILIZADO when the
+occurrence end time passes without looking at the occurrence status - keeping
+the booking active on a blocked occurrence would consume the student's credit
+for a class that will not happen.
+
+### AD-027 - ACTIVE - Unblock restores AGENDADA automatically; cancelled bookings are not restored (2026-11-10)
+
+User decision: removing or editing the holiday/closure returns the covered
+BLOQUEADA occurrences to AGENDADA automatically (today onward only; a
+CANCELADA occurrence is never resurrected). The bookings cancelled by the
+block are not restored - the student rebooks with the returned credit.
+
+### AD-028 - ACTIVE - Overlapping blocks are allowed and never unified (2026-11-10)
+
+User decision: a closure may overlap another closure or a holiday. A date
+stays blocked while ANY block covers it and unblocks only when none does.
+
+### AD-029 - ACTIVE - Blocks accept past dates with forward-only effect (2026-11-10)
+
+User decision: a holiday or closure may be registered on a past date as a
+historical record; the block effect only touches occurrences from today
+onward, never rewriting the past of the grade.
+
+### AD-030 - ACTIVE - No national-holiday seed; the admin registers them manually (2026-11-10)
+
+User decision: Brazilian national holidays are registered by the admin
+(PRD 7.1 grants the admin the registration); `db:seed` stays as is.
+
+### AD-031 - ACTIVE - Studio cancellation is refused on a blocked occurrence (2026-11-10)
+
+User decision: cancelling an occurrence already blocked by a holiday/closure
+is refused with a clear error. The block already communicates the class does
+not happen, and the cancellation would trigger studio credits (PRD 7.3),
+which a holiday forbids (PRD 7.1).
+
+### AD-032 - ACTIVE - Per-slot blocking is deferred to the admin panel feature (2026-11-10)
+
+User decision: PRD 4.3 "bloquear horários" (blocking a specific class slot,
+not a date) stays out of this feature and lands with the admin panel (AD-009
+order). Today the equivalent effect is deactivating the slot in the grade.
+
+### AD-033 - ACTIVE - Holidays and closures are removed physically, without the PRD-12 status column (2026-11-10)
+
+User decision: PRD 12 lists a `status` column on HOLIDAYS and
+STUDIO_CLOSURES, but no PRD rule uses it and the unblock path is the
+removal/edit of the record itself (AD-027), so the tables keep no `status`
+column and removal is a physical delete.
+
 ## Handoff
 
 Snapshot - updated when work pauses.
