@@ -136,9 +136,9 @@ T7 → T8
 
 **Done when**:
 
-- [ ] `materializeSession` decide o bloqueio pela função pura compartilhada; não existe segunda implementação da regra de cobertura
-- [ ] Regressão: os testes existentes de materialização bloqueada (`sessions.int.test.ts`, `blocks.int.test.ts`) continuam verdes sem alteração
-- [ ] Gate check passa: `npx vitest run`
+- [x] `materializeSession` decide o bloqueio pela função pura compartilhada; não existe segunda implementação da regra de cobertura
+- [x] Regressão: os testes existentes de materialização bloqueada (`sessions.int.test.ts`, `blocks.int.test.ts`) continuam verdes sem alteração
+- [x] Gate check passa: `npx vitest run`
 
 **Tests**: integration
 **Gate**: full

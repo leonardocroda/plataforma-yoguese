@@ -1,4 +1,4 @@
-import { and, eq, gte, lte } from "drizzle-orm";
+import { and, eq, gte } from "drizzle-orm";
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "../../../db/schema";
 import {
@@ -16,6 +16,7 @@ import {
   weekdayOf,
 } from "../../classes/domain/occurrences";
 import { cancelOccurrenceByStudio } from "../../credits/services/cancellations";
+import { isDateCoveredByBlocks } from "../domain/blocks";
 
 export type DbClient = NodePgDatabase<typeof schema>;
 
@@ -185,16 +186,22 @@ export async function cancelFutureSessions(
 
 /** A data cai em feriado cadastrado ou dentro de um recesso (extremos inclusos). */
 async function hasBlock(db: DbClient, date: string): Promise<boolean> {
-  const [holiday] = await db.select().from(holidays).where(eq(holidays.date, date));
-  const closures = await db
-    .select({ id: studioClosures.id })
-    .from(studioClosures)
-    .where(
-      and(
-        lte(studioClosures.startDate, date),
-        gte(studioClosures.endDate, date),
-      ),
-    );
+  // A regra de cobertura vive na funcao pura do dominio (fonte unica, L-005):
+  // aqui so carregamos as linhas dos bloqueios
+  const holidayRows = await db.select({ date: holidays.date }).from(holidays);
+  const closureRows = await db
+    .select({
+      startDate: studioClosures.startDate,
+      endDate: studioClosures.endDate,
+    })
+    .from(studioClosures);
 
-  return Boolean(holiday) || closures.length > 0;
+  return isDateCoveredByBlocks(date, [
+    ...holidayRows.map((row) => ({ kind: "holiday" as const, date: row.date })),
+    ...closureRows.map((row) => ({
+      kind: "closure" as const,
+      startDate: row.startDate,
+      endDate: row.endDate,
+    })),
+  ]);
 }
