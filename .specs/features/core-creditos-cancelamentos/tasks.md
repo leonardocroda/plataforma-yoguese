@@ -493,11 +493,11 @@ T15 → T18
 
 **Done when**:
 
-- [ ] A tela lista os créditos do aluno com geração, vencimento, status, origem e as transações de cada crédito
-- [ ] A tela permite conceder, devolver e cancelar crédito, exigindo o motivo
-- [ ] Após a ação, a tela mostra o novo status e a transação registrada
-- [ ] Rota visitada no walk (browser) sem erro de render
-- [ ] Gate check passa: `npm run build; npm run lint`
+- [x] A tela lista os créditos do aluno com geração, vencimento, status, origem e as transações de cada crédito
+- [x] A tela permite conceder, devolver e cancelar crédito, exigindo o motivo
+- [x] Após a ação, a tela mostra o novo status e a transação registrada
+- [x] Rota visitada no walk (browser) sem erro de render
+- [x] Gate check passa: `npm run build; npm run lint`
 
 **Tests**: none
 **Gate**: build
