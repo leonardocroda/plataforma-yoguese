@@ -449,10 +449,10 @@ T15 → T18
 
 **Done when**:
 
-- [ ] Form de não comparecimento lista os alunos fixos da ocorrência e mostra o resultado do registro
-- [ ] Form de cancelar aula mostra as reservas canceladas e a quantidade de créditos gerados
-- [ ] Form de reposição manual lista os créditos DISPONIVEL do aluno e não confirma sem escolha
-- [ ] Gate check passa: `npm run build; npm run lint`
+- [x] Form de não comparecimento lista os alunos fixos da ocorrência e mostra o resultado do registro
+- [x] Form de cancelar aula mostra as reservas canceladas e a quantidade de créditos gerados
+- [x] Form de reposição manual lista os créditos DISPONIVEL do aluno e não confirma sem escolha
+- [x] Gate check passa: `npm run build; npm run lint`
 
 **Tests**: none
 **Gate**: build
