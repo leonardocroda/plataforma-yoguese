@@ -196,6 +196,41 @@ occurrence does not get a second one.
 
 Snapshot - updated when work pauses.
 
+### Handoff snapshot (2026-11-10)
+
+- Feature `core-creditos-cancelamentos` EXECUTADA: 18 tasks (T1-T18), uma commit atomica por
+  task, em 3 batches (Fases 1-2, Fases 3-4 e Fase 5), mais 2 commits da rodada de correcao
+  do Verifier.
+- Verifier (author != verifier) devolveu FAIL com 10 achados; os 10 foram corrigidos em uma
+  passada no commit 60d114e, cada um fechado por commit na coluna `Closed` de
+  `verification.md`. Criterios CRD-45, CRD-46 e CRD-47 acrescentados ao spec (aviso so para
+  aluno fixo, aviso em ocorrencia cancelada, aviso em ocorrencia no passado), com os checks
+  C45-C47; a ressalva da borda de 7 dias dos vencimentos foi fechada no commit ed02215.
+- Suite: 149 testes verdes (unit 37 + integration 112), build e lint limpos,
+  `check_proofs.py` com 63 pass / 0 fail e `validate_verification.py` com 0 erro e 0 warning
+  (feature fechada).
+- 9 licoes destiladas dos achados do Verifier em `.specs/lessons.json`; L-002 e L-009
+  reincidiram nesta feature e foram promovidas a `confirmed` (mesma regra observada em
+  2 features distintas).
+- Decisoes do usuario que valem para as proximas features: AD-016 (escopo = regras no
+  servidor + UI minima do admin; a area do aluno vem depois), AD-017 (1 credito
+  CANCELAMENTO_ESTUDIO por aluno fixo afetado na ocorrencia cancelada), AD-018 (o credito da
+  reposicao vira UTILIZADO quando passa o fim da aula, sem etapa de presenca), AD-019
+  (agendamento manual pelo admin exige credito valido e nao conta no limite semanal), AD-020
+  e AD-021 (devolver credito volta a DISPONIVEL com o vencimento original), AD-022 e AD-023
+  (falta e cancelamento no status da reserva; o admin registra o aviso em nome do aluno),
+  AD-024 (o limite de 2 reposicoes conta a semana de segunda a domingo da data da aula) e
+  AD-025 (o credito do estudio nao duplica o credito que o aluno ja tem da ocorrencia).
+- Walk da feature: chromium headless (playwright-core) contra o dev server na 3001, rotas
+  `/creditos` e `/grade`, com as 6 acoes exercitadas (conceder, devolver, cancelar, aviso
+  com e sem as 24h, reposicao manual com e sem credito, cancelar aula).
+- `proofs.md` e artefato gerado: fica regenerado no HEAD de fechamento (por isso
+  aparece como modificacao local depois do ultimo commit).
+- Setup local (AD-015): `docker compose up -d` -> `npm run db:migrate` ->
+  `npm run db:seed` -> `npm run dev`; o Postgres local fica na 55432 (container `yoguese-db`).
+- Deferred to later features: area do aluno (autoatendimento de reposicao e botoes do
+  aluno), auth/profiles, notificacoes, pagamentos, relatorios e agenda.
+
 ### Handoff snapshot (2026-11-07)
 
 - Feature `core-turmas-reservas` EXECUTADA: 20 tasks (T1-T20), uma commit atomica por

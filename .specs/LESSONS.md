@@ -8,7 +8,17 @@
 
 Corroborated across multiple features. Safe to apply as guidance.
 
-_none_
+### L-002 - A proof line must name a test that asserts every case the check names, so one test covers the whole claim.
+- signal: `weak_test` · recurrence: 2 feature(s) · scope: `tests` · harmful: 0
+- features: core-turmas-reservas, core-creditos-cancelamentos
+- evidence: C3, C7, C9, C10 (tests) (+2 more)
+- last seen: 2026-11-10T12:17:03Z
+
+### L-009 - Every rule the source document states gets its own check, because behavior that is correct only by probe breaks silently when no test names it.
+- signal: `weak_test` · recurrence: 2 feature(s) · scope: `tests` · harmful: 0
+- features: core-turmas-reservas, core-creditos-cancelamentos
+- evidence: C28, C29, C30 (tests) (+1 more)
+- last seen: 2026-11-10T12:21:45Z
 
 ## Candidates (under observation - do NOT load as guidance yet)
 
@@ -18,12 +28,6 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - signal: `weak_test` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
 - features: core-turmas-reservas
 - evidence: C1 (src/modules/classes/__tests__/actions.int.test.ts:46) (tests)
-- last seen: 2026-11-07T11:24:38Z
-
-### L-002 - A proof line must name a test that asserts every case the check names, so one test covers the whole claim.
-- signal: `weak_test` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
-- features: core-turmas-reservas
-- evidence: C3, C7, C9, C10 (tests)
 - last seen: 2026-11-07T11:24:38Z
 
 ### L-003 - Any path that returns an existing occurrence re-checks the slot and class type status first, because get-or-create short-circuits before the write path validates.
@@ -62,12 +66,6 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: src/modules/bookings/services/bookings.ts:84 (bookings)
 - last seen: 2026-11-07T11:24:42Z
 
-### L-009 - Every rule the source document states gets its own check, because behavior that is correct only by probe breaks silently when no test names it.
-- signal: `weak_test` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
-- features: core-turmas-reservas
-- evidence: C28, C29, C30 (tests)
-- last seen: 2026-11-07T11:24:42Z
-
 ### L-010 - A rule gets its own requirement ID before the checks cite it, because two rules under one ID make the traceability ambiguous.
 - signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
 - features: core-turmas-reservas
@@ -79,6 +77,54 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - features: core-turmas-reservas
 - evidence: src/app/(site)/api/agenda/route.ts:56 (agenda)
 - last seen: 2026-11-07T11:24:43Z
+
+### L-012 - A rule with a numeric threshold is proven at the exact boundary and one step below, because a test in the middle of the range passes whatever the threshold is.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `credits` · harmful: 0
+- features: core-creditos-cancelamentos
+- evidence: C25/C26 (credits)
+- last seen: 2026-11-10T12:17:00Z
+
+### L-013 - A rule that compares two periods is proven with the request in a third period, because a test whose dates fall in the current period cannot tell which period the rule used.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `credits` · harmful: 0
+- features: core-creditos-cancelamentos
+- evidence: C20 (credits)
+- last seen: 2026-11-10T12:17:01Z
+
+### L-014 - A rule that decides a state from the current time is exercised through the service that owns the clock, because a unit test that injects the outcome proves nothing about the rule.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `credits` · harmful: 0
+- features: core-creditos-cancelamentos
+- evidence: C44 (credits)
+- last seen: 2026-11-10T12:17:01Z
+
+### L-015 - A rule with two branches is proven on both branches, because the branch the happy path never reaches stays untested.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `bookings` · harmful: 0
+- features: core-creditos-cancelamentos
+- evidence: C9 (bookings)
+- last seen: 2026-11-10T12:17:01Z
+
+### L-016 - A criterion that says the system persists references is proven by asserting the references on the rows that carry them, because asserting only the empty case passes whatever the writer stores.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `credits` · harmful: 0
+- features: core-creditos-cancelamentos
+- evidence: C11 (credits)
+- last seen: 2026-11-10T12:17:02Z
+
+### L-017 - A criterion that names a type of a created row is proven by asserting that type on the row itself, because an assertion on the related row passes whatever the type is.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `bookings` · harmful: 0
+- features: core-creditos-cancelamentos
+- evidence: C17 (bookings)
+- last seen: 2026-11-10T12:17:02Z
+
+### L-018 - Every rule the source document states gets its own check, because behavior that is correct only by probe breaks silently when no test names it.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: core-creditos-cancelamentos
+- evidence: spec.md edge cases CRD-46/CRD-47 (spec)
+- last seen: 2026-11-10T12:17:04Z
+
+### L-019 - A service that grants an entitlement checks the eligibility the requirement names, because a form that offers only eligible records hides the gap from every test.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `credits` · harmful: 0
+- features: core-creditos-cancelamentos
+- evidence: CRD-01/CRD-45 (credits)
+- last seen: 2026-11-10T12:17:05Z
 
 ## Quarantined (failed when applied - ignore)
 
