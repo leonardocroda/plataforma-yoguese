@@ -15,6 +15,14 @@ import {
   updateClassType as updateClassTypeService,
   updateSlot as updateSlotService,
 } from "./services/classes";
+import {
+  createHoliday as createHolidayService,
+  createStudioClosure as createStudioClosureService,
+  deleteHoliday as deleteHolidayService,
+  deleteStudioClosure as deleteStudioClosureService,
+  updateHoliday as updateHolidayService,
+  updateStudioClosure as updateStudioClosureService,
+} from "./services/blocks";
 
 /**
  * Server actions do admin (RES-03 Propagate, RES-14). Finas: chamam os
@@ -99,4 +107,43 @@ export async function endEnrollmentAction(
   input: { date?: string } = {},
 ) {
   return endEnrollmentService(await dbClient(), enrollmentId, input);
+}
+
+// ---- feriados e recessos (FER-01 a FER-25) ----
+
+export async function createHolidayAction(input: { date: string; name: string }) {
+  return createHolidayService(await dbClient(), input);
+}
+
+export async function updateHolidayAction(input: {
+  id: string;
+  date: string;
+  name: string;
+}) {
+  return updateHolidayService(await dbClient(), input);
+}
+
+export async function deleteHolidayAction(id: string) {
+  return deleteHolidayService(await dbClient(), { id });
+}
+
+export async function createStudioClosureAction(input: {
+  startDate: string;
+  endDate: string;
+  reason: string;
+}) {
+  return createStudioClosureService(await dbClient(), input);
+}
+
+export async function updateStudioClosureAction(input: {
+  id: string;
+  startDate: string;
+  endDate: string;
+  reason: string;
+}) {
+  return updateStudioClosureService(await dbClient(), input);
+}
+
+export async function deleteStudioClosureAction(id: string) {
+  return deleteStudioClosureService(await dbClient(), { id });
 }

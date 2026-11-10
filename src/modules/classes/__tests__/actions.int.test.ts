@@ -2,21 +2,31 @@ import { count, eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   bookings,
+  classSessions,
   classSlots,
   classTypes,
   fixedEnrollments,
+  holidays,
+  studioClosures,
 } from "../../../db/schema";
 import { createStudents, createTestClass, clearTables, grantTestCredit } from "../../../test/fixtures";
 import { PostgresTestInstance, startPostgres } from "../../../test/postgres";
-import { nextOccurrence, todayInStudio } from "../domain/occurrences";
+import { addDays, nextOccurrence, todayInStudio } from "../domain/occurrences";
+import { materializeSession } from "../../bookings/services/sessions";
 import {
   createBookingAction,
   createClassTypeAction,
   createEnrollmentAction,
+  createHolidayAction,
   createSlotAction,
+  createStudioClosureAction,
   deactivateClassTypeAction,
   deactivateSlotAction,
+  deleteHolidayAction,
+  deleteStudioClosureAction,
   endEnrollmentAction,
+  updateHolidayAction,
+  updateStudioClosureAction,
 } from "../actions";
 
 describe("admin actions", () => {
@@ -216,5 +226,200 @@ describe("admin actions", () => {
       .from(fixedEnrollments)
       .where(eq(fixedEnrollments.id, enrollment.ok ? enrollment.value.id : ""));
     expect(stored.status).toBe("INATIVA");
+  });
+
+  it("creates a holiday from the block action and returns the outcome (FER-17)", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const date = nextOccurrence({ weekday: 3 }, today);
+    await materializeSession(pg.db, { classSlotId: slotId, date });
+
+    const created = await createHolidayAction({ date, name: "Feriado Municipal" });
+    expect(created.ok).toBe(true);
+    if (created.ok) {
+      expect(created.value.date).toBe(date);
+      expect(created.value.name).toBe("Feriado Municipal");
+    }
+
+    // Efeito imediato pela action: a ocorrencia existente fica BLOQUEADA
+    const [session] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.sessionDate, date));
+    expect(session.status).toBe("BLOQUEADA");
+  });
+
+  it("refuses a holiday on a duplicated date (FER-18)", async () => {
+    const date = nextOccurrence({ weekday: 3 }, today);
+
+    const first = await createHolidayAction({ date, name: "Primeiro" });
+    expect(first.ok).toBe(true);
+
+    const second = await createHolidayAction({ date, name: "Repetido" });
+    expect(second.ok).toBe(false);
+    if (!second.ok) {
+      expect(second.error).toContain("feriado");
+      expect(second.field).toBe("date");
+    }
+    const rows = await pg.db.select().from(holidays);
+    expect(rows).toHaveLength(1);
+  });
+
+  it("edits a holiday from the block action and reprocesses the blocks (FER-19)", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const oldDate = nextOccurrence({ weekday: 3 }, today);
+    const newDate = addDays(oldDate, 7);
+
+    const created = await createHolidayAction({ date: oldDate, name: "Feriado" });
+    if (!created.ok) throw new Error(created.error);
+    for (const date of [oldDate, newDate]) {
+      await materializeSession(pg.db, { classSlotId: slotId, date });
+    }
+
+    const edited = await updateHolidayAction({
+      id: created.value.id,
+      date: newDate,
+      name: "Feriado Corrigido",
+    });
+    expect(edited.ok).toBe(true);
+    if (edited.ok) {
+      expect(edited.value.date).toBe(newDate);
+      expect(edited.value.name).toBe("Feriado Corrigido");
+    }
+
+    const [oldSession] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.sessionDate, oldDate));
+    expect(oldSession.status).toBe("AGENDADA");
+    const [newSession] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.sessionDate, newDate));
+    expect(newSession.status).toBe("BLOQUEADA");
+  });
+
+  it("creates a studio closure from the block action and returns the outcome (FER-21)", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const startDate = nextOccurrence({ weekday: 3 }, today);
+    const endDate = addDays(startDate, 7);
+    for (const date of [startDate, endDate]) {
+      await materializeSession(pg.db, { classSlotId: slotId, date });
+    }
+
+    const created = await createStudioClosureAction({
+      startDate,
+      endDate,
+      reason: "Recesso de Inverno",
+    });
+    expect(created.ok).toBe(true);
+    if (created.ok) {
+      expect(created.value.startDate).toBe(startDate);
+      expect(created.value.endDate).toBe(endDate);
+      expect(created.value.reason).toBe("Recesso de Inverno");
+    }
+
+    const sessions = await pg.db.select().from(classSessions);
+    expect(sessions).toHaveLength(2);
+    expect(sessions.every((session) => session.status === "BLOQUEADA")).toBe(true);
+  });
+
+  it("refuses a closure with an end before the start (FER-22)", async () => {
+    const startDate = nextOccurrence({ weekday: 3 }, today);
+
+    const created = await createStudioClosureAction({
+      startDate: addDays(startDate, 7),
+      endDate: startDate,
+      reason: "Invalido",
+    });
+    expect(created.ok).toBe(false);
+    if (!created.ok) {
+      expect(created.error).toContain("fim do recesso");
+      expect(created.field).toBe("endDate");
+    }
+    const rows = await pg.db.select().from(studioClosures);
+    expect(rows).toHaveLength(0);
+  });
+
+  it("edits a studio closure from the block action and reprocesses the blocks (FER-23)", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const startDate = nextOccurrence({ weekday: 3 }, today);
+    const endDate = addDays(startDate, 7);
+
+    const created = await createStudioClosureAction({
+      startDate,
+      endDate,
+      reason: "Recesso",
+    });
+    if (!created.ok) throw new Error(created.error);
+    for (const date of [startDate, endDate]) {
+      await materializeSession(pg.db, { classSlotId: slotId, date });
+    }
+
+    const edited = await updateStudioClosureAction({
+      id: created.value.id,
+      startDate,
+      endDate: startDate,
+      reason: "Recesso encurtado",
+    });
+    expect(edited.ok).toBe(true);
+    if (edited.ok) {
+      expect(edited.value.endDate).toBe(startDate);
+      expect(edited.value.reason).toBe("Recesso encurtado");
+    }
+
+    const [startSession] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.sessionDate, startDate));
+    expect(startSession.status).toBe("BLOQUEADA");
+    const [endSession] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.sessionDate, endDate));
+    expect(endSession.status).toBe("AGENDADA");
+  });
+
+  it("deletes a holiday from the block action and unblocks the occurrences (FER-24)", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const date = nextOccurrence({ weekday: 3 }, today);
+
+    const created = await createHolidayAction({ date, name: "Feriado" });
+    if (!created.ok) throw new Error(created.error);
+    await materializeSession(pg.db, { classSlotId: slotId, date });
+
+    const deleted = await deleteHolidayAction(created.value.id);
+    expect(deleted.ok).toBe(true);
+
+    const rows = await pg.db.select().from(holidays);
+    expect(rows).toHaveLength(0);
+    const [session] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.sessionDate, date));
+    expect(session.status).toBe("AGENDADA");
+  });
+
+  it("deletes a studio closure from the block action and unblocks the occurrences (FER-25)", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const date = nextOccurrence({ weekday: 3 }, today);
+
+    const created = await createStudioClosureAction({
+      startDate: date,
+      endDate: date,
+      reason: "Recesso",
+    });
+    if (!created.ok) throw new Error(created.error);
+    await materializeSession(pg.db, { classSlotId: slotId, date });
+
+    const deleted = await deleteStudioClosureAction(created.value.id);
+    expect(deleted.ok).toBe(true);
+
+    const rows = await pg.db.select().from(studioClosures);
+    expect(rows).toHaveLength(0);
+    const [session] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.sessionDate, date));
+    expect(session.status).toBe("AGENDADA");
   });
 });

@@ -231,13 +231,13 @@ T7 → T8
 
 **Done when**:
 
-- [ ] Action de criar feriado devolve o resultado do cadastro; action de criar recesso idem
-- [ ] Data de feriado duplicada é recusada pela action com o erro do serviço
-- [ ] Recesso com fim antes do início é recusado pela action
-- [ ] Actions de editar feriado e editar recesso devolvem o resultado do reprocessamento
-- [ ] Actions de remover feriado e remover recesso devolvem o resultado do desbloqueio
-- [ ] Testes de integração cobrem: criação de feriado e recesso, as duas recusas, as duas edições e as duas remoções (8 testes novos)
-- [ ] Gate check passa: `npx vitest run`
+- [x] Action de criar feriado devolve o resultado do cadastro; action de criar recesso idem
+- [x] Data de feriado duplicada é recusada pela action com o erro do serviço
+- [x] Recesso com fim antes do início é recusado pela action
+- [x] Actions de editar feriado e editar recesso devolvem o resultado do reprocessamento
+- [x] Actions de remover feriado e remover recesso devolvem o resultado do desbloqueio
+- [x] Testes de integração cobrem: criação de feriado e recesso, as duas recusas, as duas edições e as duas remoções (8 testes novos)
+- [x] Gate check passa: `npx vitest run`
 
 **Tests**: integration
 **Gate**: full
