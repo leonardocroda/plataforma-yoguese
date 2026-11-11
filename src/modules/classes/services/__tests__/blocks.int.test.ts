@@ -248,9 +248,11 @@ describe("blocks", () => {
   it("creates no credit when a block is registered (FER-05, PRD 15)", async () => {
     const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
     const date = nextOccurrence({ weekday: 3 }, today);
-    const students = await createStudents(pg.db, 2);
+    const date2 = addDays(date, 7);
+    const students = await createStudents(pg.db, 3);
 
-    // Fixo com vinculo ativo na data + reposicao de outro aluno com credito
+    // Fixo com vinculo ativo + reposicao com credito reservado (feriado) e
+    // experimental sem credito (recesso)
     const enrolled = await createEnrollment(pg.db, {
       studentId: students[0],
       classSlotId: slotId,
@@ -266,21 +268,51 @@ describe("blocks", () => {
       creditId,
     });
     expect(booked.ok).toBe(true);
+    const experimental = await createBooking(pg.db, {
+      studentId: students[2],
+      classSlotId: slotId,
+      date: date2,
+      type: "EXPERIMENTAL",
+    });
+    expect(experimental.ok).toBe(true);
 
+    // O feriado bloqueia a primeira ocorrencia: nenhum credito novo
     const created = await createHoliday(pg.db, { date, name: "Feriado Municipal" });
     expect(created.ok).toBe(true);
 
-    // Nenhuma linha de credito nova: o fixo nao recebe credito (PRD 7.1) e
-    // o credito da reposicao e o mesmo, devolvido a DISPONIVEL
-    const creditsAfter = await pg.db.select().from(credits);
-    expect(creditsAfter).toHaveLength(1);
-    expect(creditsAfter[0].id).toBe(creditId);
-    expect(creditsAfter[0].status).toBe("DISPONIVEL");
+    const creditsAfterHoliday = await pg.db.select().from(credits);
+    expect(creditsAfterHoliday).toHaveLength(1);
+    expect(creditsAfterHoliday[0].id).toBe(creditId);
+    expect(creditsAfterHoliday[0].status).toBe("DISPONIVEL");
     const fixedStudentCredits = await pg.db
       .select()
       .from(credits)
       .where(eq(credits.studentId, students[0]));
     expect(fixedStudentCredits).toHaveLength(0);
+
+    // O recesso bloqueia a segunda ocorrencia: tambem nenhum credito
+    // (PRD 7.2), e a experimental e cancelada sem credito
+    const closure = await createStudioClosure(pg.db, {
+      startDate: date2,
+      endDate: date2,
+      reason: "Recesso Teste",
+    });
+    expect(closure.ok).toBe(true);
+
+    const creditsAfterClosure = await pg.db.select().from(credits);
+    expect(creditsAfterClosure).toHaveLength(1);
+    expect(creditsAfterClosure[0].id).toBe(creditId);
+    const experimentalStudentCredits = await pg.db
+      .select()
+      .from(credits)
+      .where(eq(credits.studentId, students[2]));
+    expect(experimentalStudentCredits).toHaveLength(0);
+    const [experimentalBooking] = await pg.db
+      .select()
+      .from(bookings)
+      .where(eq(bookings.id, experimental.value!.id));
+    expect(experimentalBooking.status).toBe("CANCELADA");
+    expect(experimentalBooking.bookingType).toBe("EXPERIMENTAL");
   });
 
   it("moves the block when the holiday is edited (FER-19)", async () => {

@@ -16,7 +16,7 @@ import {
   grantTestCredit,
 } from "../../../../test/fixtures";
 import { PostgresTestInstance, startPostgres } from "../../../../test/postgres";
-import { nextOccurrence, todayInStudio } from "../../../classes/domain/occurrences";
+import { nextOccurrence, todayInStudio, addDays } from "../../../classes/domain/occurrences";
 import { cancelOccurrenceByStudio } from "../../../credits/services/cancellations";
 import { createEnrollment } from "../../../students/services/enrollments";
 import { createBooking } from "../bookings";
@@ -154,8 +154,10 @@ describe("block reconcile", () => {
 
   it("creates no credit when blocking (FER-05, PRD 15)", async () => {
     const { slotId, date } = await setupClass();
-    // Fixo com vinculo ativo na data + reposicao com credito reservado
-    const students = await createStudents(pg.db, 2);
+    const date2 = addDays(date, 7); // mesma terca, semana seguinte
+    // Fixo com vinculo ativo + reposicao com credito reservado (feriado) e
+    // experimental sem credito (recesso)
+    const students = await createStudents(pg.db, 3);
     const enrolled = await createEnrollment(pg.db, {
       studentId: students[0],
       classSlotId: slotId,
@@ -163,25 +165,56 @@ describe("block reconcile", () => {
     });
     if (!enrolled.ok) throw new Error(enrolled.error);
     const { creditId } = await bookMakeup(slotId, date, students[1]);
+    const experimental = await createBooking(pg.db, {
+      studentId: students[2],
+      classSlotId: slotId,
+      date: date2,
+      type: "EXPERIMENTAL",
+    });
+    if (!experimental.ok) throw new Error(experimental.error);
 
     const creditsBefore = await pg.db.select().from(credits);
     expect(creditsBefore).toHaveLength(1);
 
+    // O feriado bloqueia a primeira ocorrencia: nenhum credito novo
     await pg.db.insert(holidays).values({ date, name: "Feriado Teste" });
-    await reconcileBlockedOccurrences(pg.db, { fromDate: date, toDate: date });
+    await reconcileBlockedOccurrences(pg.db, { fromDate: date, toDate: date2 });
 
     // Nenhuma linha de credito nova: o fixo nao recebe credito (PRD 7.1) e
     // o credito da reposicao e o mesmo, devolvido
-    const creditsAfter = await pg.db.select().from(credits);
-    expect(creditsAfter).toHaveLength(1);
-    expect(creditsAfter[0].id).toBe(creditId);
-    expect(creditsAfter[0].status).toBe("DISPONIVEL");
-
+    const creditsAfterHoliday = await pg.db.select().from(credits);
+    expect(creditsAfterHoliday).toHaveLength(1);
+    expect(creditsAfterHoliday[0].id).toBe(creditId);
+    expect(creditsAfterHoliday[0].status).toBe("DISPONIVEL");
     const fixedStudentCredits = await pg.db
       .select()
       .from(credits)
       .where(eq(credits.studentId, students[0]));
     expect(fixedStudentCredits).toHaveLength(0);
+
+    // O recesso bloqueia a segunda ocorrencia: tambem nenhum credito
+    // (PRD 7.2), e a experimental e cancelada sem credito
+    await pg.db.insert(studioClosures).values({
+      startDate: date2,
+      endDate: date2,
+      reason: "Recesso Teste",
+    });
+    await reconcileBlockedOccurrences(pg.db, { fromDate: date2, toDate: date2 });
+
+    const creditsAfterClosure = await pg.db.select().from(credits);
+    expect(creditsAfterClosure).toHaveLength(1);
+    expect(creditsAfterClosure[0].id).toBe(creditId);
+    const experimentalStudentCredits = await pg.db
+      .select()
+      .from(credits)
+      .where(eq(credits.studentId, students[2]));
+    expect(experimentalStudentCredits).toHaveLength(0);
+    const [experimentalBooking] = await pg.db
+      .select()
+      .from(bookings)
+      .where(eq(bookings.id, experimental.value.id));
+    expect(experimentalBooking.status).toBe("CANCELADA");
+    expect(experimentalBooking.bookingType).toBe("EXPERIMENTAL");
   });
 
   it("leaves past occurrences untouched (FER-06)", async () => {
@@ -220,15 +253,31 @@ describe("block reconcile", () => {
 
   it("leaves cancelled occurrences untouched (FER-07)", async () => {
     const { slotId, date } = await setupClass();
+    const [student] = await createStudents(pg.db, 1);
     const materialized = await materializeSession(pg.db, {
       classSlotId: slotId,
       date,
     });
     if (!materialized.ok) throw new Error(materialized.error);
+
+    // A ocorrencia tem historico: uma reserva cancelada pelo estudio
+    const booked = await createBooking(pg.db, {
+      studentId: student,
+      classSlotId: slotId,
+      date,
+      type: "FIXED",
+    });
+    if (!booked.ok) throw new Error(booked.error);
     const cancelled = await cancelOccurrenceByStudio(pg.db, {
       classSessionId: materialized.value.id,
     });
     expect(cancelled.ok).toBe(true);
+
+    const [before] = await pg.db
+      .select()
+      .from(bookings)
+      .where(eq(bookings.id, booked.value.id));
+    expect(before.status).toBe("CANCELADA");
 
     await pg.db.insert(holidays).values({ date, name: "Feriado Teste" });
     const result = await reconcileBlockedOccurrences(pg.db, {
@@ -242,6 +291,17 @@ describe("block reconcile", () => {
       .from(classSessions)
       .where(eq(classSessions.id, materialized.value.id));
     expect(session.status).toBe("CANCELADA");
+
+    // A reserva historica segue intocada: mesmo status, mesmo cancelamento,
+    // e nenhuma escrita na linha (o updatedAt nao muda)
+    const [after] = await pg.db
+      .select()
+      .from(bookings)
+      .where(eq(bookings.id, booked.value.id));
+    expect(after.status).toBe("CANCELADA");
+    expect(after.cancelledBy).toBe(before.cancelledBy);
+    expect(after.cancelledAt?.getTime()).toBe(before.cancelledAt?.getTime());
+    expect(after.updatedAt.getTime()).toBe(before.updatedAt.getTime());
   });
 
   it("restores uncovered blocked occurrences to AGENDADA (FER-10)", async () => {
