@@ -256,12 +256,12 @@ T7 → T8
 
 **Done when**:
 
-- [ ] A tela lista os feriados com data e nome e os recessos com início, fim e motivo
-- [ ] A tela cadastra feriado (data, nome) e recesso (início, fim, motivo) e apresenta o resultado da operação
-- [ ] A tela edita e remove feriado e recesso, apresentando o resultado
-- [ ] Erros de validação (data duplicada, fim < início) aparecem na tela
-- [ ] Rota visitada no walk (browser) sem erro de render
-- [ ] Gate check passa: `npm run build; npm run lint`
+- [x] A tela lista os feriados com data e nome e os recessos com início, fim e motivo
+- [x] A tela cadastra feriado (data, nome) e recesso (início, fim, motivo) e apresenta o resultado da operação
+- [x] A tela edita e remove feriado e recesso, apresentando o resultado
+- [x] Erros de validação (data duplicada, fim < início) aparecem na tela
+- [x] Rota visitada no walk (browser) sem erro de render
+- [x] Gate check passa: `npm run build; npm run lint`
 
 **Tests**: none
 **Gate**: build

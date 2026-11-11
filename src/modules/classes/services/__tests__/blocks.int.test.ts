@@ -380,7 +380,7 @@ describe("blocks", () => {
       });
       expect(materialized.ok).toBe(true);
     }
-    let sessions = await pg.db.select().from(classSessions);
+    const sessions = await pg.db.select().from(classSessions);
     expect(sessions.every((session) => session.status === "BLOQUEADA")).toBe(true);
 
     // Encurtado para o primeiro dia: as datas que sairam voltam
