@@ -3,7 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { fixedEnrollments } from "../../../../db/schema";
 import { createStudents, createTestClass, clearTables, grantTestCredit } from "../../../../test/fixtures";
 import { PostgresTestInstance, startPostgres } from "../../../../test/postgres";
-import { todayInStudio, nextOccurrence } from "../../../classes/domain/occurrences";
+import { addDays, todayInStudio, nextOccurrence } from "../../../classes/domain/occurrences";
 import { createBooking } from "../../../bookings/services/bookings";
 import { getComposition } from "../../../bookings/services/composition";
 import { createEnrollment, endEnrollment, listEnrollmentsByStudent } from "../enrollments";
@@ -224,8 +224,10 @@ describe("enrollments", () => {
     const classA = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
     const classB = await createTestClass(pg.db, { weekday: 5, capacity: 8 });
     const [a, lonely] = await createStudents(pg.db, 2);
+    // A data de B e buscada depois da de A: a ordenacao do historico (por
+    // startDate asc) nao pode depender do dia da semana em que a suite roda
     const dateA = nextOccurrence({ weekday: 3 }, today);
-    const dateB = nextOccurrence({ weekday: 5 }, today);
+    const dateB = nextOccurrence({ weekday: 5 }, addDays(dateA, 1));
 
     const fixedA = await createEnrollment(pg.db, {
       studentId: a,
