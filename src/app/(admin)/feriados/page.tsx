@@ -6,6 +6,7 @@ import {
   CreateClosureForm,
   CreateHolidayForm,
   ClosureRowForms,
+  FeedbackHost,
   HolidayRowForms,
 } from "./feriados-forms";
 
@@ -34,6 +35,7 @@ export default async function AdminBlocksPage() {
           geram crédito. Remover ou editar o bloqueio reabre as ocorrências de
           hoje em diante.
         </p>
+        <FeedbackHost />
       </header>
 
       <section className="mb-8 grid gap-4 md:grid-cols-2">

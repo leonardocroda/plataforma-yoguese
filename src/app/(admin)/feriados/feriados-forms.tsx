@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   createHolidayAction,
@@ -25,10 +25,34 @@ const buttonClass =
 const dangerButtonClass =
   "rounded border border-red-300 px-3 py-1 text-xs text-red-700 disabled:opacity-60";
 
-function feedback(state: ActionState) {
+/**
+ * O resultado de toda operacao da tela aparece em um unico lugar, fora das
+ * listas: ao remover um registro a linha sai da lista no refresh, e o
+ * feedback dentro dela desapareceria junto (FER-17, FER-21, FER-24, FER-25).
+ */
+const FEEDBACK_EVENT = "feriados:feedback";
+
+function showFeedback(ok: boolean, message: string) {
+  window.dispatchEvent(
+    new CustomEvent(FEEDBACK_EVENT, { detail: { ok, message } }),
+  );
+}
+
+export function FeedbackHost() {
+  const [state, setState] = useState<ActionState>(INITIAL_STATE);
+
+  useEffect(() => {
+    function onFeedback(event: Event) {
+      setState((event as CustomEvent<ActionState>).detail);
+    }
+    window.addEventListener(FEEDBACK_EVENT, onFeedback);
+    return () => window.removeEventListener(FEEDBACK_EVENT, onFeedback);
+  }, []);
+
   if (!state.message) return null;
   return (
     <p
+      role="status"
       className={
         state.ok
           ? "text-xs text-[var(--yoguese-cinza)]"
@@ -64,14 +88,16 @@ export function CreateHolidayForm() {
         date: String(formData.get("date") ?? ""),
         name: String(formData.get("name") ?? ""),
       });
-      if (!result.ok) return { ok: false, message: result.error };
-      return {
-        ok: true,
-        message: `Feriado cadastrado para ${new Date(
-          `${result.value.date}T12:00:00Z`,
-        ).toLocaleDateString("pt-BR", { timeZone: "UTC" })}. As ocorrencias
-        da data ficam bloqueadas e as reservas ativas foram canceladas.`,
-      };
+      if (!result.ok) {
+        showFeedback(false, result.error);
+        return INITIAL_STATE;
+      }
+      const message = `Feriado cadastrado para ${new Date(
+        `${result.value.date}T12:00:00Z`,
+      ).toLocaleDateString("pt-BR", { timeZone: "UTC" })}. As ocorrencias
+      da data ficam bloqueadas e as reservas ativas foram canceladas.`;
+      showFeedback(true, message);
+      return { ok: true, message };
     },
     INITIAL_STATE,
   );
@@ -98,7 +124,6 @@ export function CreateHolidayForm() {
       <button type="submit" disabled={pending} className={buttonClass}>
         {pending ? "Cadastrando..." : "Cadastrar feriado"}
       </button>
-      {feedback(state)}
     </form>
   );
 }
@@ -115,8 +140,13 @@ export function HolidayRowForms({ holiday }: { holiday: Holiday }) {
       date: String(formData.get("date") ?? ""),
       name: String(formData.get("name") ?? ""),
     });
-    if (!result.ok) return { ok: false, message: result.error };
-    return { ok: true, message: "Feriado atualizado e bloqueios reprocessados." };
+    if (!result.ok) {
+      showFeedback(false, result.error);
+      return INITIAL_STATE;
+    }
+    const message = "Feriado atualizado e bloqueios reprocessados.";
+    showFeedback(true, message);
+    return { ok: true, message };
   }, INITIAL_STATE);
 
   const [removed, removeAction, removePending] = useActionState<
@@ -124,11 +154,13 @@ export function HolidayRowForms({ holiday }: { holiday: Holiday }) {
     FormData
   >(async () => {
     const result = await deleteHolidayAction(holiday.id);
-    if (!result.ok) return { ok: false, message: result.error };
-    return {
-      ok: true,
-      message: "Feriado removido e ocorrencias desbloqueadas.",
-    };
+    if (!result.ok) {
+      showFeedback(false, result.error);
+      return INITIAL_STATE;
+    }
+    const message = "Feriado removido e ocorrencias desbloqueadas.";
+    showFeedback(true, message);
+    return { ok: true, message };
   }, INITIAL_STATE);
 
   useEffect(() => {
@@ -168,7 +200,6 @@ export function HolidayRowForms({ holiday }: { holiday: Holiday }) {
           {removePending ? "Removendo..." : "Remover feriado"}
         </button>
       </form>
-      {feedback(updated) ?? feedback(removed)}
     </div>
   );
 }
@@ -183,16 +214,18 @@ export function CreateClosureForm() {
         endDate: String(formData.get("endDate") ?? ""),
         reason: String(formData.get("reason") ?? ""),
       });
-      if (!result.ok) return { ok: false, message: result.error };
-      return {
-        ok: true,
-        message: `Recesso cadastrado de ${new Date(
-          `${result.value.startDate}T12:00:00Z`,
-        ).toLocaleDateString("pt-BR", { timeZone: "UTC" })} a ${new Date(
-          `${result.value.endDate}T12:00:00Z`,
-        ).toLocaleDateString("pt-BR", { timeZone: "UTC" })}. As ocorrencias
-        do periodo ficam bloqueadas e as reservas ativas foram canceladas.`,
-      };
+      if (!result.ok) {
+        showFeedback(false, result.error);
+        return INITIAL_STATE;
+      }
+      const message = `Recesso cadastrado de ${new Date(
+        `${result.value.startDate}T12:00:00Z`,
+      ).toLocaleDateString("pt-BR", { timeZone: "UTC" })} a ${new Date(
+        `${result.value.endDate}T12:00:00Z`,
+      ).toLocaleDateString("pt-BR", { timeZone: "UTC" })}. As ocorrencias
+      do periodo ficam bloqueadas e as reservas ativas foram canceladas.`;
+      showFeedback(true, message);
+      return { ok: true, message };
     },
     INITIAL_STATE,
   );
@@ -223,7 +256,6 @@ export function CreateClosureForm() {
       <button type="submit" disabled={pending} className={buttonClass}>
         {pending ? "Cadastrando..." : "Cadastrar recesso"}
       </button>
-      {feedback(state)}
     </form>
   );
 }
@@ -241,8 +273,13 @@ export function ClosureRowForms({ closure }: { closure: Closure }) {
       endDate: String(formData.get("endDate") ?? ""),
       reason: String(formData.get("reason") ?? ""),
     });
-    if (!result.ok) return { ok: false, message: result.error };
-    return { ok: true, message: "Recesso atualizado e bloqueios reprocessados." };
+    if (!result.ok) {
+      showFeedback(false, result.error);
+      return INITIAL_STATE;
+    }
+    const message = "Recesso atualizado e bloqueios reprocessados.";
+    showFeedback(true, message);
+    return { ok: true, message };
   }, INITIAL_STATE);
 
   const [removed, removeAction, removePending] = useActionState<
@@ -250,11 +287,13 @@ export function ClosureRowForms({ closure }: { closure: Closure }) {
     FormData
   >(async () => {
     const result = await deleteStudioClosureAction(closure.id);
-    if (!result.ok) return { ok: false, message: result.error };
-    return {
-      ok: true,
-      message: "Recesso removido e ocorrencias desbloqueadas.",
-    };
+    if (!result.ok) {
+      showFeedback(false, result.error);
+      return INITIAL_STATE;
+    }
+    const message = "Recesso removido e ocorrencias desbloqueadas.";
+    showFeedback(true, message);
+    return { ok: true, message };
   }, INITIAL_STATE);
 
   useEffect(() => {
@@ -304,7 +343,6 @@ export function ClosureRowForms({ closure }: { closure: Closure }) {
           {removePending ? "Removendo..." : "Remover recesso"}
         </button>
       </form>
-      {feedback(updated) ?? feedback(removed)}
     </div>
   );
 }
