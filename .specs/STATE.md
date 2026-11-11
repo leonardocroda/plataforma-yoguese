@@ -250,6 +250,44 @@ column and removal is a physical delete.
 
 Snapshot - updated when work pauses.
 
+### Handoff snapshot (2026-11-11)
+
+- Feature `core-feriados-recessos` EXECUTADA: 8 tasks (T1-T8), uma commit atomica por task,
+  mais 3 commits de correcao (feedback da tela fora das listas 5b88dd2, fixture de
+  enrollments independente do dia da semana 1c593de e reforco das provas do Verifier
+  816fa51). Verifier (author != verifier) devolveu FAIL com 2 findings de forca de prova;
+  ambos fechados em 816fa51 na coluna `Closed` de `verification.md`.
+- Suite: 188 testes verdes (unit 46 + integration 142), build e lint limpos,
+  `check_proofs.py` com 47 pass / 0 fail e `validate_verification.py` com 0 erro e 0
+  warning (feature fechada).
+- Licoes: L-020 registrada (candidate: criterio que protege linhas existentes prova com as
+  linhas no lugar, campo a campo) e **L-015 promovida a confirmed** (recorrencia 2:
+  core-creditos-cancelamentos + core-feriados-recessos). L-002 e L-009 seguiram confirmadas
+  e foram aplicadas (checks proprios por regra, provas que nomeiam o teste completo).
+- Decisoes do usuario que valem para as proximas features: AD-026 (bloqueio cancela as
+  reservas ativas e devolve o credito da reposicao com vencimento original, sem criar
+  credito), AD-027 (desbloqueio automatico volta a AGENDADA sem restaurar reservas),
+  AD-028 (sobreposicao de bloqueios permitida, sem unificar), AD-029 (data passada aceita
+  com efeito so para frente), AD-030 (feriados nacionais sem seed), AD-031 (cancelamento
+  pelo estudio recusado em ocorrencia bloqueada), AD-032 (bloqueio de horario por turma
+  fica para o painel admin) e AD-033 (sem coluna status do PRD 12; remocao fisica).
+- Walk da feature: chromium headless (playwright-core) contra o dev server na 3001, rotas
+  `/feriados` e `/grade` com os 10 gestos exercitados (listar vazia, cadastrar feriado,
+  duplicar com erro, grade bloqueada, recesso sobreposto, editar, remover feriado com
+  sobreposicao mantendo bloqueio, remover recesso reabrindo, estado final com Natal 25/12
+  e recesso de hoje). Sem pageerrors. O feedback das operacoes fica num host unico fora
+  das listas (a linha removida sairia da lista levando a mensagem junto).
+- Nucleo do bloqueio: transicao pura em `bookings/domain/blocks.ts`
+  (`resolveBlockTransition` + `isDateCoveredByBlocks`), reconcilio em
+  `bookings/services/blocks.ts` (janela clampada para hoje, transacao unica, idempotente),
+  CRUD em `classes/services/blocks.ts` disparando o reconcilio, `hasBlock` do
+  `sessions.ts` na cobertura compartilhada (L-005), guarda de recusa em
+  `cancelOccurrenceByStudio`.
+- Setup local (AD-015): `docker compose up -d` -> `npm run db:migrate` -> `npm run
+  db:seed` -> `npm run dev` (3001 se a 3000 estiver ocupada); docker desktop precisa
+  estar de pe antes de qualquer comando docker.
+- Proxima feature da ordem do AD-009: experimentais (PRD modulo 8).
+
 ### Handoff snapshot (2026-11-10)
 
 - Feature `core-creditos-cancelamentos` EXECUTADA: 18 tasks (T1-T18), uma commit atomica por

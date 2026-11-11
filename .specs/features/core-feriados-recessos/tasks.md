@@ -276,98 +276,98 @@ T7 → T8
 **Run int**: `npx vitest run --reporter=verbose int.test`
 
 **C1** - Cadastrar o feriado marca BLOQUEADA as ocorrências AGENDADA daquela data de hoje em diante (FER-01, AC 1)
-Proof: run int | ✓ blocks > blocks the existing occurrences when the holiday is created
-Proof: run int | ✓ block reconcile > blocks the occurrences of the window and cancels their active bookings
-Proof: run unit | ✓ block transition > blocks a covered scheduled occurrence
+Proof: run int | ✓ blocks > blocks the existing occurrences when the holiday is created (FER-01)
+Proof: run int | ✓ block reconcile > blocks the occurrences of the window and cancels their active bookings (FER-01, FER-03)
+Proof: run unit | ✓ block transition (domain) > blocks a covered scheduled occurrence
 
 **C2** - Cadastrar o recesso marca BLOQUEADA as ocorrências de todas as datas do período, extremos inclusos (FER-02, AC 2)
-Proof: run int | ✓ blocks > blocks every date of the closure range when the closure is created
-Proof: run unit | ✓ block transition > matches the holiday date and the inclusive closure range
+Proof: run int | ✓ blocks > blocks every date of the closure range when the closure is created (FER-02)
+Proof: run unit | ✓ block transition (domain) > matches the holiday date and the inclusive closure range
 
 **C3** - A ocorrência que passa a BLOQUEADA tem as reservas ativas canceladas e as vagas liberadas (FER-03, AC 3)
-Proof: run int | ✓ block reconcile > blocks the occurrences of the window and cancels their active bookings
+Proof: run int | ✓ block reconcile > blocks the occurrences of the window and cancels their active bookings (FER-01, FER-03)
 
 **C4** - O crédito RESERVADO da reposição cancelada volta a DISPONIVEL com o vencimento original e a transação registrada (FER-04, AC 4)
-Proof: run int | ✓ block reconcile > returns the reserved makeup credit to DISPONIVEL keeping the original expiry
+Proof: run int | ✓ block reconcile > returns the reserved makeup credit to DISPONIVEL keeping the original expiry (FER-04)
 
 **C5** - Cadastrar feriado ou recesso não cria crédito algum (PRD 15 "Feriado | Não gera crédito") (FER-05, AC 5)
-Proof: run int | ✓ blocks > creates no credit when a block is registered
-Proof: run int | ✓ block reconcile > creates no credit when blocking
+Proof: run int | ✓ blocks > creates no credit when a block is registered (FER-05, PRD 15)
+Proof: run int | ✓ block reconcile > creates no credit when blocking (FER-05, PRD 15)
 
 **C6** - Ocorrência coberta no passado não é alterada: hoje é afetado, ontem não (FER-06, AC 6)
-Proof: run int | ✓ block reconcile > leaves past occurrences untouched
-Proof: run unit | ✓ block transition > treats today as affected and yesterday as not
+Proof: run int | ✓ block reconcile > leaves past occurrences untouched (FER-06)
+Proof: run unit | ✓ block transition (domain) > treats today as affected and yesterday as not
 
 **C7** - Ocorrência coberta já CANCELADA permanece CANCELADA, sem tocar nas reservas históricas (FER-07, AC 7)
-Proof: run int | ✓ block reconcile > leaves cancelled occurrences untouched
-Proof: run unit | ✓ block transition > ignores a covered cancelled occurrence
+Proof: run int | ✓ block reconcile > leaves cancelled occurrences untouched (FER-07)
+Proof: run unit | ✓ block transition (domain) > ignores a covered cancelled occurrence
 
 **C8** - Enquanto a data está coberta por feriado ou recesso, nova reserva na ocorrência é recusada (FER-08, AC 8)
 Proof: run int | ✓ bookings > rejects a booking in an occurrence blocked by holiday or closure
 
 **C9** - Cancelamento pelo estúdio em ocorrência BLOQUEADA é recusado: status mantido, reservas intactas, nenhum crédito (FER-09, AC 9)
-Proof: run int | ✓ studio cancellation > refuses the cancellation of a blocked occurrence
+Proof: run int | ✓ studio cancellation > refuses the cancellation of a blocked occurrence (FER-09)
 
 **C10** - Remover o feriado devolve a AGENDADA as ocorrências BLOQUEADA da data de hoje em diante não mais cobertas (FER-10, AC 1)
-Proof: run int | ✓ blocks > unblocks the occurrences when the holiday is deleted
-Proof: run int | ✓ block reconcile > restores uncovered blocked occurrences to AGENDADA
-Proof: run unit | ✓ block transition > reopens an uncovered blocked occurrence
+Proof: run int | ✓ blocks > unblocks the occurrences when the holiday is deleted (FER-10)
+Proof: run int | ✓ block reconcile > restores uncovered blocked occurrences to AGENDADA (FER-10)
+Proof: run unit | ✓ block transition (domain) > reopens an uncovered blocked occurrence
 
 **C11** - Remover ou encurtar o recesso devolve a AGENDADA as ocorrências das datas que deixaram de ser cobertas (FER-11, AC 2)
-Proof: run int | ✓ blocks > unblocks the occurrences when the closure is deleted
-Proof: run int | ✓ blocks > blocks new dates and releases removed dates when the closure is edited
+Proof: run int | ✓ blocks > unblocks the occurrences when the closure is deleted (FER-11)
+Proof: run int | ✓ blocks > blocks new dates and releases removed dates when the closure is edited (FER-11, FER-23)
 
 **C12** - Enquanto qualquer outro bloqueio cobre a data, a ocorrência permanece BLOQUEADA (FER-12, AC 3)
-Proof: run int | ✓ block reconcile > keeps the occurrence blocked while another block covers the date
-Proof: run int | ✓ blocks > keeps the occurrence blocked when one of two overlapping blocks is removed
+Proof: run int | ✓ block reconcile > keeps the occurrence blocked while another block covers the date (FER-12)
+Proof: run int | ✓ blocks > keeps the occurrence blocked when one of two overlapping blocks is removed (FER-12)
 
 **C13** - O desbloqueio não altera ocorrência bloqueada no passado (FER-13, AC 4)
-Proof: run int | ✓ block reconcile > keeps a past blocked occurrence blocked when unblocking
-Proof: run unit | ✓ block transition > keeps a past blocked occurrence blocked
+Proof: run int | ✓ block reconcile > keeps a past blocked occurrence blocked when unblocking (FER-13)
+Proof: run unit | ✓ block transition (domain) > keeps a past blocked occurrence blocked
 
 **C14** - O desbloqueio não devolve a AGENDADA ocorrência cuja data não corresponde mais ao dia da semana da turma (FER-14, AC 5)
-Proof: run int | ✓ block reconcile > keeps the occurrence blocked when the slot weekday changed
-Proof: run unit | ✓ block transition > keeps the occurrence blocked when the weekday no longer matches
+Proof: run int | ✓ block reconcile > keeps the occurrence blocked when the slot weekday changed (FER-14)
+Proof: run unit | ✓ block transition (domain) > keeps the occurrence blocked when the weekday no longer matches
 
 **C15** - O desbloqueio não restaura as reservas canceladas pelo bloqueio (FER-15, AC 6)
-Proof: run int | ✓ block reconcile > restores no booking when unblocking
+Proof: run int | ✓ block reconcile > restores no booking when unblocking (FER-15)
 
 **C16** - A tela /feriados lista os feriados com data e nome e os recessos com início, fim e motivo (FER-16, AC 1)
-Proof: run int | ✓ blocks > lists holidays and studio closures
+Proof: run int | ✓ blocks > lists holidays and studio closures (FER-16)
 Proof: walk - a tela /feriados lista os feriados com data e nome e os recessos com inicio, fim e motivo
 
 **C17** - Cadastrar feriado pela tela grava, aplica o bloqueio e apresenta o resultado da operação (FER-17, AC 2)
-Proof: run int | ✓ admin actions > creates a holiday from the block action and returns the outcome
+Proof: run int | ✓ admin actions > creates a holiday from the block action and returns the outcome (FER-17)
 Proof: walk - cadastrar feriado na tela /feriados grava, bloqueia e apresenta o resultado da operacao
 
 **C18** - Feriado em data já cadastrada é recusado pela tela com o erro apresentado (FER-18, AC 3)
-Proof: run int | ✓ admin actions > refuses a holiday on a duplicated date
+Proof: run int | ✓ admin actions > refuses a holiday on a duplicated date (FER-18)
 
 **C19** - Editar o feriado aplica data e nome novos e reprocessa os bloqueios das datas afetadas (FER-19, AC 4)
-Proof: run int | ✓ blocks > moves the block when the holiday is edited
-Proof: run int | ✓ admin actions > edits a holiday from the block action and reprocesses the blocks
+Proof: run int | ✓ blocks > moves the block when the holiday is edited (FER-19)
+Proof: run int | ✓ admin actions > edits a holiday from the block action and reprocesses the blocks (FER-19)
 
 **C20** - Edição do feriado que colide com a data de outro feriado é recusada com o erro apresentado (FER-20, AC 5)
-Proof: run int | ✓ blocks > refuses to edit a holiday onto another holiday date
+Proof: run int | ✓ blocks > refuses to edit a holiday onto another holiday date (FER-20)
 
 **C21** - Cadastrar recesso pela tela grava, aplica o bloqueio e apresenta o resultado da operação (FER-21, AC 6)
-Proof: run int | ✓ admin actions > creates a studio closure from the block action and returns the outcome
+Proof: run int | ✓ admin actions > creates a studio closure from the block action and returns the outcome (FER-21)
 Proof: walk - cadastrar recesso na tela /feriados grava, bloqueia e apresenta o resultado da operacao
 
 **C22** - Recesso com fim antes do início é recusado com o erro apresentado (FER-22, AC 7)
-Proof: run int | ✓ blocks > refuses a closure whose end is before its start
-Proof: run int | ✓ admin actions > refuses a closure with an end before the start
+Proof: run int | ✓ blocks > refuses a closure whose end is before its start (FER-22)
+Proof: run int | ✓ admin actions > refuses a closure with an end before the start (FER-22)
 
 **C23** - Editar o recesso aplica os valores novos e reprocessa os bloqueios das datas afetadas (FER-23, AC 8)
-Proof: run int | ✓ blocks > blocks new dates and releases removed dates when the closure is edited
-Proof: run int | ✓ admin actions > edits a studio closure from the block action and reprocesses the blocks
+Proof: run int | ✓ blocks > blocks new dates and releases removed dates when the closure is edited (FER-11, FER-23)
+Proof: run int | ✓ admin actions > edits a studio closure from the block action and reprocesses the blocks (FER-23)
 
 **C24** - Remover o feriado pela tela remove o registro, desbloqueia as ocorrências e apresenta o resultado (FER-24, AC 9)
-Proof: run int | ✓ admin actions > deletes a holiday from the block action and unblocks the occurrences
+Proof: run int | ✓ admin actions > deletes a holiday from the block action and unblocks the occurrences (FER-24)
 Proof: walk - remover feriado na tela /feriados desbloqueia as ocorrencias e apresenta o resultado
 
 **C25** - Remover o recesso pela tela remove o registro, desbloqueia as ocorrências e apresenta o resultado (FER-25, AC 10)
-Proof: run int | ✓ admin actions > deletes a studio closure from the block action and unblocks the occurrences
+Proof: run int | ✓ admin actions > deletes a studio closure from the block action and unblocks the occurrences (FER-25)
 Proof: walk - remover recesso na tela /feriados desbloqueia as ocorrencias e apresenta o resultado
 
 ---
@@ -376,9 +376,9 @@ Proof: walk - remover recesso na tela /feriados desbloqueia as ocorrencias e apr
 
 The feature's live state, written as it happens - a compaction gives no warning.
 
-**Settled mid-build:** 2026-11-10 - user aprovou o spec ("aprovo"); as 7 decisões de produto e a da coluna `status` estão nos AD-026 a AD-033 de `.specs/STATE.md` e em `context.md`
-**Dispatched:** -
-**Walked:** -
+**Settled mid-build:** 2026-11-10 - user aprovou o spec ("aprovo") e as tasks ("aprovado"); as 7 decisões de produto e a da coluna `status` estão nos AD-026 a AD-033 de `.specs/STATE.md` e em `context.md`; 2026-11-11 - o walk expôs dois defeitos corrigidos no escopo: o feedback do remove sumia com o refresh (a linha saía da lista levando a mensagem junto) e o resultado passou a um host único fora das listas (commit 5b88dd2), e a fixture do teste `enrollments > student history` (pré-existente, fora da feature) era dependente do dia da semana - a data de B passou a ser buscada depois da de A, asserções intactas (commit 1c593de)
+**Dispatched:** Verifier (sub-agent independente, author != verifier) sobre o HEAD 1c593de - sent 2026-11-11; returned: 2026-11-11, FAIL: 25 checks avaliados, 23 segurando e 2 findings de força de prova (FER-07 sem asserção da reserva histórica; FER-05/PRD 7.2 provado só pelo feriado, sem recesso nem EXPERIMENTAL); 3 exemplos proprios do Verifier passaram, nenhuma regra quebrou. Correcao em 816fa51 (rodada 2: check_proofs.py 47 pass / 0 fail no HEAD 816fa51)
+**Walked:** 2026-11-11 - chromium headless (playwright-core, chrome.exe do cache ms-playwright) contra o dev server na 3001, banco `yoguese-db` (porta 55432) com seed e 2 turmas (terca 13:39 e quarta 16:39, restantes dos walks anteriores). /feriados abre com as duas listas vazias; cadastrar feriado 11/11 "Feriado do Walk" -> feedback "Feriado cadastrado para 11/11/2026..." e a linha na lista; mesma data de novo -> "ja existe feriado cadastrado para esta data" em vermelho; /grade passa a mostrar a ocorrencia de quarta como "Bloqueada por feriado ou recesso"; cadastrar recesso 11/11..11/11 "Recesso do Walk" (sobreposto ao feriado); editar o feriado pela linha (nome) -> "Feriado atualizado e bloqueios reprocessados."; remover o feriado -> "Feriado removido e ocorrencias desbloqueadas." e a /grade segue bloqueada pelo recesso (sobreposicao ao vivo); remover o recesso -> a /grade reabre a ocorrencia (sem bloqueios). Estado final deixado no banco: feriado "Natal" 25/12 e recesso "Recesso de quarta (demo)" 11/11, com a ocorrencia de quarta visivel bloqueada na grade. Sem pageerrors.
 
 ---
 

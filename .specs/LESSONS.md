@@ -20,6 +20,12 @@ Corroborated across multiple features. Safe to apply as guidance.
 - evidence: C28, C29, C30 (tests) (+1 more)
 - last seen: 2026-11-10T12:21:45Z
 
+### L-015 - A rule with two branches is proven on both branches, because the branch the happy path never reaches stays untested.
+- signal: `weak_test` · recurrence: 2 feature(s) · scope: `bookings` · harmful: 0
+- features: core-creditos-cancelamentos, core-feriados-recessos
+- evidence: C9 (bookings) (+1 more)
+- last seen: 2026-11-11T19:39:52Z
+
 ## Candidates (under observation - do NOT load as guidance yet)
 
 Seen once or not yet corroborated. Tracked, not trusted.
@@ -96,12 +102,6 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: C44 (credits)
 - last seen: 2026-11-10T12:17:01Z
 
-### L-015 - A rule with two branches is proven on both branches, because the branch the happy path never reaches stays untested.
-- signal: `weak_test` · recurrence: 1 feature(s) · scope: `bookings` · harmful: 0
-- features: core-creditos-cancelamentos
-- evidence: C9 (bookings)
-- last seen: 2026-11-10T12:17:01Z
-
 ### L-016 - A criterion that says the system persists references is proven by asserting the references on the rows that carry them, because asserting only the empty case passes whatever the writer stores.
 - signal: `weak_test` · recurrence: 1 feature(s) · scope: `credits` · harmful: 0
 - features: core-creditos-cancelamentos
@@ -125,6 +125,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - features: core-creditos-cancelamentos
 - evidence: CRD-01/CRD-45 (credits)
 - last seen: 2026-11-10T12:17:05Z
+
+### L-020 - A criterion that protects existing rows is proven with those rows in place, asserting their fields after the operation
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
+- features: core-feriados-recessos
+- evidence: C7 (tests)
+- last seen: 2026-11-11T19:39:51Z
 
 ## Quarantined (failed when applied - ignore)
 

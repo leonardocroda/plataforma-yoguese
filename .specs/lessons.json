@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 20,
+  "next_id": 21,
   "lessons": [
     {
       "id": "L-001",
@@ -268,17 +268,19 @@
       "text": "A rule with two branches is proven on both branches, because the branch the happy path never reaches stays untested.",
       "signal": "weak_test",
       "scope": "bookings",
-      "status": "candidate",
+      "status": "confirmed",
       "features": [
-        "core-creditos-cancelamentos"
+        "core-creditos-cancelamentos",
+        "core-feriados-recessos"
       ],
-      "recurrence": 1,
+      "recurrence": 2,
       "harmful": 0,
       "evidence": [
-        "C9 (bookings)"
+        "C9 (bookings)",
+        "C5 (tests)"
       ],
       "created": "2026-11-10T12:17:01Z",
-      "last_seen": "2026-11-10T12:17:01Z"
+      "last_seen": "2026-11-11T19:39:52Z"
     },
     {
       "id": "L-016",
@@ -351,6 +353,24 @@
       ],
       "created": "2026-11-10T12:17:05Z",
       "last_seen": "2026-11-10T12:17:05Z"
+    },
+    {
+      "id": "L-020",
+      "key": "weak_test::a criterion that protects existing rows is proven with those rows in place asserting their fields after the operation",
+      "text": "A criterion that protects existing rows is proven with those rows in place, asserting their fields after the operation",
+      "signal": "weak_test",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "core-feriados-recessos"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C7 (tests)"
+      ],
+      "created": "2026-11-11T19:39:51Z",
+      "last_seen": "2026-11-11T19:39:51Z"
     }
   ]
 }
