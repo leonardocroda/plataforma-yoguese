@@ -93,6 +93,21 @@ async function emailTaken(
 }
 
 /**
+ * O plano indicado precisa existir: sem esta checagem, um planId inalcançavel
+ * pelo formulario mas submetivel pela action estoura a FK como 500 (STUD-11).
+ */
+async function planExists(
+  db: DbClient,
+  planId: string,
+): Promise<boolean> {
+  const [plan] = await db
+    .select({ id: plans.id })
+    .from(plans)
+    .where(eq(plans.id, planId));
+  return Boolean(plan);
+}
+
+/**
  * Cria a aluna com o cadastro completo do PRD 4.4 (STUD-01). Campos
  * obrigatorios e formato sao recusados pelo validador com erro por campo
  * (STUD-02); e-mail duplicado e recusado com erro proprio (STUD-04). A data
@@ -117,6 +132,9 @@ export async function createStudent(
   const email = normalizeEmail(input.email);
   if (await emailTaken(db, email)) {
     return { ok: false, error: "e-mail ja cadastrado", field: "email" };
+  }
+  if (input.planId && !(await planExists(db, input.planId))) {
+    return { ok: false, error: "planId: plano nao encontrado", field: "planId" };
   }
 
   try {
@@ -173,6 +191,9 @@ export async function updateStudent(
   const email = normalizeEmail(input.email);
   if (await emailTaken(db, email, input.studentId)) {
     return { ok: false, error: "e-mail ja cadastrado", field: "email" };
+  }
+  if (input.planId && !(await planExists(db, input.planId))) {
+    return { ok: false, error: "planId: plano nao encontrado", field: "planId" };
   }
 
   try {

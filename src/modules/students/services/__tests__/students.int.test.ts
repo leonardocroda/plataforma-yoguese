@@ -223,6 +223,34 @@ describe("students services", () => {
     expect(rows.some((row) => row.email === "MARIA@TESTE.COM")).toBe(false);
   });
 
+  it("plano inexistente e recusado com erro do campo, sem estourar FK (STUD-11)", async () => {
+    const missingPlanId = crypto.randomUUID();
+
+    const created = await createStudent(
+      pg.db,
+      studentInput({ planId: missingPlanId, status: "ATIVO" }),
+    );
+    expect(created.ok).toBe(false);
+    if (created.ok) return;
+    expect(created.field).toBe("planId");
+    expect(created.error).toContain("plano nao encontrado");
+
+    const first = await createStudent(pg.db, studentInput());
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    const edited = await updateStudent(pg.db, {
+      studentId: first.value.id,
+      ...studentInput({ planId: missingPlanId }),
+    });
+    expect(edited.ok).toBe(false);
+    if (edited.ok) return;
+    expect(edited.field).toBe("planId");
+    expect(edited.error).toContain("plano nao encontrado");
+
+    const rows = await pg.db.select().from(students);
+    expect(rows).toHaveLength(1);
+  });
+
   it("edita a aluna e a mudanca aparece na listagem (STUD-05)", async () => {
     const plan = await createTestPlan({ name: "Mensal 2x" });
     const created = await createStudent(pg.db, studentInput());

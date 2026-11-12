@@ -447,6 +447,9 @@ Proof: run students | ✓ students services > reativar aluna sem plano e recusad
 **C28** - E-mail de aluna igual diferindo só em maiúsculas é recusado no cadastro e na edição, e gravado normalizado (STUD-10, AC 10) *check da verificação (F5)*
 Proof: run students | ✓ students services > e-mail igual diferindo so em maiusculas e duplicado (STUD-10)
 
+**C29** - Plano inexistente no cadastro ou na edição é recusado com erro do campo, sem estourar a FK (STUD-11, AC 11) *check da verificação (F6)*
+Proof: run students | ✓ students services > plano inexistente e recusado com erro do campo, sem estourar FK (STUD-11)
+
 **C30** - A tela de aluna oferece e exibe os quatro termos exatos do PRD 4.4 (STUD-03, AC 3) *check da verificação (F3)*
 Proof: walk - select de status oferece Experimental, Aguardando matrícula, Ativo e Inativo
 

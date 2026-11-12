@@ -105,6 +105,7 @@ experimentais.
 8. WHEN o admin abre o detalhe de uma aluna THEN a tela SHALL mostrar os dados cadastrais, os horários fixos ativos, os créditos disponíveis com vencimento e o histórico de reservas  <!-- event-driven -->
 9. IF uma aluna sem plano é marcada como Ativa THEN o sistema SHALL recusar indicando o plano obrigatório  <!-- unwanted-behavior --> *encontrado pela verificação: o invariante do cadastro não valia no ciclo de vida por status (F2, STUD-09)*
 10. IF um e-mail igual a um já cadastrado difere apenas por maiúsculas THEN o sistema SHALL recusá-lo como duplicado e gravar o e-mail normalizado  <!-- unwanted-behavior --> *encontrado pela verificação: a unicidade era case-sensitive para a identidade futura de acesso (F5, STUD-10)*
+11. IF o plano indicado no cadastro ou na edição não existe THEN o sistema SHALL recusar com erro do campo plano, sem erro de servidor  <!-- unwanted-behavior --> *encontrado pela verificação: planId inalcançável pelo formulário mas submetível pela action estourava a FK (F6, STUD-11)*
 
 **Independent Test**: criar uma aluna com plano Ativo aparece na listagem e no detalhe com créditos e horários; inativá-la libera a vaga na grade (ocupação derivada), reativá-la restaura.
 
@@ -163,6 +164,7 @@ experimentais.
 | STUD-08 | P1: Cadastro de alunos | Design | Pending |
 | STUD-09 | P1: Cadastro de alunos | Verification | Pending |
 | STUD-10 | P1: Cadastro de alunos | Verification | Pending |
+| STUD-11 | P1: Cadastro de alunos | Verification | Pending |
 | PLAN-01 | P1: Gestão de planos | Design | Pending |
 | PLAN-02 | P1: Gestão de planos | Design | Pending |
 | PLAN-03 | P1: Gestão de planos | Design | Pending |
