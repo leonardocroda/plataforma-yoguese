@@ -20,6 +20,8 @@ import {
   changeExperimentalOccurrence,
   createExperimentalRequest,
   refuseExperimental,
+  registerPayment,
+  registerWhatsAppContact,
 } from "../experimentals";
 
 // EXP-20 a EXP-23: a aprovacao revalida a vaga, ocupa a ocorrencia e duas
@@ -379,5 +381,60 @@ describe("experimental approval", () => {
 
     const history = await pg.db.select().from(experimentalReschedules);
     expect(history).toHaveLength(0);
+  });
+
+  it("registra pagamento nos quatro status", async () => {
+    const { classTypeId, slotId, date } = await occurrence(3, 2);
+    const request = await pendingRequest({ classTypeId, classSlotId: slotId, date });
+
+    const [registro] = await pg.db
+      .select()
+      .from(experimentals)
+      .where(eq(experimentals.id, request.id));
+    expect(registro.paymentStatus).toBe("PENDENTE");
+
+    for (const paymentStatus of [
+      "PAGO",
+      "ISENTO",
+      "REEMBOLSADO",
+      "PENDENTE",
+    ] as const) {
+      const result = await registerPayment(pg.db, {
+        experimentalId: request.id,
+        paymentStatus,
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.value.paymentStatus).toBe(paymentStatus);
+
+      const [atual] = await pg.db
+        .select()
+        .from(experimentals)
+        .where(eq(experimentals.id, request.id));
+      expect(atual.paymentStatus).toBe(paymentStatus);
+    }
+  });
+
+  it("registra contato via WhatsApp", async () => {
+    const { classTypeId, slotId, date } = await occurrence(3, 2);
+    const request = await pendingRequest({ classTypeId, classSlotId: slotId, date });
+    const now = new Date();
+
+    const result = await registerWhatsAppContact(
+      pg.db,
+      { experimentalId: request.id },
+      now,
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.whatsappContactedAt?.toISOString()).toBe(now.toISOString());
+
+    const [atual] = await pg.db
+      .select()
+      .from(experimentals)
+      .where(eq(experimentals.id, request.id));
+    expect(atual.whatsappContactedAt?.toISOString()).toBe(now.toISOString());
   });
 });

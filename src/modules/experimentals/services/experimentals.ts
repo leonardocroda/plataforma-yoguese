@@ -25,13 +25,19 @@ import { listActiveSlots } from "../../classes/services/classes";
 import {
   addDays,
   occurrenceDates,
+  studioDateTimeToInstant,
   todayInStudio,
 } from "../../classes/domain/occurrences";
 import { normalizePhone } from "../domain/phone";
-import { canReschedule } from "../domain/rules";
+import {
+  canCancel,
+  canReschedule,
+  cancellationKeepsRight,
+} from "../domain/rules";
 import {
   HEALTH_DECLARATION,
   validateExperimentalRequest,
+  type ExperimentalPaymentStatus,
 } from "../domain/validators";
 
 export type Experimental = typeof experimentals.$inferSelect;
@@ -50,6 +56,14 @@ export type ExperimentalResult =
   | { ok: false; error: string; field?: string };
 
 export type ExperimentalRequestResult = ExperimentalResult;
+
+/** Os quatro status de pagamento do PRD 8.4 (EXP-25, EXP-33). */
+const PAYMENT_STATUSES: readonly ExperimentalPaymentStatus[] = [
+  "PENDENTE",
+  "PAGO",
+  "ISENTO",
+  "REEMBOLSADO",
+];
 
 const DUPLICATE_ERROR = "ja existe uma aula experimental para este telefone";
 
@@ -727,4 +741,213 @@ export async function rescheduleExperimental(
 
     return { ok: true, value: updated };
   });
+}
+
+/** Antecedencia em horas entre o instante dado e o inicio da ocorrencia. */
+const MS_PER_HOUR = 3_600_000;
+
+/**
+ * Cancelamento (EXP-34, EXP-35, EXP-37, EXP-38): com 24 horas ou mais de
+ * antecedencia o cancelamento mantem o direito ao reagendamento; com menos,
+ * o direito acaba. A vaga volta nos dois casos, porque so a aprovada
+ * ocupa.
+ *
+ * Depois do inicio da ocorrencia o cancelamento e recusado e o caminho
+ * indicado e o registro de falta (EXP-37).
+ */
+export async function cancelExperimental(
+  db: DbClient,
+  input: { experimentalId: string },
+  now: Date = new Date(),
+): Promise<ExperimentalResult> {
+  const [experimental] = await db
+    .select()
+    .from(experimentals)
+    .where(eq(experimentals.id, input.experimentalId));
+  if (!experimental) {
+    return {
+      ok: false,
+      error: "solicitacao nao encontrada",
+      field: "experimentalId",
+    };
+  }
+  if (experimental.status === "DUPLICADA") {
+    return { ok: false, error: "tentativa duplicada e somente leitura" };
+  }
+  if (!canCancel(experimental.status)) {
+    return {
+      ok: false,
+      error: "status nao aceita cancelamento",
+      field: "status",
+    };
+  }
+
+  const occurrence = await loadOccurrence(db, experimental.classSessionId);
+  if (!occurrence) {
+    return { ok: false, error: "ocorrencia nao encontrada" };
+  }
+  const { session, slot } = occurrence;
+
+  const start = studioDateTimeToInstant(session.sessionDate, slot.startTime);
+  if (now.getTime() >= start.getTime()) {
+    return {
+      ok: false,
+      error: "cancelamento apos o inicio da ocorrencia: registre a falta",
+      field: "status",
+    };
+  }
+
+  const hoursBeforeStart = (start.getTime() - now.getTime()) / MS_PER_HOUR;
+  const status = cancellationKeepsRight(hoursBeforeStart)
+    ? "CANCELADA_COM_DIREITO"
+    : "CANCELADA_SEM_DIREITO";
+
+  const [updated] = await db
+    .update(experimentals)
+    .set({ status, cancelledAt: now, updatedAt: now })
+    .where(eq(experimentals.id, experimental.id))
+    .returning();
+  if (!updated) {
+    return { ok: false, error: "falha ao cancelar a solicitacao" };
+  }
+  return { ok: true, value: updated };
+}
+
+/**
+ * Falta (EXP-36): so depois do inicio da ocorrencia. A falta libera a
+ * vaga e encerra o direito ao reagendamento.
+ */
+export async function registerNoShow(
+  db: DbClient,
+  input: { experimentalId: string },
+  now: Date = new Date(),
+): Promise<ExperimentalResult> {
+  const [experimental] = await db
+    .select()
+    .from(experimentals)
+    .where(eq(experimentals.id, input.experimentalId));
+  if (!experimental) {
+    return {
+      ok: false,
+      error: "solicitacao nao encontrada",
+      field: "experimentalId",
+    };
+  }
+  if (experimental.status === "DUPLICADA") {
+    return { ok: false, error: "tentativa duplicada e somente leitura" };
+  }
+  if (!canCancel(experimental.status)) {
+    return {
+      ok: false,
+      error: "status nao aceita registro de falta",
+      field: "status",
+    };
+  }
+
+  const occurrence = await loadOccurrence(db, experimental.classSessionId);
+  if (!occurrence) {
+    return { ok: false, error: "ocorrencia nao encontrada" };
+  }
+  const { session, slot } = occurrence;
+
+  const start = studioDateTimeToInstant(session.sessionDate, slot.startTime);
+  if (now.getTime() < start.getTime()) {
+    return {
+      ok: false,
+      error: "falta so pode ser registrada depois do inicio da ocorrencia",
+      field: "status",
+    };
+  }
+
+  const [updated] = await db
+    .update(experimentals)
+    .set({ status: "FALTA", noShowAt: now, updatedAt: now })
+    .where(eq(experimentals.id, experimental.id))
+    .returning();
+  if (!updated) {
+    return { ok: false, error: "falha ao registrar a falta" };
+  }
+  return { ok: true, value: updated };
+}
+
+/**
+ * Pagamento manual (EXP-25): o admin grava um dos quatro status do PRD
+ * 8.4 - Pendente, Pago, Isento ou Reembolsado. O pagamento nao bloqueia
+ * aprovacao nem conversao.
+ */
+export async function registerPayment(
+  db: DbClient,
+  input: {
+    experimentalId: string;
+    paymentStatus: ExperimentalPaymentStatus;
+  },
+  now: Date = new Date(),
+): Promise<ExperimentalResult> {
+  if (!PAYMENT_STATUSES.includes(input.paymentStatus)) {
+    return {
+      ok: false,
+      error: "status de pagamento invalido",
+      field: "paymentStatus",
+    };
+  }
+
+  const [experimental] = await db
+    .select()
+    .from(experimentals)
+    .where(eq(experimentals.id, input.experimentalId));
+  if (!experimental) {
+    return {
+      ok: false,
+      error: "solicitacao nao encontrada",
+      field: "experimentalId",
+    };
+  }
+  if (experimental.status === "DUPLICADA") {
+    return { ok: false, error: "tentativa duplicada e somente leitura" };
+  }
+
+  const [updated] = await db
+    .update(experimentals)
+    .set({ paymentStatus: input.paymentStatus, updatedAt: now })
+    .where(eq(experimentals.id, experimental.id))
+    .returning();
+  if (!updated) {
+    return { ok: false, error: "falha ao registrar o pagamento" };
+  }
+  return { ok: true, value: updated };
+}
+
+/**
+ * Contato via WhatsApp (EXP-26): o admin registra o instante do contato,
+ * que aparece no detalhe da solicitacao.
+ */
+export async function registerWhatsAppContact(
+  db: DbClient,
+  input: { experimentalId: string },
+  now: Date = new Date(),
+): Promise<ExperimentalResult> {
+  const [experimental] = await db
+    .select()
+    .from(experimentals)
+    .where(eq(experimentals.id, input.experimentalId));
+  if (!experimental) {
+    return {
+      ok: false,
+      error: "solicitacao nao encontrada",
+      field: "experimentalId",
+    };
+  }
+  if (experimental.status === "DUPLICADA") {
+    return { ok: false, error: "tentativa duplicada e somente leitura" };
+  }
+
+  const [updated] = await db
+    .update(experimentals)
+    .set({ whatsappContactedAt: now, updatedAt: now })
+    .where(eq(experimentals.id, experimental.id))
+    .returning();
+  if (!updated) {
+    return { ok: false, error: "falha ao registrar o contato" };
+  }
+  return { ok: true, value: updated };
 }

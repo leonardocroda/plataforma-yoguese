@@ -385,11 +385,11 @@ Execução em ordem: T19, T20, T21, T22, T23, T24, T25, T26.
 
 **Done when**:
 
-- [ ] 24h exatas → `CANCELADA_COM_DIREITO`; 23h59 → `CANCELADA_SEM_DIREITO`
-- [ ] Cancelamento depois do início recusado; falta só depois do início
-- [ ] Status terminal recusa cancelamento
-- [ ] Pagamento nos quatro status e contato com timestamp
-- [ ] Gate: `npm test`
+- [x] 24h exatas → `CANCELADA_COM_DIREITO`; 23h59 → `CANCELADA_SEM_DIREITO`
+- [x] Cancelamento depois do início recusado; falta só depois do início
+- [x] Status terminal recusa cancelamento
+- [x] Pagamento nos quatro status e contato com timestamp
+- [x] Gate: `npm test`
 
 **Tests**: integration
 **Gate**: full
@@ -870,7 +870,7 @@ Proof: run exp-conversion | ✓ aluna convertida nao recebe login nesta versao
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** none
-**Dispatched:** batch 1 (Fases 1-2, T1-T10) RETORNADO - 10 tasks, 10 commits (fc64e38, b088fb3, 8847e1c, 95d7e99, a0519a8, 18353cb, 09d6f70, eab6e0a, be30a5a, bef8d35), 298 testes verdes. 1a tentativa morreu por limite de uso no meio da T1 (sem commit) e foi retomada do estado parcial em disco. batch 2 (Fase 3, T11-T18) despachado a partir de bef8d35 - running
+**Dispatched:** batch 1 (Fases 1-2, T1-T10) RETORNADO - 10 tasks, 10 commits (fc64e38, b088fb3, 8847e1c, 95d7e99, a0519a8, 18353cb, 09d6f70, eab6e0a, be30a5a, bef8d35), 298 testes verdes. 1a tentativa morreu por limite de uso no meio da T1 (sem commit) e foi retomada do estado parcial em disco. batch 2 (Fase 3, T11-T18): T11 e T12 commitadas (e7628a2, fa86c60); o worker caiu no meio da T13 (servico + testes em disco, sem commit) e a continuacao foi despachada a partir de fa86c60 - running
 **Walked:** none
 
 ---
