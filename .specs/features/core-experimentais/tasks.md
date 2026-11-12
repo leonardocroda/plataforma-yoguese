@@ -407,10 +407,10 @@ Execução em ordem: T19, T20, T21, T22, T23, T24, T25, T26.
 
 **Done when**:
 
-- [ ] Lista traz nome, telefone, ocorrência, status, pagamento e data
-- [ ] Busca por telefone devolve todas as tentativas, inclusive duplicada/recusada/cancelada/convertida
-- [ ] Detalhe traz declaração, timestamps e aluna convertida
-- [ ] Gate: `npm test`
+- [x] Lista traz nome, telefone, ocorrência, status, pagamento e data
+- [x] Busca por telefone devolve todas as tentativas, inclusive duplicada/recusada/cancelada/convertida
+- [x] Detalhe traz declaração, timestamps e aluna convertida
+- [x] Gate: `npm test`
 
 **Tests**: integration
 **Gate**: full

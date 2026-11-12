@@ -5,13 +5,14 @@
 // solicitacao existente, e e somente leitura. A aprovacao ocupa a vaga da
 // ocorrencia e a recusa libera o telefone.
 
-import { and, eq, isNull, ne } from "drizzle-orm";
+import { and, desc, eq, isNull, ne } from "drizzle-orm";
 import {
   classSessions,
   classSlots,
   classTypes,
   experimentalReschedules,
   experimentals,
+  students,
 } from "../../../db/schema";
 import {
   getComposition,
@@ -38,6 +39,7 @@ import {
   HEALTH_DECLARATION,
   validateExperimentalRequest,
   type ExperimentalPaymentStatus,
+  type ExperimentalStatus,
 } from "../domain/validators";
 
 export type Experimental = typeof experimentals.$inferSelect;
@@ -951,3 +953,204 @@ export async function registerWhatsAppContact(
   }
   return { ok: true, value: updated };
 }
+
+// ---- leitura administrativa (EXP-17, EXP-18, EXP-19, EXP-49, EXP-60) ----
+
+/** A ocorrencia da experimental, com a turma e a modalidade (EXP-17). */
+export type ExperimentalOccurrence = {
+  classSessionId: string;
+  classSlotId: string;
+  classTypeId: string;
+  classTypeName: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+};
+
+/** Linha da listagem do admin (EXP-17, EXP-18). */
+export type ExperimentalListItem = {
+  id: string;
+  name: string;
+  phone: string;
+  phoneNormalized: string;
+  status: ExperimentalStatus;
+  paymentStatus: ExperimentalPaymentStatus;
+  requestedAt: Date;
+  duplicateOfId: string | null;
+  occurrence: ExperimentalOccurrence;
+};
+
+/** A aluna criada na conversao (EXP-19, EXP-60). */
+export type ConvertedStudent = {
+  id: string;
+  name: string;
+  email: string;
+  status: string;
+};
+
+/** Historico de reagendamentos da solicitacao (PRD 8.5). */
+export type ExperimentalRescheduleEntry = {
+  id: string;
+  fromSessionId: string;
+  toSessionId: string;
+  reason: string;
+  rescheduledAt: Date;
+};
+
+/** Detalhe da solicitacao (EXP-19, EXP-60). */
+export type ExperimentalDetail = {
+  experimental: Experimental;
+  occurrence: ExperimentalOccurrence;
+  convertedStudent: ConvertedStudent | null;
+  reschedules: ExperimentalRescheduleEntry[];
+};
+
+export type ExperimentalDetailResult =
+  | { ok: true; value: ExperimentalDetail }
+  | { ok: false; error: string; field?: string };
+
+/** Projecao da listagem: a solicitacao com a sua ocorrencia. */
+const LIST_PROJECTION = {
+  id: experimentals.id,
+  name: experimentals.name,
+  phone: experimentals.phone,
+  phoneNormalized: experimentals.phoneNormalized,
+  status: experimentals.status,
+  paymentStatus: experimentals.paymentStatus,
+  requestedAt: experimentals.requestedAt,
+  duplicateOfId: experimentals.duplicateOfId,
+  classSessionId: classSessions.id,
+  classSlotId: classSlots.id,
+  classTypeId: classTypes.id,
+  classTypeName: classTypes.name,
+  date: classSessions.sessionDate,
+  startTime: classSlots.startTime,
+  endTime: classSlots.endTime,
+};
+
+/**
+ * Listagem do admin (EXP-17, EXP-18): nome, telefone, data/horario,
+ * modalidade, status, pagamento e a data da solicitacao. Com telefone
+ * informado, a busca traz todas as tentativas daquele telefone
+ * normalizado - inclusive a duplicada, a recusada, a cancelada, a falta
+ * e a convertida.
+ */
+export async function listExperimentals(
+  db: DbClient,
+  input: { phone?: string } = {},
+): Promise<ExperimentalListItem[]> {
+  const phoneNormalized =
+    input.phone === undefined ? null : normalizePhone(input.phone);
+
+  const rows = await db
+    .select(LIST_PROJECTION)
+    .from(experimentals)
+    .innerJoin(classSessions, eq(experimentals.classSessionId, classSessions.id))
+    .innerJoin(classSlots, eq(classSessions.classSlotId, classSlots.id))
+    .innerJoin(classTypes, eq(classSlots.classTypeId, classTypes.id))
+    .where(
+      phoneNormalized === null
+        ? undefined
+        : eq(experimentals.phoneNormalized, phoneNormalized),
+    )
+    .orderBy(desc(experimentals.requestedAt));
+
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    phone: row.phone,
+    phoneNormalized: row.phoneNormalized,
+    status: row.status,
+    paymentStatus: row.paymentStatus,
+    requestedAt: row.requestedAt,
+    duplicateOfId: row.duplicateOfId,
+    occurrence: {
+      classSessionId: row.classSessionId,
+      classSlotId: row.classSlotId,
+      classTypeId: row.classTypeId,
+      classTypeName: row.classTypeName,
+      date: row.date,
+      startTime: row.startTime,
+      endTime: row.endTime,
+    },
+  }));
+}
+
+/**
+ * Detalhe da solicitacao (EXP-19, EXP-60): a declaracao, os timestamps do
+ * ciclo de vida, a ocorrencia, o historico de reagendamentos e a aluna
+ * convertida, quando houver.
+ */
+export async function getExperimental(
+  db: DbClient,
+  input: { experimentalId: string },
+): Promise<ExperimentalDetailResult> {
+  const [row] = await db
+    .select({
+      experimental: experimentals,
+      date: classSessions.sessionDate,
+      classSlotId: classSlots.id,
+      classTypeId: classTypes.id,
+      classTypeName: classTypes.name,
+      startTime: classSlots.startTime,
+      endTime: classSlots.endTime,
+    })
+    .from(experimentals)
+    .innerJoin(classSessions, eq(experimentals.classSessionId, classSessions.id))
+    .innerJoin(classSlots, eq(classSessions.classSlotId, classSlots.id))
+    .innerJoin(classTypes, eq(classSlots.classTypeId, classTypes.id))
+    .where(eq(experimentals.id, input.experimentalId));
+
+  if (!row) {
+    return {
+      ok: false,
+      error: "solicitacao nao encontrada",
+      field: "experimentalId",
+    };
+  }
+
+  let convertedStudent: ConvertedStudent | null = null;
+  if (row.experimental.convertedStudentId) {
+    const [student] = await db
+      .select({
+        id: students.id,
+        name: students.name,
+        email: students.email,
+        status: students.status,
+      })
+      .from(students)
+      .where(eq(students.id, row.experimental.convertedStudentId));
+    convertedStudent = student ?? null;
+  }
+
+  const history = await db
+    .select({
+      id: experimentalReschedules.id,
+      fromSessionId: experimentalReschedules.fromSessionId,
+      toSessionId: experimentalReschedules.toSessionId,
+      reason: experimentalReschedules.reason,
+      rescheduledAt: experimentalReschedules.rescheduledAt,
+    })
+    .from(experimentalReschedules)
+    .where(eq(experimentalReschedules.experimentalId, row.experimental.id))
+    .orderBy(desc(experimentalReschedules.rescheduledAt));
+
+  return {
+    ok: true,
+    value: {
+      experimental: row.experimental,
+      occurrence: {
+        classSessionId: row.experimental.classSessionId,
+        classSlotId: row.classSlotId,
+        classTypeId: row.classTypeId,
+        classTypeName: row.classTypeName,
+        date: row.date,
+        startTime: row.startTime,
+        endTime: row.endTime,
+      },
+      convertedStudent,
+      reschedules: history,
+    },
+  };
+}
+

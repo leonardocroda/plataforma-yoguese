@@ -48,6 +48,11 @@ export async function createExperimental(
     duplicateOfId?: string | null;
     requestedAt?: Date;
     approvedAt?: Date | null;
+    cancelledAt?: Date | null;
+    noShowAt?: Date | null;
+    attendedAt?: Date | null;
+    whatsappContactedAt?: Date | null;
+    convertedStudentId?: string | null;
   },
 ): Promise<TestExperimental> {
   const suffix = Math.random().toString(16).slice(2, 10);
@@ -68,6 +73,11 @@ export async function createExperimental(
       duplicateOfId: input.duplicateOfId ?? null,
       requestedAt: input.requestedAt ?? new Date(),
       approvedAt: input.approvedAt ?? null,
+      cancelledAt: input.cancelledAt ?? null,
+      noShowAt: input.noShowAt ?? null,
+      attendedAt: input.attendedAt ?? null,
+      whatsappContactedAt: input.whatsappContactedAt ?? null,
+      convertedStudentId: input.convertedStudentId ?? null,
     })
     .returning();
   if (!created) throw new Error("falha ao criar experimental de teste");
