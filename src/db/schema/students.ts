@@ -41,6 +41,12 @@ export const students = pgTable("students", {
   notes: text("notes"),
   // Prepara a area do aluno (PRD 12) sem nova migracao futura
   userId: uuid("user_id").references(() => users.id),
+  // Declaracao de saude copiada da experimental na conversao (EXP-50):
+  // os cadastros feitos em /alunos deixam as duas colunas nulas
+  healthDeclaration: text("health_declaration"),
+  healthDeclarationAcceptedAt: timestamp("health_declaration_accepted_at", {
+    withTimezone: true,
+  }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

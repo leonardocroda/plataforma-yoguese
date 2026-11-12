@@ -1,7 +1,12 @@
 import { sql } from "drizzle-orm";
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "../db/schema";
-import { classSlots, classTypes, students } from "../db/schema";
+import {
+  classSlots,
+  classTypes,
+  experimentals,
+  students,
+} from "../db/schema";
 import { grantCredit } from "../modules/credits/services/credits";
 
 export type DbClient = NodePgDatabase<typeof schema>;
@@ -9,8 +14,64 @@ export type DbClient = NodePgDatabase<typeof schema>;
 /** Recria o banco de teste vazio entre os testes de uma mesma suite. */
 export async function clearTables(db: DbClient): Promise<void> {
   await db.execute(
-    sql`truncate table credit_transactions, credits, bookings, class_sessions, fixed_enrollments, class_slots, class_types, students, plans, users, holidays, studio_closures`,
+    sql`truncate table experimental_reschedules, experimentals, credit_transactions, credits, bookings, class_sessions, fixed_enrollments, class_slots, class_types, students, plans, users, holidays, studio_closures`,
   );
+}
+
+export type TestExperimentalStatus = NonNullable<
+  (typeof experimentals.$inferInsert)["status"]
+>;
+
+export type TestExperimentalPaymentStatus = NonNullable<
+  (typeof experimentals.$inferInsert)["paymentStatus"]
+>;
+
+export type TestExperimental = {
+  id: string;
+};
+
+/**
+ * Cria uma experimental de teste ligada a uma ocorrencia ja materializada.
+ * O telefone normalizado deriva do telefone quando nao informado; os testes
+ * que provam a identidade do telefone passam o valor normalizado.
+ */
+export async function createExperimental(
+  db: DbClient,
+  input: {
+    classSessionId: string;
+    name?: string;
+    phone?: string;
+    phoneNormalized?: string;
+    status?: TestExperimentalStatus;
+    paymentStatus?: TestExperimentalPaymentStatus;
+    healthDeclaration?: string;
+    duplicateOfId?: string | null;
+    requestedAt?: Date;
+    approvedAt?: Date | null;
+  },
+): Promise<TestExperimental> {
+  const suffix = Math.random().toString(16).slice(2, 10);
+  const phone =
+    input.phone ?? `11${Math.floor(Math.random() * 1e9)
+      .toString()
+      .padStart(9, "0")}`;
+  const [created] = await db
+    .insert(experimentals)
+    .values({
+      classSessionId: input.classSessionId,
+      name: input.name ?? `Visitante ${suffix}`,
+      phone,
+      phoneNormalized: input.phoneNormalized ?? phone.replace(/\D/g, ""),
+      status: input.status ?? "PENDENTE",
+      paymentStatus: input.paymentStatus ?? "PENDENTE",
+      healthDeclaration: input.healthDeclaration ?? "declaracao de teste",
+      duplicateOfId: input.duplicateOfId ?? null,
+      requestedAt: input.requestedAt ?? new Date(),
+      approvedAt: input.approvedAt ?? null,
+    })
+    .returning();
+  if (!created) throw new Error("falha ao criar experimental de teste");
+  return { id: created.id };
 }
 
 export type TestClass = {

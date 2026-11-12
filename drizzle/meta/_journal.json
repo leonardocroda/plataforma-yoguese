@@ -22,6 +22,13 @@
       "when": 1794487814920,
       "tag": "0002_easy_mariko_yashida",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794506581290,
+      "tag": "0003_real_proteus",
+      "breakpoints": true
     }
   ]
 }

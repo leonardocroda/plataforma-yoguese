@@ -128,12 +128,12 @@ Execução em ordem: T19, T20, T21, T22, T23, T24, T25, T26.
 
 **Done when**:
 
-- [ ] Migração aplica do zero no Testcontainers e a suíte existente sobe
-- [ ] `experimentals` tem status `PENDENTE` default, pagamento `PENDENTE` default, `phone_normalized` e `duplicate_of_id`
-- [ ] Índice `experimentals_telefone_unico` aceita uma canônica e várias `DUPLICADA` do mesmo telefone
-- [ ] `students` aceita as colunas de declaração
-- [ ] Fixtures truncam as tabelas novas entre suites
-- [ ] Gate: `npm test`
+- [x] Migração aplica do zero no Testcontainers e a suíte existente sobe
+- [x] `experimentals` tem status `PENDENTE` default, pagamento `PENDENTE` default, `phone_normalized` e `duplicate_of_id`
+- [x] Índice `experimentals_telefone_unico` aceita uma canônica e várias `DUPLICADA` do mesmo telefone
+- [x] `students` aceita as colunas de declaração
+- [x] Fixtures truncam as tabelas novas entre suites
+- [x] Gate: `npm test`
 
 **Tests**: integration
 **Gate**: full
@@ -807,7 +807,7 @@ Proof: run exp-composition | ✓ aprovada ocupa a vaga e pendente nao ocupa
 Proof: run exp-composition | ✓ cancelada com direito, falta e convertida liberam a vaga
 
 **C43** - A grade lista a aprovada como participante experimental (EXP-43, AC 43)
-Proof: run exp-composition | ✓ grade lista a aprovada como participante experimental
+Proof: run exp-reads | ✓ grade lista a aprovada como participante experimental
 
 **C44** - A agenda pública desconta a experimental aprovada (EXP-44, AC 44)
 Proof: run exp-occurrences | ✓ a aprovada reduz a vaga ofertada
@@ -870,7 +870,7 @@ Proof: run exp-conversion | ✓ aluna convertida nao recebe login nesta versao
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** none
-**Dispatched:** none
+**Dispatched:** batch 1 (Fases 1-2, T1-T10) to general worker at HEAD a8c3595 - 1a tentativa morreu por limite de uso no meio da T1 (sem commit); retentativa em andamento a partir do estado parcial em disco
 **Walked:** none
 
 ---
