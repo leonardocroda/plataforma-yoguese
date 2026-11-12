@@ -308,9 +308,9 @@ T8 → T13
 
 **Done when**:
 
-- [ ] Criar/editar/inativar plano funciona da tela
-- [ ] Valor mostrado é o gravado no banco
-- [ ] Gate: build
+- [x] Criar/editar/inativar plano funciona da tela
+- [x] Valor mostrado é o gravado no banco
+- [x] Gate: build
 
 **Tests**: none (regras provadas no T7; tela provada por walk)
 **Gate**: build

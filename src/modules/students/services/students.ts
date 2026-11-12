@@ -5,7 +5,6 @@
 import { asc, eq, or } from "drizzle-orm";
 import { and, gte, isNull } from "drizzle-orm";
 import {
-  classSessions,
   classSlots,
   classTypes,
   fixedEnrollments,

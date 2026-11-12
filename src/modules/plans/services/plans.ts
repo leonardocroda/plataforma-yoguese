@@ -90,12 +90,13 @@ export async function createPlan(
 }
 
 /**
- * Edita o plano (PLAN-03): a validacao roda sobre os dados finais (patch +
- * valores atuais), igual ao update de turma.
+ * Edita o plano (PLAN-03): patch parcial mesclado com o atual, validado
+ * sobre os dados finais, igual ao update de turma. Inativar e uma edicao de
+ * status (PLAN-04).
  */
 export async function updatePlan(
   db: DbClient,
-  input: PlanInput & { planId: string },
+  input: Partial<PlanInput> & { planId: string },
   now: Date = new Date(),
 ): Promise<PlanResult> {
   const [current] = await db
