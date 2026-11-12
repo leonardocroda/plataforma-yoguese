@@ -1,5 +1,5 @@
 import { and, eq, gt, inArray, isNull, lte, or } from "drizzle-orm";
-import { bookings, classSessions, classSlots, fixedEnrollments } from "../../../db/schema";
+import { bookings, classSessions, classSlots, fixedEnrollments, students } from "../../../db/schema";
 import {
   Composition,
   calculateComposition,
@@ -38,10 +38,15 @@ export async function getOccurrenceComposition(
   const fixedStudents = await db
     .select({ studentId: fixedEnrollments.studentId })
     .from(fixedEnrollments)
+    .innerJoin(students, eq(students.id, fixedEnrollments.studentId))
     .where(
       and(
         eq(fixedEnrollments.classSlotId, input.classSlotId),
         eq(fixedEnrollments.status, "ATIVA"),
+        // Aluna INATIVA deixa de ocupar vaga fixa (STUD-06): a contagem e
+        // derivada do status, e reativar volta a contar sem reescrever a
+        // matricula (STUD-07)
+        eq(students.status, "ATIVO"),
         // Cobre a data: startDate <= data < endDate encerrado (RES-23 AC4)
         lte(fixedEnrollments.startDate, input.date),
         or(

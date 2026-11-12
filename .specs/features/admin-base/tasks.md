@@ -267,9 +267,9 @@ T8 → T13
 
 **Done when**:
 
-- [ ] Matrícula ativa de aluna INATIVA não conta no fixedCount nem nas vagas
-- [ ] Voltando a ATIVO, a mesma matrícula conta novamente
-- [ ] Gate: full (suíte inteira - composição é usada em vários fluxos)
+- [x] Matrícula ativa de aluna INATIVA não conta no fixedCount nem nas vagas
+- [x] Voltando a ATIVO, a mesma matrícula conta novamente
+- [x] Gate: full (suíte inteira - composição é usada em vários fluxos)
 
 **Tests**: integration
 **Gate**: full
