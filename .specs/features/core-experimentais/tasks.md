@@ -653,10 +653,10 @@ Execução em ordem: T19, T20, T21, T22, T23, T24, T25, T26.
 
 **Done when**:
 
-- [ ] O formulário oferece planos ativos e horários ativos
-- [ ] Conversão pede confirmação e mostra sucesso/erro
-- [ ] A aluna convertida fica linkada no detalhe
-- [ ] Gate: `npm run build; npm run lint`
+- [x] O formulário oferece planos ativos e horários ativos
+- [x] Conversão pede confirmação e mostra sucesso/erro
+- [x] A aluna convertida fica linkada no detalhe
+- [x] Gate: `npm run build; npm run lint`
 
 **Tests**: none
 **Gate**: build

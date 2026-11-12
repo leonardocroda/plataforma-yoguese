@@ -6,6 +6,7 @@ import {
   approveExperimentalAction,
   cancelExperimentalAction,
   changeExperimentalOccurrenceAction,
+  convertExperimentalAction,
   refuseExperimentalAction,
   registerNoShowAction,
   registerPaymentAction,
@@ -223,12 +224,147 @@ function PaymentForm({
  * Bloco de acoes do detalhe. O status decide o que o admin ainda pode
  * fazer; a tentativa duplicada aparece somente leitura (EXP-49).
  */
+/** Plano escolhido na conversao (EXP-51). */
+export type ConversionPlanOption = {
+  id: string;
+  name: string;
+};
+
+/** Horario fixo escolhido na conversao (EXP-51). */
+export type ConversionScheduleOption = {
+  id: string;
+  label: string;
+};
+
+/**
+ * Conversao em aluna (EXP-50, EXP-51, EXP-57): e-mail, data de
+ * nascimento, plano e horario fixo. A conversao pede confirmacao antes de
+ * aplicar e mostra o resultado sem perder a tela.
+ */
+export function ConversionForm({
+  experimentalId,
+  plans,
+  schedules,
+}: {
+  experimentalId: string;
+  plans: ConversionPlanOption[];
+  schedules: ConversionScheduleOption[];
+}) {
+  const router = useRouter();
+
+  const [state, formAction, pending] = useActionState<ActionState, FormData>(
+    async (_previous, formData) => {
+      const classSlotIds = formData
+        .getAll("classSlotIds")
+        .map((value) => String(value))
+        .filter((value) => value !== "");
+
+      const result = await convertExperimentalAction({
+        experimentalId,
+        email: String(formData.get("email") ?? ""),
+        birthDate: String(formData.get("birthDate") ?? ""),
+        planId: String(formData.get("planId") ?? ""),
+        classSlotIds,
+      });
+      if (!result.ok) return { ok: false, message: result.error };
+      return {
+        ok: true,
+        message: `Aluna "${result.value.student.name}" criada com o plano e o horário fixo.`,
+      };
+    },
+    INITIAL_STATE,
+  );
+
+  useEffect(() => {
+    if (state.ok) router.refresh();
+  }, [state.ok, router]);
+
+  return (
+    <form
+      action={formAction}
+      onSubmit={(event) => {
+        if (
+          !confirmAction(
+            "Converter esta experimental em aluna ativa? A aluna entra com o plano e o horário fixo escolhidos.",
+          )
+        ) {
+          event.preventDefault();
+        }
+      }}
+      className="space-y-2"
+    >
+      <label className="block text-xs font-medium">
+        E-mail da aluna
+        <input
+          name="email"
+          type="email"
+          required
+          className={inputClass}
+          placeholder="maria@exemplo.com"
+        />
+      </label>
+
+      <label className="block text-xs font-medium">
+        Data de nascimento
+        <input name="birthDate" type="date" required className={inputClass} />
+      </label>
+
+      <label className="block text-xs font-medium">
+        Plano
+        <select name="planId" required className={inputClass} defaultValue="">
+          <option value="">Selecione o plano</option>
+          {plans.map((plan) => (
+            <option key={plan.id} value={plan.id}>
+              {plan.name}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <fieldset className="space-y-1">
+        <legend className="text-xs font-medium">Horário fixo</legend>
+        {schedules.length === 0 ? (
+          <p className="text-xs opacity-70">
+            Nenhuma turma ativa cadastrada.
+          </p>
+        ) : (
+          schedules.map((schedule) => (
+            <label
+              key={schedule.id}
+              className="flex items-center gap-2 text-xs font-normal"
+            >
+              <input
+                type="checkbox"
+                name="classSlotIds"
+                value={schedule.id}
+                className="h-3 w-3"
+              />
+              {schedule.label}
+            </label>
+          ))
+        )}
+      </fieldset>
+
+      <button type="submit" disabled={pending} className={buttonClass}>
+        {pending ? "Convertendo..." : "Converter em aluna"}
+      </button>
+      <Message state={state} />
+    </form>
+  );
+}
+
+/**
+ * Bloco de acoes do detalhe. O status decide o que o admin ainda pode
+ * fazer; a tentativa duplicada aparece somente leitura (EXP-49).
+ */
 export function ExperimentalActions({
   experimentalId,
   status,
   paymentStatus,
   cancelLosesRight,
   occurrences,
+  plans = [],
+  schedules = [],
 }: {
   experimentalId: string;
   status: ExperimentalStatus;
@@ -236,6 +372,10 @@ export function ExperimentalActions({
   /** O cancelamento encerra o direito ao reagendamento (menos de 24h). */
   cancelLosesRight: boolean;
   occurrences: OccurrenceChoice[];
+  /** Planos ativos oferecidos na conversao (EXP-51). */
+  plans?: ConversionPlanOption[];
+  /** Horarios ativos oferecidos na conversao (EXP-51). */
+  schedules?: ConversionScheduleOption[];
 }) {
   if (status === "DUPLICADA") {
     return (
@@ -333,6 +473,17 @@ export function ExperimentalActions({
           pendingLabel="Registrando..."
           run={() => registerWhatsAppContactAction({ experimentalId })}
         />
+
+        {status === "APROVADA" ? (
+          <div className="space-y-2 rounded border border-[var(--yoguese-bege)] p-2">
+            <h3 className="text-xs font-medium">Converter em aluna</h3>
+            <ConversionForm
+              experimentalId={experimentalId}
+              plans={plans}
+              schedules={schedules}
+            />
+          </div>
+        ) : null}
       </div>
     </div>
   );

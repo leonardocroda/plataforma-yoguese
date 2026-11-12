@@ -13,6 +13,8 @@ import {
   getExperimental,
   listExperimentalOccurrences,
 } from "../../../../modules/experimentals/services/experimentals";
+import { listActiveSlots } from "../../../../modules/classes/services/classes";
+import { listSelectablePlans } from "../../../../modules/plans/services/plans";
 import { ExperimentalActions } from "./experimental-forms";
 
 export const dynamic = "force-dynamic";
@@ -90,6 +92,17 @@ export default async function ExperimentalDetailPage({
 
   // As ocorrencias futuras com vaga, oferecidas para trocar data/horario
   const occurrences = await listExperimentalOccurrences(db);
+
+  // A conversao em aluna: os planos ativos e as turmas ativas oferecidas no
+  // formulario (EXP-51)
+  const plans = (await listSelectablePlans(db)).map((plan) => ({
+    id: plan.id,
+    name: plan.name,
+  }));
+  const schedules = (await listActiveSlots(db)).map((slot) => ({
+    id: slot.id,
+    label: `${slot.classTypeName} - ${formatOccurrenceTime(slot.startTime)}`,
+  }));
 
   // A regra das 24 horas decide se o cancelamento mantem o direito ao
   // reagendamento. O cancelamento que o encerra pede confirmacao
@@ -209,6 +222,8 @@ export default async function ExperimentalDetailPage({
             date: option.date,
             label: `${option.classTypeName} - ${formatOccurrenceDate(option.date)} ${formatOccurrenceTime(option.startTime)} (${option.availableSpots} ${option.availableSpots === 1 ? "vaga" : "vagas"})`,
           }))}
+          plans={plans}
+          schedules={schedules}
         />
       </section>
     </main>
