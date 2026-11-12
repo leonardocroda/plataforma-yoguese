@@ -13,6 +13,7 @@ import {
 } from "../../../db/schema";
 import { todayInStudio } from "../../classes/domain/occurrences";
 import type { DbClient } from "../../bookings/services/sessions";
+import { normalizeEmail } from "../../auth/services/credentials";
 import {
   listStudentCredits,
   type StudentCredit,
@@ -111,7 +112,9 @@ export async function createStudent(
     };
   }
 
-  const email = input.email.trim();
+  // E-mail e identidade de acesso (edge case do spec): igual sem distinguir
+  // maiusculas e duplicado (STUD-10), e gravado normalizado
+  const email = normalizeEmail(input.email);
   if (await emailTaken(db, email)) {
     return { ok: false, error: "e-mail ja cadastrado", field: "email" };
   }
@@ -167,7 +170,7 @@ export async function updateStudent(
     };
   }
 
-  const email = input.email.trim();
+  const email = normalizeEmail(input.email);
   if (await emailTaken(db, email, input.studentId)) {
     return { ok: false, error: "e-mail ja cadastrado", field: "email" };
   }

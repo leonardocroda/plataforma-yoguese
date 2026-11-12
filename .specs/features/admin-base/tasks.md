@@ -444,6 +444,9 @@ Proof: run auth-int | ✓ credentials > credenciais de role ALUNO nao autenticam
 **C26** - Marcar aluna sem plano como Ativa é recusado com erro do campo; com plano funciona (STUD-09, AC 9) *check da verificação (F2)*
 Proof: run students | ✓ students services > reativar aluna sem plano e recusado e com plano funciona (STUD-09)
 
+**C28** - E-mail de aluna igual diferindo só em maiúsculas é recusado no cadastro e na edição, e gravado normalizado (STUD-10, AC 10) *check da verificação (F5)*
+Proof: run students | ✓ students services > e-mail igual diferindo so em maiusculas e duplicado (STUD-10)
+
 **C30** - A tela de aluna oferece e exibe os quatro termos exatos do PRD 4.4 (STUD-03, AC 3) *check da verificação (F3)*
 Proof: walk - select de status oferece Experimental, Aguardando matrícula, Ativo e Inativo
 

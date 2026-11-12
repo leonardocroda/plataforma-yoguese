@@ -183,6 +183,46 @@ describe("students services", () => {
     expect(rows).toHaveLength(1);
   });
 
+  it("e-mail igual diferindo so em maiusculas e duplicado (STUD-10)", async () => {
+    const first = await createStudent(
+      pg.db,
+      studentInput({ email: "maria@teste.com" }),
+    );
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+
+    // Cadastro: maiusculas nao criam uma segunda aluna
+    const duplicate = await createStudent(
+      pg.db,
+      studentInput({ email: "MARIA@TESTE.COM", name: "Outra Maria" }),
+    );
+    expect(duplicate.ok).toBe(false);
+    if (!duplicate.ok) {
+      expect(duplicate.field).toBe("email");
+      expect(duplicate.error).toContain("cadastrado");
+    }
+
+    // Edicao de OUTRA aluna para o mesmo e-mail em outra caixa: recusa
+    const other = await createStudent(
+      pg.db,
+      studentInput({ email: "joana@teste.com", name: "Joana" }),
+    );
+    expect(other.ok).toBe(true);
+    if (!other.ok) return;
+    const editDuplicate = await updateStudent(pg.db, {
+      studentId: other.value.id,
+      ...studentInput({ email: "Maria@Teste.com", name: "Joana" }),
+    });
+    expect(editDuplicate.ok).toBe(false);
+    if (!editDuplicate.ok) {
+      expect(editDuplicate.field).toBe("email");
+    }
+
+    // O e-mail gravado fica normalizado em minusculas
+    const rows = await pg.db.select().from(students);
+    expect(rows.some((row) => row.email === "MARIA@TESTE.COM")).toBe(false);
+  });
+
   it("edita a aluna e a mudanca aparece na listagem (STUD-05)", async () => {
     const plan = await createTestPlan({ name: "Mensal 2x" });
     const created = await createStudent(pg.db, studentInput());
