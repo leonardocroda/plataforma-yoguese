@@ -151,9 +151,9 @@ Execução em ordem: T19, T20, T21, T22, T23, T24, T25, T26.
 
 **Done when**:
 
-- [ ] Máscaras diferentes do mesmo número normalizam igual
-- [ ] `+55` é removido; 10 e 11 dígitos válidos; outros tamanhos inválidos
-- [ ] Gate: `npx vitest run src/modules/experimentals/domain`
+- [x] Máscaras diferentes do mesmo número normalizam igual
+- [x] `+55` é removido; 10 e 11 dígitos válidos; outros tamanhos inválidos
+- [x] Gate: `npx vitest run src/modules/experimentals/domain`
 
 **Tests**: unit
 **Gate**: quick
