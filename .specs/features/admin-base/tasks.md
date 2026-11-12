@@ -122,10 +122,10 @@ T8 → T13
 
 **Done when**:
 
-- [ ] Hash nunca devolve a senha em claro; verify falha com senha errada
-- [ ] Token alterado ou expirado devolve `ok: false` com reason
-- [ ] ~8 testes unit novos verdes
-- [ ] Gate: quick
+- [x] Hash nunca devolve a senha em claro; verify falha com senha errada
+- [x] Token alterado ou expirado devolve `ok: false` com reason
+- [x] ~8 testes unit novos verdes
+- [x] Gate: quick
 
 **Tests**: unit
 **Gate**: quick
@@ -143,10 +143,10 @@ T8 → T13
 
 **Done when**:
 
-- [ ] E-mail desconhecido e senha errada falham com o mesmo erro genérico
-- [ ] requireAdminSession sem sessão redireciona; com sessão devolve o usuário
-- [ ] ~6 testes int novos verdes
-- [ ] Gate: full
+- [x] E-mail desconhecido e senha errada falham com o mesmo erro genérico
+- [x] requireAdminSession sem sessão redireciona; com sessão devolve o usuário
+- [x] ~6 testes int novos verdes
+- [x] Gate: full
 
 **Tests**: integration
 **Gate**: full
