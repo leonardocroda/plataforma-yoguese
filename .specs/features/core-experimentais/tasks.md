@@ -323,8 +323,8 @@ Execução em ordem: T19, T20, T21, T22, T23, T24, T25, T26.
 
 **Done when**:
 
-- [ ] O controle aparece e alcança o formulário
-- [ ] Gate: `npm run build; npm run lint`
+- [x] O controle aparece e alcança o formulário
+- [x] Gate: `npm run build; npm run lint`
 
 **Tests**: none
 **Gate**: build
