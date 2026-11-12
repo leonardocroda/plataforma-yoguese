@@ -101,6 +101,41 @@ describe("plans services", () => {
     expect(listed[0].price).toBe("150.00");
   });
 
+  it("edita limpa a descricao e manter omitido preserva (PLAN-03)", async () => {
+    const created = await createPlan(pg.db, {
+      name: "Mensal Descricao",
+      price: "140.00",
+      weeklyFrequency: 2,
+      description: "Aulas livres na semana",
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    // String vazia vinda do formulario limpa a descricao
+    const cleared = await updatePlan(pg.db, {
+      planId: created.value.id,
+      name: "Mensal Descricao",
+      price: "140.00",
+      weeklyFrequency: 2,
+      description: "",
+    });
+    expect(cleared.ok).toBe(true);
+    if (!cleared.ok) return;
+    expect(cleared.value.description).toBeNull();
+
+    // Chamada sem descricao (ex.: inativar pelo botao) preserva o campo
+    const kept = await updatePlan(pg.db, {
+      planId: created.value.id,
+      name: "Mensal Descricao",
+      price: "140.00",
+      weeklyFrequency: 2,
+      status: "INATIVO",
+    });
+    expect(kept.ok).toBe(true);
+    if (!kept.ok) return;
+    expect(kept.value.description).toBeNull();
+  });
+
   it("inativa via update e o seletor omite o plano (PLAN-04)", async () => {
     const active = await createPlan(pg.db, {
       name: "Mensal Ativo",

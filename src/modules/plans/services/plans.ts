@@ -126,7 +126,14 @@ export async function updatePlan(
         name: merged.name.trim(),
         price: merged.price,
         weeklyFrequency: merged.weeklyFrequency,
-        description: input.description ?? current.description,
+        // Edicao: descricao omitida mantem a atual; string vazia limpa o
+        // campo (PLAN-03 - a mudanca de remover tambem persiste)
+        description:
+          input.description === undefined
+            ? current.description
+            : input.description.trim() === ""
+              ? null
+              : input.description.trim(),
         status: input.status ?? current.status,
         updatedAt: now,
       })

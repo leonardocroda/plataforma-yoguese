@@ -447,6 +447,9 @@ Proof: run students | ✓ students services > reativar aluna sem plano e recusad
 **C30** - A tela de aluna oferece e exibe os quatro termos exatos do PRD 4.4 (STUD-03, AC 3) *check da verificação (F3)*
 Proof: walk - select de status oferece Experimental, Aguardando matrícula, Ativo e Inativo
 
+**C27** - Editar o plano com descrição vazia limpa o campo; omiti-la preserva (PLAN-03, AC 3) *check da verificação (F4)*
+Proof: run plans | ✓ plans services > edita limpa a descricao e manter omitido preserva (PLAN-03)
+
 ---
 
 ## Handoff

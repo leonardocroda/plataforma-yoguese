@@ -121,7 +121,7 @@ export function PlanCardForms({
       name: String(formData.get("name") ?? ""),
       price: String(formData.get("price") ?? ""),
       weeklyFrequency: Number(formData.get("weeklyFrequency") ?? 0),
-      description: String(formData.get("description") ?? "") || null,
+      description: String(formData.get("description") ?? ""),
     });
     return result.ok
       ? { ok: true, message: "Plano atualizado." }
