@@ -2,7 +2,7 @@
 // e-mail desconhecido e senha errada devolvem exatamente o mesmo resultado,
 // sem dizer qual dos dois errou.
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { users } from "../../../db/schema";
 import type { DbClient } from "../../bookings/services/sessions";
 import { verifyPassword } from "../domain/password";
@@ -25,7 +25,14 @@ export async function verifyCredentials(
   const [user] = await db
     .select()
     .from(users)
-    .where(eq(users.email, normalizeEmail(input.email)));
+    .where(
+      and(
+        eq(users.email, normalizeEmail(input.email)),
+        // O painel e de admin: credenciais de ALUNO nao iniciam sessao aqui
+        // (AUTH-09) - a recusa e a mesma generica, sem pista do papel
+        eq(users.role, "ADMIN"),
+      ),
+    );
 
   if (!user) return { ok: false };
   if (!verifyPassword(input.password, user.passwordHash)) return { ok: false };

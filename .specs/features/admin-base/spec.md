@@ -66,6 +66,7 @@ experimentais.
 6. WHEN o admin autenticado usa a ação "Sair" THEN o sistema SHALL invalidar a sessão e redirecionar para o login  <!-- event-driven -->
 7. WHILE uma sessão válida existe, um acesso à tela de login SHALL redirecionar para a `/grade`  <!-- state-driven -->
 8. WHEN o `db:seed` roda THEN o sistema SHALL criar o primeiro administrador (role ADMIN) com as credenciais de `ADMIN_EMAIL`/`ADMIN_PASSWORD`, idempotente  <!-- event-driven -->
+9. IF credenciais válidas chegam de um usuário que não é ADMIN THEN o sistema SHALL recusar o login com a mesma mensagem genérica, sem iniciar sessão  <!-- unwanted-behavior --> *encontrado pela verificação: o guard do layout só checava a presença da sessão (F1, AUTH-09)*
 
 **Independent Test**: sem sessão, abrir `/grade` redireciona; logar com a credencial do seed entra; errar a senha mostra a mensagem genérica; inspecionar o banco mostra `password_hash`, nunca texto puro.
 
@@ -147,6 +148,7 @@ experimentais.
 | AUTH-06 | P1: Login seguro | Design | Pending |
 | AUTH-07 | P1: Login seguro | Design | Pending |
 | AUTH-08 | P1: Login seguro | Design | Pending |
+| AUTH-09 | P1: Login seguro | Verification | Pending |
 | SHELL-01 | P1: Shell da área logada | Design | Pending |
 | SHELL-02 | P1: Shell da área logada | Design | Pending |
 | STUD-01 | P1: Cadastro de alunos | Design | Pending |

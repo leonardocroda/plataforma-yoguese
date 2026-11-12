@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { logoutAction } from "../../modules/auth/actions";
-import { getSession } from "../../modules/auth/services/session";
+import { requireAdminSession } from "../../modules/auth/services/session";
 import { users } from "../../db/schema";
 
 const NAV_LINKS = [
@@ -23,10 +22,9 @@ export default async function AdminLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getSession();
-  if (!session) {
-    redirect("/login");
-  }
+  // Guard do grupo inteiro (AUTH-01, AUTH-09): sem sessao de ADMIN a rota
+  // nao responde - o papel e verificado junto com a sessao, nao so a presenca
+  const session = await requireAdminSession();
 
   // O client so e necessario em tempo de execucao: o build roda sem
   // DATABASE_URL configurada.

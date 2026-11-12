@@ -92,6 +92,23 @@ describe("credentials", () => {
     expect(result).toEqual({ ok: false });
   });
 
+  it("credenciais de role ALUNO nao autenticam no admin (AUTH-09)", async () => {
+    await pg.db.insert(users).values({
+      name: "Aluna com conta",
+      email: "aluna@yoguese.com",
+      passwordHash: hashPassword("S3nha!Segura"),
+      role: "ALUNO",
+    });
+
+    const result = await verifyCredentials(pg.db, {
+      email: "aluna@yoguese.com",
+      password: "S3nha!Segura",
+    });
+
+    // Recusa generica identica: nenhuma pista de que o e-mail existe
+    expect(result).toEqual({ ok: false });
+  });
+
   it("normalizeEmail devolve trim e lowercase", () => {
     expect(normalizeEmail("  Ana@YogueSe.com ")).toBe("ana@yoguese.com");
   });
