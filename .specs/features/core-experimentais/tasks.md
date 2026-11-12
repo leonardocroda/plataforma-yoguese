@@ -342,10 +342,10 @@ Execução em ordem: T19, T20, T21, T22, T23, T24, T25, T26.
 
 **Done when**:
 
-- [ ] Aprovação com vaga ocupa; sem vaga/bloqueada/cancelada recusa e mantém `PENDENTE`
-- [ ] Duas aprovações concorrentes na última vaga confirmam uma
-- [ ] Recusa mantém o registro consultável e libera o telefone
-- [ ] Gate: `npm test`
+- [x] Aprovação com vaga ocupa; sem vaga/bloqueada/cancelada recusa e mantém `PENDENTE`
+- [x] Duas aprovações concorrentes na última vaga confirmam uma
+- [x] Recusa mantém o registro consultável e libera o telefone
+- [x] Gate: `npm test`
 
 **Tests**: integration
 **Gate**: full
@@ -870,7 +870,7 @@ Proof: run exp-conversion | ✓ aluna convertida nao recebe login nesta versao
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** none
-**Dispatched:** batch 1 (Fases 1-2, T1-T10) to general worker at HEAD a8c3595 - 1a tentativa morreu por limite de uso no meio da T1 (sem commit); retentativa em andamento a partir do estado parcial em disco
+**Dispatched:** batch 1 (Fases 1-2, T1-T10) RETORNADO - 10 tasks, 10 commits (fc64e38, b088fb3, 8847e1c, 95d7e99, a0519a8, 18353cb, 09d6f70, eab6e0a, be30a5a, bef8d35), 298 testes verdes. 1a tentativa morreu por limite de uso no meio da T1 (sem commit) e foi retomada do estado parcial em disco. batch 2 (Fase 3, T11-T18) despachado a partir de bef8d35 - running
 **Walked:** none
 
 ---

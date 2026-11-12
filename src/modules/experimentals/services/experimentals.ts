@@ -1,11 +1,17 @@
-// Servico da solicitacao publica de experimental (PRD 8.1, 8.2, 13,
-// EXP-06 a EXP-16). O visitante escolhe uma ocorrencia concreta com
-// vaga; o servidor revalida tudo antes de gravar a solicitacao pendente.
-// A duplicidade e por telefone normalizado: a tentativa bloqueada fica
-// gravada como DUPLICADA, ligada a solicitacao existente.
+// Servicos da experimental (PRD 8.1 a 8.5, 13, EXP-06 a EXP-40). O
+// visitante escolhe uma ocorrencia concreta com vaga; o servidor revalida
+// tudo antes de gravar a solicitacao pendente. A duplicidade e por telefone
+// normalizado: a tentativa bloqueada fica gravada como DUPLICADA, ligada a
+// solicitacao existente, e e somente leitura. A aprovacao ocupa a vaga da
+// ocorrencia e a recusa libera o telefone.
 
 import { and, eq, isNull, ne } from "drizzle-orm";
-import { classSlots, experimentals } from "../../../db/schema";
+import {
+  classSessions,
+  classSlots,
+  classTypes,
+  experimentals,
+} from "../../../db/schema";
 import {
   getComposition,
   getOccurrenceComposition,
@@ -37,9 +43,11 @@ export type ExperimentalRequestInput = {
   declarationAccepted: boolean;
 };
 
-export type ExperimentalRequestResult =
+export type ExperimentalResult =
   | { ok: true; value: Experimental }
   | { ok: false; error: string; field?: string };
+
+export type ExperimentalRequestResult = ExperimentalResult;
 
 const DUPLICATE_ERROR = "ja existe uma aula experimental para este telefone";
 
@@ -305,4 +313,176 @@ export async function listExperimentalOccurrences(
   );
 
   return options;
+}
+
+// ---- operacao administrativa (PRD 8.3, 8.4, EXP-20 a EXP-29) ----
+
+/**
+ * A ocorrencia da experimental com a turma e a modalidade. A ocupacao e
+ * conferida pela composicao (fonte unica, RES-27), que precisa da
+ * capacidade da turma.
+ */
+async function loadOccurrence(
+  db: DbClient,
+  classSessionId: string,
+): Promise<
+  | {
+      session: typeof classSessions.$inferSelect;
+      slot: typeof classSlots.$inferSelect;
+      classType: typeof classTypes.$inferSelect;
+    }
+  | undefined
+> {
+  const [session] = await db
+    .select()
+    .from(classSessions)
+    .where(eq(classSessions.id, classSessionId));
+  if (!session) return undefined;
+
+  const [slot] = await db
+    .select()
+    .from(classSlots)
+    .where(eq(classSlots.id, session.classSlotId));
+  if (!slot) return undefined;
+
+  const [classType] = await db
+    .select()
+    .from(classTypes)
+    .where(eq(classTypes.id, slot.classTypeId));
+  if (!classType) return undefined;
+
+  return { session, slot, classType };
+}
+
+/**
+ * Aprovacao (EXP-20 a EXP-22): a solicitacao pendente vira APROVADA e
+ * ocupa a vaga da ocorrencia. A disponibilidade e revalidada dentro da
+ * transacao, com a ocorrencia travada: duas aprovacoes concorrentes pela
+ * ultima vaga confirmam exatamente uma.
+ *
+ * Sem vaga, ocorrencia bloqueada ou cancelada, ou turma/modalidade
+ * inativa, a aprovacao e recusada e a solicitacao continua PENDENTE
+ * (EXP-21).
+ */
+export async function approveExperimental(
+  db: DbClient,
+  input: { experimentalId: string },
+  now: Date = new Date(),
+): Promise<ExperimentalResult> {
+  const [experimental] = await db
+    .select()
+    .from(experimentals)
+    .where(eq(experimentals.id, input.experimentalId));
+  if (!experimental) {
+    return {
+      ok: false,
+      error: "solicitacao nao encontrada",
+      field: "experimentalId",
+    };
+  }
+  if (experimental.status === "DUPLICADA") {
+    return { ok: false, error: "tentativa duplicada e somente leitura" };
+  }
+  if (experimental.status !== "PENDENTE") {
+    return {
+      ok: false,
+      error: "somente solicitacao pendente pode ser aprovada",
+      field: "status",
+    };
+  }
+
+  const occurrence = await loadOccurrence(db, experimental.classSessionId);
+  if (!occurrence) {
+    return { ok: false, error: "ocorrencia nao encontrada" };
+  }
+  const { session, slot, classType } = occurrence;
+
+  if (session.status === "BLOQUEADA") {
+    return { ok: false, error: "ocorrencia bloqueada por feriado/recesso" };
+  }
+  if (session.status === "CANCELADA") {
+    return { ok: false, error: "ocorrencia cancelada" };
+  }
+  if (slot.status === "INATIVA") {
+    return { ok: false, error: "turma inativa nao aceita experimentais" };
+  }
+  if (classType.status === "INATIVA") {
+    return { ok: false, error: "modalidade inativa nao aceita experimentais" };
+  }
+
+  return db.transaction(async (tx): Promise<ExperimentalResult> => {
+    // Trava a ocorrencia: a segunda aprovacao da ultima vaga ve a ocupacao
+    // confirmada pela primeira
+    await tx
+      .select({ id: classSessions.id })
+      .from(classSessions)
+      .where(eq(classSessions.id, session.id))
+      .for("update");
+
+    const composition = await getOccurrenceComposition(tx, {
+      classSlotId: slot.id,
+      sessionId: session.id,
+      date: session.sessionDate,
+      capacity: slot.capacity,
+    });
+    if (composition.availableSpots <= 0) {
+      return { ok: false, error: "sem vaga disponivel nesta ocorrencia" };
+    }
+
+    const [updated] = await tx
+      .update(experimentals)
+      .set({ status: "APROVADA", approvedAt: now, updatedAt: now })
+      .where(eq(experimentals.id, experimental.id))
+      .returning();
+    if (!updated) {
+      return { ok: false, error: "falha ao aprovar a solicitacao" };
+    }
+    return { ok: true, value: updated };
+  });
+}
+
+/**
+ * Recusa (EXP-23): a solicitacao vira RECUSADA, o registro continua
+ * consultavel e o telefone volta a ficar livre para uma nova solicitacao -
+ * o indice unico do telefone nao alcanca a recusada.
+ */
+export async function refuseExperimental(
+  db: DbClient,
+  input: { experimentalId: string },
+  now: Date = new Date(),
+): Promise<ExperimentalResult> {
+  const [experimental] = await db
+    .select()
+    .from(experimentals)
+    .where(eq(experimentals.id, input.experimentalId));
+  if (!experimental) {
+    return {
+      ok: false,
+      error: "solicitacao nao encontrada",
+      field: "experimentalId",
+    };
+  }
+  if (experimental.status === "DUPLICADA") {
+    return { ok: false, error: "tentativa duplicada e somente leitura" };
+  }
+  if (
+    experimental.status !== "PENDENTE" &&
+    experimental.status !== "APROVADA"
+  ) {
+    return {
+      ok: false,
+      error: "somente solicitacao pendente ou aprovada pode ser recusada",
+      field: "status",
+    };
+  }
+
+  const [updated] = await db
+    .update(experimentals)
+    .set({ status: "RECUSADA", updatedAt: now })
+    .where(eq(experimentals.id, experimental.id))
+    .returning();
+  if (!updated) {
+    return { ok: false, error: "falha ao recusar a solicitacao" };
+  }
+  return { ok: true, value: updated };
 }
