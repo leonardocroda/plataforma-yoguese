@@ -224,10 +224,10 @@ T8 → T13
 
 **Done when**:
 
-- [ ] price <= 0 e weeklyFrequency < 1 recusados com erro por campo
-- [ ] listSelectablePlans omite INATIVO, mas mantém o plano atual de uma aluna em edição
-- [ ] ~10 testes novos verdes (unit + int)
-- [ ] Gate: full
+- [x] price <= 0 e weeklyFrequency < 1 recusados com erro por campo
+- [x] listSelectablePlans omite INATIVO, mas mantém o plano atual de uma aluna em edição
+- [x] ~10 testes novos verdes (unit + int)
+- [x] Gate: full
 
 **Tests**: integration
 **Gate**: full
@@ -445,7 +445,8 @@ Proof: walk - plano criado com valor X aparece na /planos com X
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** 2026-11-12 - user: "pode seguir" (aprovação do plano de tasks; modo de execução por lotes com sub-agentes, padrão da skill, delegado ao orquestrador)
-**Dispatched:** 2026-11-12 - batch worker 1 (fases 1-2, T1-T6) em HEAD 8429c7d - aguardando retorno
+**Dispatched:** 2026-11-12 - batch worker 1 (fases 1-2, T1-T6) em HEAD 8429c7d - **returned**: completo (T1 178bcac, T2 83aa007, T3 90fae50, T4 da7d220, T5 5ecff9b, T6 4996448; 223 testes verdes, 0 desvios)
+**Dispatched:** 2026-11-12 - batch worker 2 (fases 3-4, T7-T13) em HEAD 4996448 - aguardando retorno
 **Walked:** [each story's Independent Test as you did it - what the screen showed, and how the user reaches each state: sign-in, data, path]
 
 ---
