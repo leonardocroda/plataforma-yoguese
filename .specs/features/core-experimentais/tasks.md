@@ -235,12 +235,12 @@ Execução em ordem: T19, T20, T21, T22, T23, T24, T25, T26.
 
 **Done when**:
 
-- [ ] Solicitação válida nasce `PENDENTE` e não ocupa vaga
-- [ ] Telefone anterior não recusado bloqueia, mesmo com máscara diferente, e grava `DUPLICADA` ligada
-- [ ] Ocorrência passada, bloqueada, cancelada ou sem vaga é recusada no servidor
-- [ ] Duas submissões concorrentes do mesmo telefone geram uma solicitação e uma duplicada
-- [ ] Declaração e `requested_at` ficam gravados
-- [ ] Gate: `npm test`
+- [x] Solicitação válida nasce `PENDENTE` e não ocupa vaga
+- [x] Telefone anterior não recusado bloqueia, mesmo com máscara diferente, e grava `DUPLICADA` ligada
+- [x] Ocorrência passada, bloqueada, cancelada ou sem vaga é recusada no servidor
+- [x] Duas submissões concorrentes do mesmo telefone geram uma solicitação e uma duplicada
+- [x] Declaração e `requested_at` ficam gravados
+- [x] Gate: `npm test`
 
 **Tests**: integration
 **Gate**: full
