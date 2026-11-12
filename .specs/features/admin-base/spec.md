@@ -172,7 +172,7 @@ experimentais.
 | PLAN-05 | P1: Gestão de planos | Design | Pending |
 | PLAN-06 | P1: Gestão de planos | Design | Pending |
 
-**Coverage:** 24 total, 0 mapped to tasks, 24 unmapped ⚠️ (mapeamento na fase de Tasks)
+**Coverage:** 28 total, 28 mapeados a checks (C1-C30 em tasks.md; ACs 9-11 e STUD-10/11 vindos da verificação)
 
 ---
 

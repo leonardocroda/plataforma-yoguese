@@ -1,9 +1,9 @@
 # admin-base proofs
 
-**HEAD**: 809b7f4
+**HEAD**: 1e19399
 **Tree**: clean
 **Shell**: C:/Program Files/Git\bin\bash.exe
-**Result**: 26 pass, 0 fail
+**Result**: 32 pass, 0 fail
 
 | Check | Proof | Result |
 | --- | --- | --- |
@@ -31,6 +31,12 @@
 | C22 | `run plans / ✓ plans services > inativa via update e o seletor omite o plano (PLAN-04)` | pass |
 | C23 | `run students / ✓ students services > perfil mostra o plano mesmo depois de inativado (PLAN-05)` | pass |
 | C24 | `walk - plano criado com valor X aparece na /planos com X` | pass (Walked) |
+| C25 | `run auth-int / ✓ credentials > credenciais de role ALUNO nao autenticam no admin (AUTH-09)` | pass |
+| C26 | `run students / ✓ students services > reativar aluna sem plano e recusado e com plano funciona (STUD-09)` | pass |
+| C28 | `run students / ✓ students services > e-mail igual diferindo so em maiusculas e duplicado (STUD-10)` | pass |
+| C29 | `run students / ✓ students services > plano inexistente e recusado com erro do campo, sem estourar FK (STUD-11)` | pass |
+| C30 | `walk - select de status oferece Experimental, Aguardando matrícula, Ativo e Inativo` | pass (Walked) |
+| C27 | `run plans / ✓ plans services > edita limpa a descricao e manter omitido preserva (PLAN-03)` | pass |
 | Build | `npm run build` | pass |
 | Build | `npm run lint` | pass |
 
@@ -39,17 +45,17 @@
 `Run auth-int` - exit 0
 
 ```
- ✓ src/__tests__/seed.int.test.ts > seed > admin idempotente com hash verificavel (AUTH-08) 703ms
- ✓ src/modules/auth/__tests__/credentials.int.test.ts > credentials > e-mail desconhecido e senha errada falham com o mesmo erro generico 367ms
- ✓ src/modules/auth/__tests__/credentials.int.test.ts > credentials > hash sem o formato scrypt nunca autentica 86ms
- ✓ src/modules/auth/__tests__/credentials.int.test.ts > credentials > normalizeEmail devolve trim e lowercase 88ms
- ✓ src/__tests__/seed.int.test.ts > seed > seed de novo atualiza a senha do admin pelo env (upsert) 645ms
- ✓ src/__tests__/seed.int.test.ts > seed > sem ADMIN_EMAIL/ADMIN_PASSWORD o seed recusa com erro claro 10ms
+ ✓ src/modules/auth/__tests__/actions.int.test.ts > auth actions > e-mail chega normalizado ao servico (trim e lowercase) 436ms
+ ✓ src/__tests__/seed.int.test.ts > seed > sem ADMIN_EMAIL/ADMIN_PASSWORD o seed recusa com erro claro 14ms
+ ✓ src/modules/auth/__tests__/credentials.int.test.ts > credentials > e-mail desconhecido e senha errada falham com o mesmo erro generico 325ms
+ ✓ src/modules/auth/__tests__/credentials.int.test.ts > credentials > hash sem o formato scrypt nunca autentica 67ms
+ ✓ src/modules/auth/__tests__/credentials.int.test.ts > credentials > credenciais de role ALUNO nao autenticam no admin (AUTH-09) 125ms
+ ✓ src/modules/auth/__tests__/credentials.int.test.ts > credentials > normalizeEmail devolve trim e lowercase 69ms
 
  Test Files  6 passed (6)
-      Tests  34 passed (34)
-   Start at  11:41:16
-   Duration  24.13s (tests 86%, import 13%, transform 1%)
+      Tests  35 passed (35)
+   Start at  12:13:35
+   Duration  24.87s (tests 84%, import 15%, transform 1%)
 
 (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
   - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
@@ -59,17 +65,17 @@ Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
 `Run auth-unit` - exit 0
 
 ```
- ✓ src/modules/auth/domain/__tests__/session-token.test.ts > session-token > token malformado devolve tampered, sem lancar 0ms
- ✓ src/modules/auth/domain/__tests__/password.test.ts > password > hash nunca devolve a senha em claro e segue o formato scrypt:salt:hash 43ms
- ✓ src/modules/auth/domain/__tests__/password.test.ts > password > duas hashes da mesma senha diferem (salt aleatorio) 79ms
- ✓ src/modules/auth/domain/__tests__/password.test.ts > password > verify aceita a senha certa 76ms
- ✓ src/modules/auth/domain/__tests__/password.test.ts > password > verify falha com senha errada 78ms
+ ✓ src/modules/auth/domain/__tests__/session-token.test.ts > session-token > token malformado devolve tampered, sem lancar 1ms
+ ✓ src/modules/auth/domain/__tests__/password.test.ts > password > hash nunca devolve a senha em claro e segue o formato scrypt:salt:hash 85ms
+ ✓ src/modules/auth/domain/__tests__/password.test.ts > password > duas hashes da mesma senha diferem (salt aleatorio) 108ms
+ ✓ src/modules/auth/domain/__tests__/password.test.ts > password > verify aceita a senha certa 77ms
+ ✓ src/modules/auth/domain/__tests__/password.test.ts > password > verify falha com senha errada 76ms
  ✓ src/modules/auth/domain/__tests__/password.test.ts > password > verify falha com hash malformado 0ms
 
  Test Files  2 passed (2)
       Tests  11 passed (11)
-   Start at  11:41:45
-   Duration  514ms (tests 78%, import 11%, transform 7%, worker 4%)
+   Start at  12:14:04
+   Duration  801ms (tests 70%, import 17%, transform 7%, worker 5%)
 
 (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
   - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
@@ -79,17 +85,17 @@ Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
 `Run students` - exit 0
 
 ```
- ✓ src/modules/students/services/__tests__/students.int.test.ts > students services > setStudentStatus inativa e reativa sem tocar nas matriculas 124ms
- ✓ src/modules/students/services/__tests__/students.int.test.ts > students services > listagem traz o nome do plano de cada aluna 121ms
- ✓ src/modules/students/services/__tests__/students.int.test.ts > students services > perfil agrega fixos, creditos e historico (STUD-08) 197ms
- ✓ src/modules/students/services/__tests__/students.int.test.ts > students services > perfil mostra o plano mesmo depois de inativado (PLAN-05) 89ms
- ✓ src/modules/students/services/__tests__/students.int.test.ts > students services > perfil lista so os creditos disponiveis 565ms
- ✓ src/modules/students/services/__tests__/students.int.test.ts > students services > perfil de aluna inexistente e recusado 44ms
+ ✓ src/modules/students/services/__tests__/students.int.test.ts > students services > reativar aluna sem plano e recusado e com plano funciona (STUD-09) 73ms
+ ✓ src/modules/students/services/__tests__/students.int.test.ts > students services > listagem traz o nome do plano de cada aluna 74ms
+ ✓ src/modules/students/services/__tests__/students.int.test.ts > students services > perfil agrega fixos, creditos e historico (STUD-08) 763ms
+ ✓ src/modules/students/services/__tests__/students.int.test.ts > students services > perfil mostra o plano mesmo depois de inativado (PLAN-05) 77ms
+ ✓ src/modules/students/services/__tests__/students.int.test.ts > students services > perfil lista so os creditos disponiveis 74ms
+ ✓ src/modules/students/services/__tests__/students.int.test.ts > students services > perfil de aluna inexistente e recusado 41ms
 
  Test Files  3 passed (3)
-      Tests  28 passed (28)
-   Start at  11:41:49
-   Duration  19.62s (tests 83%, import 16%, transform 1%)
+      Tests  31 passed (31)
+   Start at  12:14:08
+   Duration  19.42s (tests 83%, import 16%, transform 1%)
 
 (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
   - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
@@ -101,14 +107,14 @@ Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
 ```
 RUN  v5.1.0 C:/Users/leona/projects/plataforma-yoguese
 
- ✓ src/modules/bookings/services/__tests__/composition.int.test.ts > occurrence composition > the single composition service feeds the booking and the reading paths 331ms
- ✓ src/modules/bookings/services/__tests__/composition.int.test.ts > occurrence composition > matricula de aluna inativa nao conta e reativacao volta a contar (STUD-06, STUD-07) 138ms
- ✓ src/modules/bookings/services/__tests__/composition.int.test.ts > occurrence composition > reserva fixa de aluna inativa nao conta e reativacao volta a contar (STUD-06, STUD-07) 168ms
+ ✓ src/modules/bookings/services/__tests__/composition.int.test.ts > occurrence composition > the single composition service feeds the booking and the reading paths 363ms
+ ✓ src/modules/bookings/services/__tests__/composition.int.test.ts > occurrence composition > matricula de aluna inativa nao conta e reativacao volta a contar (STUD-06, STUD-07) 158ms
+ ✓ src/modules/bookings/services/__tests__/composition.int.test.ts > occurrence composition > reserva fixa de aluna inativa nao conta e reativacao volta a contar (STUD-06, STUD-07) 188ms
 
  Test Files  1 passed (1)
       Tests  3 passed (3)
-   Start at  11:42:12
-   Duration  10.09s (tests 72%, import 26%, transform 1%)
+   Start at  12:14:31
+   Duration  10.24s (tests 71%, import 27%, transform 2%)
 
 (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
   - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
@@ -118,17 +124,17 @@ Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
 `Run plans` - exit 0
 
 ```
- ✓ src/modules/plans/services/__tests__/plans.int.test.ts > plans services > cria plano completo com nome, valor, frequencia, descricao e status (PLAN-01) 54ms
- ✓ src/modules/plans/services/__tests__/plans.int.test.ts > plans services > recusa valor e frequencia invalidos com erro por campo (PLAN-02) 41ms
- ✓ src/modules/plans/services/__tests__/plans.int.test.ts > plans services > edita plano e reflete a mudanca na listagem (PLAN-03) 48ms
- ✓ src/modules/plans/services/__tests__/plans.int.test.ts > plans services > inativa via update e o seletor omite o plano (PLAN-04) 46ms
- ✓ src/modules/plans/services/__tests__/plans.int.test.ts > plans services > seletor mantem o plano atual da aluna mesmo inativo (PLAN-04, PLAN-05) 60ms
- ✓ src/modules/plans/services/__tests__/plans.int.test.ts > plans services > recusa plano com nome duplicado 43ms
+ ✓ src/modules/plans/services/__tests__/plans.int.test.ts > plans services > recusa valor e frequencia invalidos com erro por campo (PLAN-02) 38ms
+ ✓ src/modules/plans/services/__tests__/plans.int.test.ts > plans services > edita plano e reflete a mudanca na listagem (PLAN-03) 54ms
+ ✓ src/modules/plans/services/__tests__/plans.int.test.ts > plans services > edita limpa a descricao e manter omitido preserva (PLAN-03) 55ms
+ ✓ src/modules/plans/services/__tests__/plans.int.test.ts > plans services > inativa via update e o seletor omite o plano (PLAN-04) 60ms
+ ✓ src/modules/plans/services/__tests__/plans.int.test.ts > plans services > seletor mantem o plano atual da aluna mesmo inativo (PLAN-04, PLAN-05) 55ms
+ ✓ src/modules/plans/services/__tests__/plans.int.test.ts > plans services > recusa plano com nome duplicado 41ms
 
  Test Files  2 passed (2)
-      Tests  13 passed (13)
-   Start at  11:42:26
-   Duration  10.77s (tests 74%, import 25%, transform 1%)
+      Tests  14 passed (14)
+   Start at  12:14:44
+   Duration  11.31s (tests 76%, import 23%, transform 2%)
 
 (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
   - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
