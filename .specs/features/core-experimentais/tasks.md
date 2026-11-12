@@ -448,10 +448,10 @@ Execução em ordem: T19, T20, T21, T22, T23, T24, T25, T26.
 
 **Done when**:
 
-- [ ] Lista mostra nome, telefone, data/horário, modalidade, status, pagamento e data da solicitação
-- [ ] Busca por telefone filtra pelo normalizado
-- [ ] Sem solicitações mostra estado vazio
-- [ ] Gate: `npm run build; npm run lint`
+- [x] Lista mostra nome, telefone, data/horário, modalidade, status, pagamento e data da solicitação
+- [x] Busca por telefone filtra pelo normalizado
+- [x] Sem solicitações mostra estado vazio
+- [x] Gate: `npm run build; npm run lint`
 
 **Tests**: none
 **Gate**: build
