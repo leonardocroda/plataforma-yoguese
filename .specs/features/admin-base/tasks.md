@@ -373,13 +373,13 @@ Proof: walk - visit à /grade deslogada cai no /login
 Proof: walk - login com a credencial do seed termina na /grade
 
 **C3** - E-mail desconhecido e senha errada falham com a mesma mensagem genérica, sem sessão (AUTH-03, AC 3)
-Proof: run auth-int | ✓ credentials > credenciais invalidas falham com erro generico
+Proof: run auth-int | ✓ auth actions > credencial invalida devolve exatamente a mensagem generica, sem sessao (AUTH-03)
 
 **C4** - Campo vazio ou e-mail em formato inválido é recusado no servidor, sem criar sessão (AUTH-04, AC 4)
-Proof: run auth-int | ✓ login action > recusa campo vazio e email invalido
+Proof: run auth-int | ✓ auth actions > recusa campo vazio e e-mail invalido no servidor, sem tocar cookies (AUTH-04)
 
-**C5** - Senha é guardada só como `scrypt:<salt>:<hash>` e verify erra a senha com timingSafeEqual (AUTH-05, AC 5)
-Proof: run auth-unit | ✓ password > hash nunca devolve a senha e verify falha com senha errada
+**C5** - A senha é guardada somente como `scrypt:<salt>:<hash>`, nunca em claro (AUTH-05, AC 5)
+Proof: run auth-unit | ✓ password > hash nunca devolve a senha em claro e segue o formato scrypt:salt:hash
 
 **C6** - "Sair" invalida a sessão e volta ao login (AUTH-06, AC 6)
 Proof: walk - clique em Sair desloga e /grade volta a redirecionar
@@ -409,13 +409,13 @@ Proof: run students | ✓ students services > aceita os 4 status do PRD
 Proof: run students | ✓ students services > recusa e-mail duplicado
 
 **C15** - updateStudent persiste as mudanças e elas aparecem na listagem/perfil (STUD-05, AC 5)
-Proof: run students | ✓ students services > edita e reflete na listagem
+Proof: run students | ✓ students services > edita a aluna e a mudanca aparece na listagem (STUD-05)
 
 **C16** - WHILE inativa, a aluna não conta como ocupação fixa da ocorrência (STUD-06, AC 6)
-Proof: run composition | ✓ composition > matricula de aluna inativa nao conta na ocupacao
+Proof: run composition | ✓ occurrence composition > matricula de aluna inativa nao conta e reativacao volta a contar (STUD-06, STUD-07)
 
 **C17** - De volta a Ativa, a mesma matrícula volta a contar sem reescrever dados (STUD-07, AC 7)
-Proof: run composition | ✓ composition > reativacao volta a contar a matricula
+Proof: run composition | ✓ occurrence composition > matricula de aluna inativa nao conta e reativacao volta a contar (STUD-06, STUD-07)
 
 **C18** - getStudentProfile devolve cadastro, fixos ativos, créditos com vencimento e histórico (STUD-08, AC 8)
 Proof: run students | ✓ students services > perfil agrega fixos creditos e historico
@@ -429,11 +429,11 @@ Proof: run plans | ✓ plans services > recusa valor e frequencia invalidos
 **C21** - updatePlan persiste as mudanças e elas aparecem na listagem (PLAN-03, AC 3)
 Proof: run plans | ✓ plans services > edita e reflete na listagem
 
-**C22** - listSelectablePlans omite plano INATIVO e mantém o plano atual da aluna em edição (PLAN-04, AC 4)
-Proof: run plans | ✓ plans services > seletor omite inativo e mantem o atual
+**C22** - listSelectablePlans omite o plano INATIVO da seleção (PLAN-04, AC 4)
+Proof: run plans | ✓ plans services > inativa via update e o seletor omite o plano (PLAN-04)
 
 **C23** - Aluna com plano inativo mantém o plano visível no perfil (PLAN-05, AC 5)
-Proof: run students | ✓ students services > perfil mostra plano mesmo inativo
+Proof: run students | ✓ students services > perfil mostra o plano mesmo depois de inativado (PLAN-05)
 
 **C24** - O valor do plano exibido na tela é o gravado no banco, sem tabela fixa no código (PLAN-06, AC 6)
 Proof: walk - plano criado com valor X aparece na /planos com X
@@ -447,7 +447,7 @@ The feature's live state, written as it happens - a compaction gives no warning.
 **Settled mid-build:** 2026-11-12 - user: "pode seguir" (aprovação do plano de tasks; modo de execução por lotes com sub-agentes, padrão da skill, delegado ao orquestrador)
 **Dispatched:** 2026-11-12 - batch worker 1 (fases 1-2, T1-T6) em HEAD 8429c7d - **returned**: completo (T1 178bcac, T2 83aa007, T3 90fae50, T4 da7d220, T5 5ecff9b, T6 4996448; 223 testes verdes, 0 desvios)
 **Dispatched:** 2026-11-12 - batch worker 2 (fases 3-4, T7-T13) em HEAD 4996448 - **returned**: completo (T7 a861700, T8 d064880, T9 7db69df, T10 27663c3, T11 37cdba7, T12 b753172, T13 ffecf6e; 261 testes verdes, 0 desvios)
-**Walked:** [each story's Independent Test as you did it - what the screen showed, and how the user reaches each state: sign-in, data, path]
+**Walked:** 2026-11-12, chromium headless (playwright-core/msedge) contra dev server na 3000 - 26/26 PASS. Login seguro: /grade deslogada cai no /login (C1); senha errada mostra "E-mail ou senha inválidos" sem sessão (C3); login admin@yoguese.com leva a /grade (C2); logada, /login devolve a /grade (C7); Sair desloga e o guard volta (C6). Shell: nav Grade/Alunos/Planos/Créditos/Feriados + "Admin Yogue-se logada" (C9, C10). Planos: "Mensal 2x" criado por R$ 180,00 e exibido na listagem com o valor do banco (C24). Alunos: "Ana Walk" criada Ativa com plano Mensal 2x (STUD-01/03), reservada como fixa na ter 19h pela grade (Fixos 1 / Vagas 7); Inativar libera a vaga na grade (Vagas 8, STUD-06) e Reativar restaura (Vagas 7, STUD-07); detalhe /alunos/[id] mostra Dados cadastrais, Horários fixos ativos, Créditos disponíveis e Histórico de reservas (STUD-08). Achado do walk fechado: a reserva FIXED de aluna inativa contava na composição (branch sem teste) - fix 809b7f4 com teste dos dois branches, 262 testes verdes. Estado final do banco local: admin seedado, plano Mensal 2x, Ana Walk ativa com reserva fixa na ocorrência de ter 19h, 4 alunos de teste.
 
 ---
 
