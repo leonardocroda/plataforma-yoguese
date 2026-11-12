@@ -280,9 +280,9 @@ Execução em ordem: T19, T20, T21, T22, T23, T24, T25, T26.
 
 **Done when**:
 
-- [ ] Action pública funciona sem cookie de sessão
-- [ ] Erros de campo chegam à tela com a mensagem do serviço
-- [ ] Gate: `npm test`
+- [x] Action pública funciona sem cookie de sessão
+- [x] Erros de campo chegam à tela com a mensagem do serviço
+- [x] Gate: `npm test`
 
 **Tests**: integration
 **Gate**: full
