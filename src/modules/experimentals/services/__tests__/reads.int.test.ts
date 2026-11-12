@@ -16,6 +16,7 @@ import {
   changeExperimentalOccurrence,
   createExperimentalRequest,
   getExperimental,
+  listApprovedExperimentalsBySession,
   listExperimentals,
   refuseExperimental,
   registerPayment,
@@ -313,5 +314,62 @@ describe("experimental reads", () => {
     expect(registro.paymentStatus).toBe("PENDENTE");
     expect(registro.whatsappContactedAt).toBeNull();
     expect(registro.cancelledAt).toBeNull();
+  });
+
+  it("grade lista a aprovada como participante experimental", async () => {
+    const { sessionId } = await occurrence(3, 2);
+    const outra = await occurrence(4, 2);
+
+    // A aprovada da primeira ocorrencia: entra na lista de participantes
+    const aprovada = await createExperimental(pg.db, {
+      classSessionId: sessionId,
+      status: "APROVADA",
+      name: "Maria Aprovada",
+      phone: "(11) 98888-7777",
+    });
+
+    // Os demais status nao entram: so a aprovada ocupa a vaga (EXP-42)
+    await createExperimental(pg.db, {
+      classSessionId: sessionId,
+      status: "PENDENTE",
+      name: "Joana Pendente",
+      phone: "(11) 97777-6666",
+    });
+    await createExperimental(pg.db, {
+      classSessionId: sessionId,
+      status: "CANCELADA_COM_DIREITO",
+      name: "Ana Cancelada",
+      phone: "(11) 96666-5555",
+    });
+    await createExperimental(pg.db, {
+      classSessionId: sessionId,
+      status: "FALTA",
+      name: "Bruna Falta",
+      phone: "(11) 95555-4444",
+    });
+    await createExperimental(pg.db, {
+      classSessionId: sessionId,
+      status: "CONVERTIDA",
+      name: "Carla Convertida",
+      phone: "(11) 94444-3333",
+    });
+
+    // Uma aprovada de outra ocorrencia: nao entra na lista da primeira
+    await createExperimental(pg.db, {
+      classSessionId: outra.sessionId,
+      status: "APROVADA",
+      name: "Daniela Otra",
+      phone: "(11) 93333-2222",
+    });
+
+    const lista = await listApprovedExperimentalsBySession(pg.db, [sessionId]);
+
+    expect(lista).toHaveLength(1);
+    expect(lista[0].id).toBe(aprovada.id);
+    expect(lista[0].name).toBe("Maria Aprovada");
+    expect(lista[0].classSessionId).toBe(sessionId);
+
+    // Sem ocorrencia nao ha nada a listar
+    expect(await listApprovedExperimentalsBySession(pg.db, [])).toEqual([]);
   });
 });

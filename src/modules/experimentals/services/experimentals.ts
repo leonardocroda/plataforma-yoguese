@@ -5,7 +5,7 @@
 // solicitacao existente, e e somente leitura. A aprovacao ocupa a vaga da
 // ocorrencia e a recusa libera o telefone.
 
-import { and, desc, eq, isNull, ne } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, ne } from "drizzle-orm";
 import {
   classSessions,
   classSlots,
@@ -959,7 +959,42 @@ export async function registerWhatsAppContact(
   return { ok: true, value: updated };
 }
 
-// ---- leitura administrativa (EXP-17, EXP-18, EXP-19, EXP-49, EXP-60) ----
+// ---- leitura das aprovadas por sessao (EXP-43) ----
+
+/** A experimental aprovada de uma ocorrencia, como a grade a lista. */
+export type ApprovedExperimental = {
+  id: string;
+  name: string;
+  classSessionId: string;
+};
+
+/**
+ * As experimentais aprovadas das ocorrencias informadas (EXP-43): a grade
+ * lista cada uma como participante experimental, com o nome da pessoa. So a
+ * APROVADA ocupa a vaga e aparece na lista de participantes; os demais
+ * status nao contam na ocupacao (EXP-42).
+ */
+export async function listApprovedExperimentalsBySession(
+  db: DbClient,
+  classSessionIds: string[],
+): Promise<ApprovedExperimental[]> {
+  if (classSessionIds.length === 0) return [];
+
+  return db
+    .select({
+      id: experimentals.id,
+      name: experimentals.name,
+      classSessionId: experimentals.classSessionId,
+    })
+    .from(experimentals)
+    .where(
+      and(
+        inArray(experimentals.classSessionId, classSessionIds),
+        eq(experimentals.status, "APROVADA"),
+      ),
+    );
+}
+
 
 /** A ocorrencia da experimental, com a turma e a modalidade (EXP-17). */
 export type ExperimentalOccurrence = {
