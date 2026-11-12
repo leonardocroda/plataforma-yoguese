@@ -171,11 +171,11 @@ Execução em ordem: T19, T20, T21, T22, T23, T24, T25, T26.
 
 **Done when**:
 
-- [ ] Declaração e preço são constantes exatas do PRD
-- [ ] Solicitação recusa nome vazio, telefone inválido e declaração não marcada
-- [ ] Conversão exige e-mail, nascimento, plano e ao menos um horário
-- [ ] Rótulos de status e pagamento são os termos do PRD
-- [ ] Gate: `npx vitest run src/modules/experimentals/domain`
+- [x] Declaração e preço são constantes exatas do PRD
+- [x] Solicitação recusa nome vazio, telefone inválido e declaração não marcada
+- [x] Conversão exige e-mail, nascimento, plano e ao menos um horário
+- [x] Rótulos de status e pagamento são os termos do PRD
+- [x] Gate: `npx vitest run src/modules/experimentals/domain`
 
 **Tests**: unit
 **Gate**: quick
