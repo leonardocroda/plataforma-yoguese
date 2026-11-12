@@ -273,6 +273,44 @@ area from now on (admin today, student area later) reuses this pattern.
 
 Snapshot - updated when work pauses.
 
+### Handoff snapshot (2026-11-12)
+
+- Feature `admin-base` EXECUTADA e FECHADA: 13 tasks (T1-T13) em 2 batches (Fases 1-2, Fases
+  3-4), uma commit atomica por task sobre o commit de planejamento 8429c7d. Achado do walk
+  fechado antes do Verifier (reserva FIXED de aluna inativa contava na composicao - branch sem
+  teste; fix 809b7f4 com teste dos dois branches). Verifier (author != verifier) devolveu FAIL
+  com 6 findings (F1-F6): todos fechados em uma passada, um commit por finding (94d70dc,
+  1e3c822, 78eb0ad, 1594143, 39cdce4, 717ec90), com criterios novos no spec (AUTH-09,
+  STUD-09, STUD-10, STUD-11) e checks C25-C30. Tipo `null` do F4 flagado pelo Build do
+  check_proofs e corrigido em 1e19399.
+- Suite: 267 testes verdes (37 arquivos), build e lint limpos, walk round 2 com 27/27 PASS
+  (banco local resetado), `check_proofs.py` com 32 pass / 0 fail no HEAD b15df66 e
+  `validate_verification.py` com 0 erro e 0 warning (feature fechada). HEAD de fechamento:
+  b15df66. Estado local esperado pos-gate: `proofs.md` regenerado (HEAD b15df66) e as linhas
+  C25-C30 autorais em `verification.md` ficam como modificacao local nao commitada (commitar
+  movimenta o HEAD e invalida o hash das provas).
+- Login/logout prontos: `/login` fora dos route groups; guard com papel no layout
+  (`requireAdminSession`); login recusa credenciais de role ALUNO com o erro generico
+  (AUTH-09); sessao cookie httpOnly 7 dias (AD-035). `.env.local` tem AUTH_SECRET,
+  ADMIN_EMAIL e ADMIN_PASSWORD (documentados no `.env.example`/README). AD-016 cumprida:
+  `adminLabel` sai do `users.name` da sessao, actions de credito nao aceitam mais rótulo.
+- Regras novas de aluna: reativar exige plano (STUD-09); e-mail gravado normalizado em
+  minusculas e unicidade case-insensitive (STUD-10); plano inexistente recusa com erro de
+  campo, sem estourar FK (STUD-11). Termos de status na tela agora sao os do PRD: "Ativo" e
+  "Inativo" (F3). Migracao nova quebra o volume local: `docker compose down -v` -> migrate ->
+  seed (documentado no README).
+- Licoes destiladas (7, todas candidate): L-021 guard checa papel junto com presenca; L-022
+  todo caminho que grava estado revalida a regra do validator; L-023 termos fixos por
+  criterio aparecem verbatim na UI; L-024 campo opcional distingue omitido de vazio; L-025
+  unicidade de identidade ignora caixa e grava normalizado; L-026 id referenciado por action
+  valida existencia; L-027 service que muda assinatura precisa do gate Build (vitest nao
+  typecheck). NOTA OPERACIONAL: rodar `lessons.py add` SEQUENCIAL - duas chamadas em
+  paralelo fizeram race no `lessons.json` e uma lição se perdeu (re-adicionada).
+- Proxima feature da ordem do AD-034: experimentais (PRD modulo 8) - antes do resto do
+  AD-009. Dev server: subir com `npm run dev` APÓS qualquer `npm run build` (o build de
+  producao sobrescreve `.next` e corrompe o cache do dev server rodando - reiniciar e limpar
+  `.next`).
+
 ### Handoff snapshot (2026-11-11)
 
 - Feature `core-feriados-recessos` EXECUTADA: 8 tasks (T1-T8), uma commit atomica por task,
