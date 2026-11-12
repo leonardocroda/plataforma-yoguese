@@ -60,8 +60,12 @@ function validationError(errors: { field: string; message: string }[]): string {
   return errors.map((error) => `${error.field}: ${error.message}`).join("; ");
 }
 
-/** O Drizzle embrulha o erro do Postgres: a mensagem original vem no cause. */
-function isUniqueViolation(error: unknown): boolean {
+/**
+ * O Drizzle embrulha o erro do Postgres: a mensagem original vem no cause.
+ * Exportado porque a conversao de experimental grava a aluna na mesma tabela
+ * e precisa tratar a corrida do e-mail unico (EXP-52).
+ */
+export function isUniqueViolation(error: unknown): boolean {
   const messages: string[] = [];
   let current: unknown = error;
   while (current instanceof Error) {
@@ -80,7 +84,12 @@ function enrollmentDateOrToday(
   return input.enrollmentDate || todayInStudio(now);
 }
 
-async function emailTaken(
+/**
+ * O e-mail identifica a aluna: o mesmo e-mail em outra caixa e a mesma
+ * pessoa (STUD-10). O e-mail gravado e normalizado, entao a comparacao
+ * normalizada tambem encontra o cadastro existente.
+ */
+export async function emailTaken(
   db: DbClient,
   email: string,
   exceptStudentId?: string,
@@ -96,7 +105,7 @@ async function emailTaken(
  * O plano indicado precisa existir: sem esta checagem, um planId inalcançavel
  * pelo formulario mas submetivel pela action estoura a FK como 500 (STUD-11).
  */
-async function planExists(
+export async function planExists(
   db: DbClient,
   planId: string,
 ): Promise<boolean> {
@@ -104,6 +113,22 @@ async function planExists(
     .select({ id: plans.id })
     .from(plans)
     .where(eq(plans.id, planId));
+  return Boolean(plan);
+}
+
+/**
+ * O plano existe e esta ativo (PLAN-04): a conversao da experimental exige um
+ * plano ativo - um plano inativo nao e oferecido e nao pode virar matricula
+ * (EXP-53).
+ */
+export async function activePlanExists(
+  db: DbClient,
+  planId: string,
+): Promise<boolean> {
+  const [plan] = await db
+    .select({ id: plans.id })
+    .from(plans)
+    .where(and(eq(plans.id, planId), eq(plans.status, "ATIVO")));
   return Boolean(plan);
 }
 

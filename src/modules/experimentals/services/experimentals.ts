@@ -29,6 +29,7 @@ import {
   studioDateTimeToInstant,
   todayInStudio,
 } from "../../classes/domain/occurrences";
+import { isUniqueViolation } from "../../students/services/students";
 import { normalizePhone } from "../domain/phone";
 import {
   canCancel,
@@ -73,19 +74,6 @@ function isPaymentStatus(value: string): value is ExperimentalPaymentStatus {
 }
 
 const DUPLICATE_ERROR = "ja existe uma aula experimental para este telefone";
-
-/** O Drizzle embrulha o erro do Postgres: a mensagem original vem no cause. */
-function isUniqueViolation(error: unknown): boolean {
-  const messages: string[] = [];
-  let current: unknown = error;
-  while (current instanceof Error) {
-    messages.push(current.message);
-    current = (current as { cause?: unknown }).cause;
-  }
-  return messages
-    .join(" | ")
-    .includes("duplicate key value violates unique constraint");
-}
 
 /**
  * A solicitacao canonica do telefone: a que bloqueia uma nova solicitacao.

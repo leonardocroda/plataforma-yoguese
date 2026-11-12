@@ -610,12 +610,12 @@ Execução em ordem: T19, T20, T21, T22, T23, T24, T25, T26.
 
 **Done when**:
 
-- [ ] Cria aluna `ATIVO`, copia declaração e grava as matrículas fixas
-- [ ] E-mail duplicado/inválido, plano inexistente/inativo e horário lotado recusam sem criar nada
-- [ ] Antes do fim da aula ou status não aprovado recusa
-- [ ] Segunda conversão recusa; `attended_at` e `converted_student_id` gravam
-- [ ] Aluna não recebe `user_id`
-- [ ] Gate: `npm test`
+- [x] Cria aluna `ATIVO`, copia declaração e grava as matrículas fixas
+- [x] E-mail duplicado/inválido, plano inexistente/inativo e horário lotado recusam sem criar nada
+- [x] Antes do fim da aula ou status não aprovado recusa
+- [x] Segunda conversão recusa; `attended_at` e `converted_student_id` gravam
+- [x] Aluna não recebe `user_id`
+- [x] Gate: `npm test`
 
 **Tests**: integration
 **Gate**: full
