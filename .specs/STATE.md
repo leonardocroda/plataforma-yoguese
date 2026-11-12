@@ -246,6 +246,29 @@ STUDIO_CLOSURES, but no PRD rule uses it and the unblock path is the
 removal/edit of the record itself (AD-027), so the tables keep no `status`
 column and removal is a physical delete.
 
+### AD-034 - ACTIVE - Admin base comes before experimentals (2026-11-11)
+
+User reorder of AD-009 after the three core features closed: the next feature
+is the admin base (login + logged-in admin area wiring the existing screens)
+instead of experimentals. Rationale from the user: with the operational core
+done, a logged-in admin frontend already makes much of the platform usable
+("gostaria de ja ter um frontend uma area logada para os admins"); the (admin)
+layout is a placeholder reading "auth em feature futura" and PRD section 16
+places authentication, admin panel and registrations in FASE 1. Experimentals
+(PRD modulo 8) follow the admin base.
+
+### AD-035 - ACTIVE - Auth stack: own implementation, signed cookie session (2026-11-12)
+
+Decision recorded during the admin-base design: credentials auth is implemented
+in-repo - scrypt (node:crypto) password hashing and a stateless session cookie
+signed with HMAC-SHA256 (`yoguese_session`, httpOnly, 7 days, secret from
+AUTH_SECRET) - with no auth dependency. The guard lives in the (admin) layout
+plus requireAdminSession() on every admin server action (a server action is a
+reachable POST endpoint). Rationale: defaults approved in the spec (no heavy new
+dependency, single admin in v1). Trade-off: no server-side revocation before
+expiry in v1; revisiting when student accounts land. Scope: every authenticated
+area from now on (admin today, student area later) reuses this pattern.
+
 ## Handoff
 
 Snapshot - updated when work pauses.
@@ -286,7 +309,8 @@ Snapshot - updated when work pauses.
 - Setup local (AD-015): `docker compose up -d` -> `npm run db:migrate` -> `npm run
   db:seed` -> `npm run dev` (3001 se a 3000 estiver ocupada); docker desktop precisa
   estar de pe antes de qualquer comando docker.
-- Proxima feature da ordem do AD-009: experimentais (PRD modulo 8).
+- Proxima feature da ordem do AD-009 (emendada pela AD-034): base do admin
+  (login + area logada dos admins) antes das experimentais (PRD modulo 8).
 
 ### Handoff snapshot (2026-11-10)
 
