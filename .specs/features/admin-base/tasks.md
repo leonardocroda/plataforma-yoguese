@@ -348,8 +348,8 @@ T8 → T13
 
 **Done when**:
 
-- [ ] Detalhe mostra os 4 blocos de informação do perfil
-- [ ] Gate: build
+- [x] Detalhe mostra os 4 blocos de informação do perfil
+- [x] Gate: build
 
 **Tests**: none (dados provados no T8; tela provada por walk)
 **Gate**: build
