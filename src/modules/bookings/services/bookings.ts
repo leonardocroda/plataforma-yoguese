@@ -1,8 +1,9 @@
-import { and, eq, gt, isNull, lte, or } from "drizzle-orm";
+import { and, asc, desc, eq, gt, isNull, lte, or } from "drizzle-orm";
 import {
   bookings,
   classSessions,
   classSlots,
+  classTypes,
   fixedEnrollments,
 } from "../../../db/schema";
 import { todayInStudio, isDatePast } from "../../classes/domain/occurrences";
@@ -215,4 +216,43 @@ export async function createBooking(
 
     return { ok: true, value: created };
   });
+}
+
+export type StudentBooking = {
+  id: string;
+  bookingType: BookingType;
+  status: (typeof bookings.status.enumValues)[number];
+  date: string;
+  startTime: string;
+  endTime: string;
+  classTypeName: string;
+};
+
+/**
+ * Historico de reservas do aluno (STUD-08): todas as reservas, do mais
+ * recente. Leitura simples para o detalhe do aluno - as regras de reserva
+ * ficam no createBooking.
+ */
+export async function listStudentBookings(
+  db: DbClient,
+  studentId: string,
+): Promise<StudentBooking[]> {
+  const rows = await db
+    .select({
+      id: bookings.id,
+      bookingType: bookings.bookingType,
+      status: bookings.status,
+      date: classSessions.sessionDate,
+      startTime: classSlots.startTime,
+      endTime: classSlots.endTime,
+      classTypeName: classTypes.name,
+    })
+    .from(bookings)
+    .innerJoin(classSessions, eq(bookings.classSessionId, classSessions.id))
+    .innerJoin(classSlots, eq(classSessions.classSlotId, classSlots.id))
+    .innerJoin(classTypes, eq(classSlots.classTypeId, classTypes.id))
+    .where(eq(bookings.studentId, studentId))
+    .orderBy(desc(classSessions.sessionDate), asc(classSlots.startTime));
+
+  return rows;
 }

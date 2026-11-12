@@ -245,11 +245,11 @@ T8 → T13
 
 **Done when**:
 
-- [ ] Falta de campo obrigatório recusa com erro específico do campo
-- [ ] E-mail duplicado recusa com mensagem própria
-- [ ] getStudentProfile devolve fixos, créditos com vencimento e histórico
-- [ ] ~14 testes novos verdes
-- [ ] Gate: full
+- [x] Falta de campo obrigatório recusa com erro específico do campo
+- [x] E-mail duplicado recusa com mensagem própria
+- [x] getStudentProfile devolve fixos, créditos com vencimento e histórico
+- [x] ~14 testes novos verdes
+- [x] Gate: full
 
 **Tests**: integration
 **Gate**: full
