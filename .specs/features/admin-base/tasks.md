@@ -204,9 +204,9 @@ T8 → T13
 
 **Done when**:
 
-- [ ] Sem sessão, qualquer rota do (admin) redireciona ao login
-- [ ] Nav alcança as 5 telas; Sair encerra a sessão
-- [ ] Gate: build
+- [x] Sem sessão, qualquer rota do (admin) redireciona ao login
+- [x] Nav alcança as 5 telas; Sair encerra a sessão
+- [x] Gate: build
 
 **Tests**: none (prova de walk nos critérios de tela)
 **Gate**: build
