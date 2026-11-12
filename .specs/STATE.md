@@ -269,12 +269,64 @@ dependency, single admin in v1). Trade-off: no server-side revocation before
 expiry in v1; revisiting when student accounts land. Scope: every authenticated
 area from now on (admin today, student area later) reuses this pattern.
 
+### AD-036 - ACTIVE - Experimental has its own table and approved ones occupy the vacancy (2026-11-12)
+
+User decision: a public request lives in `EXPERIMENTALS` (PRD 12) with the
+normalized phone, and an approved experimental counts as experimental occupancy
+in the occurrence composition; no student row is created before conversion.
+Rationale: the public form collects only name and phone while `STUDENTS`
+requires e-mail and birth date; the separate table preserves attempts and
+history, and composition stays the single source of the numbers (AD-008).
+
+### AD-037 - ACTIVE - Conversion creates an active student with plan and fixed slots (2026-11-12)
+
+User decision: "Converter em aluna" asks e-mail, birth date, plan and fixed
+slot(s), checks vacancy, and creates an ATIVO student with fixed enrollments in
+one transaction, keeping the experimental as CONVERTIDA. This departs from PRD
+8.6 steps 1-2 (status "aguardando matricula" then send access): the student area
+and login do not exist yet (AD-006, AD-034), so the intermediate state would
+leave the student unusable. Revisit when the student area lands.
+
+### AD-038 - ACTIVE - Duplicate experimental: everything except refused blocks, and blocked attempts are recorded (2026-11-12)
+
+User decision: the phone is normalized before comparison; any prior request not
+RECUSADA blocks a new one, while a request refused by the studio frees the
+person. The blocked attempt is stored as DUPLICADA linked to the canonical
+request so the admin can consult previous attempts (PRD 8.2). Concurrency is
+settled by a partial unique index on the normalized phone for canonical rows.
+
+### AD-039 - ACTIVE - Admin registers experimental cancellation and no-show with the 24h rule (2026-11-12)
+
+User decision: the admin registers on the visitor's behalf (AD-023). With 24h
+or more before the start the experimental becomes CANCELADA_COM_DIREITO and the
+same record may be rescheduled, with the previous occurrence recorded; less
+than 24h and no-show end the right. No-show only after the start; cancellation
+only before it. Studio cancellation, a holiday/closure block, or a slot
+weekday/time edit keeps the right and frees the spot (AD-026/AD-027).
+
+### AD-040 - ACTIVE - The public form chooses a concrete occurrence with vacancy (2026-11-12)
+
+User decision: the visitor picks date, time and modality from the active future
+occurrences that still have a vacancy; the request stores that session. A
+pending request never occupies, and approval rechecks the same vacancy (PRD
+8.3). The experimental price stays R$ 45,00 with manual payment and no
+automatic charge (PRD 8.4).
+
 ## Handoff
 
 Snapshot - updated when work pauses.
 
 ### Handoff snapshot (2026-11-12)
 
+- Feature `core-experimentais` em PLANEJAMENTO: spec aprovado pelo usuario ("bora");
+  `context.md`, `spec.md` (EXP-01 a EXP-61), `design.md` e `tasks.md` (26 tasks em 4 fases)
+  escritos. `validate_spec.py` e `validate_tasks.py` com 0 erros (7 warnings esperados de
+  `Tests: none` nas telas). PARADO antes do Execute aguardando aprovacao das tasks pelo
+  usuario; so depois gravar `**Approved**` em `tasks.md` e rodar
+  `validate_tasks.py core-experimentais --execute`.
+- Arquitetura fechada: tabela `experimentals` + `experimental_reschedules`, indice unico
+  parcial por telefone, composicao contando `APROVADA`, hooks nos dois caminhos de
+  cancelamento do estudio, conversao transacional para aluna `ATIVO` com matriculas fixas.
 - Feature `admin-base` EXECUTADA e FECHADA: 13 tasks (T1-T13) em 2 batches (Fases 1-2, Fases
   3-4), uma commit atomica por task sobre o commit de planejamento 8429c7d. Achado do walk
   fechado antes do Verifier (reserva FIXED de aluna inativa contava na composicao - branch sem
