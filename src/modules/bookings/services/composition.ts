@@ -76,8 +76,13 @@ export async function getOccurrenceComposition(
 
   if (input.sessionId) {
     const activeBookings = await db
-      .select({ studentId: bookings.studentId, type: bookings.bookingType })
+      .select({
+        studentId: bookings.studentId,
+        type: bookings.bookingType,
+        studentStatus: students.status,
+      })
       .from(bookings)
+      .innerJoin(students, eq(students.id, bookings.studentId))
       .where(
         and(
           eq(bookings.classSessionId, input.sessionId),
@@ -87,6 +92,12 @@ export async function getOccurrenceComposition(
 
     for (const booking of activeBookings) {
       if (counted.has(booking.studentId)) continue;
+      // Reserva fixa de aluna inativa deixa de ocupar a vaga (STUD-06):
+      // a ocupacao fixa e derivada do status, e reativar volta a contar
+      // sem reescrever a reserva (STUD-07)
+      if (booking.type === "FIXED" && booking.studentStatus !== "ATIVO") {
+        continue;
+      }
       counted.add(booking.studentId);
       if (booking.type === "FIXED") fixedCount += 1;
       else if (booking.type === "MAKEUP") makeupCount += 1;

@@ -139,4 +139,50 @@ describe("occurrence composition", () => {
     expect(stored.startDate).toBe(date);
     expect(stored.endDate).toBeNull();
   });
+
+  it("reserva fixa de aluna inativa nao conta e reativacao volta a contar (STUD-06, STUD-07)", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 1 });
+    const date = nextOccurrence({ weekday: 3 }, today);
+    const [student] = await createStudents(pg.db, 1);
+
+    // Aluna sem matricula fixa: o admin reserva a ocorrencia como fixo pela
+    // grade (a reserva e a linha FIXED criada na ocorrencia, AD-008)
+    const booking = await createBooking(pg.db, {
+      studentId: student,
+      classSlotId: slotId,
+      date,
+      type: "FIXED",
+    });
+    expect(booking.ok).toBe(true);
+    if (!booking.ok) return;
+
+    const [session] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.classSlotId, slotId));
+
+    const compositionInput = {
+      classSlotId: slotId,
+      sessionId: session.id,
+      date,
+      capacity: 1,
+    };
+
+    // Aluna ativa: a reserva fixa ocupa a unica vaga
+    const active = await getOccurrenceComposition(pg.db, compositionInput);
+    expect(active.fixedCount).toBe(1);
+    expect(active.availableSpots).toBe(0);
+
+    // WHILE inativa: a reserva fixa para de contar e a vaga volta
+    await setStudentStatus(pg.db, { studentId: student, status: "INATIVO" });
+    const inactive = await getOccurrenceComposition(pg.db, compositionInput);
+    expect(inactive.fixedCount).toBe(0);
+    expect(inactive.availableSpots).toBe(1);
+
+    // De volta a ATIVA: a reserva volta a contar na proxima leitura
+    await setStudentStatus(pg.db, { studentId: student, status: "ATIVO" });
+    const reactivated = await getOccurrenceComposition(pg.db, compositionInput);
+    expect(reactivated.fixedCount).toBe(1);
+    expect(reactivated.availableSpots).toBe(0);
+  });
 });
