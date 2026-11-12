@@ -488,12 +488,12 @@ Execução em ordem: T19, T20, T21, T22, T23, T24, T25, T26.
 
 **Done when**:
 
-- [ ] Detalhe mostra todos os dados e timestamps
-- [ ] Cada ação mostra sucesso/erro sem perder a tela
-- [ ] Recusar, cancelar sem direito, falta e converter pedem confirmação
-- [ ] Status e pagamento usam os termos exatos
-- [ ] Duplicada aparece somente leitura
-- [ ] Gate: `npm run build; npm run lint`
+- [x] Detalhe mostra todos os dados e timestamps
+- [x] Cada ação mostra sucesso/erro sem perder a tela
+- [x] Recusar, cancelar sem direito, falta e converter pedem confirmação
+- [x] Status e pagamento usam os termos exatos
+- [x] Duplicada aparece somente leitura
+- [x] Gate: `npm run build; npm run lint`
 
 **Tests**: none
 **Gate**: build
