@@ -13,6 +13,10 @@ import {
 } from "../../../modules/classes/services/classes";
 import { listActiveStudents } from "../../../modules/students/services/students";
 import {
+  listApprovedExperimentalsBySession,
+  type ApprovedExperimental,
+} from "../../../modules/experimentals/services/experimentals";
+import {
   listStudentCredits,
   type StudentCredit,
 } from "../../../modules/credits/services/credits";
@@ -63,9 +67,10 @@ function coversDate(enrollment: EnrollmentRow, date: string): boolean {
 }
 
 /**
- * Participantes da ocorrencia: os fixos do vinculo e as reservas ativas. O
- * aluno que avisou falta ou cancelamento nao conta como participante: o
- * registro dele aparece no resultado da acao (CRD-09, AD-022).
+ * Participantes da ocorrencia: os fixos do vinculo, as reservas ativas e as
+ * experimentais aprovadas. O aluno que avisou falta ou cancelamento nao conta
+ * como participante: o registro dele aparece no resultado da acao (CRD-09,
+ * AD-022).
  */
 function occurrenceParticipants(
   input: {
@@ -76,6 +81,7 @@ function occurrenceParticipants(
   enrollments: EnrollmentRow[],
   sessionBookings: BookingRow[],
   nameById: Map<string, string>,
+  approvedExperimentals: ApprovedExperimental[],
 ): { participants: Participant[]; fixed: StudentOption[]; notices: Notice[] } {
   const nameOf = (studentId: string): string =>
     nameById.get(studentId) ?? "Aluno";
@@ -122,6 +128,17 @@ function occurrenceParticipants(
     } else {
       participants.push({ id: booking.studentId, name, kind: "fixo" });
     }
+  }
+
+  // As experimentais aprovadas da ocorrencia entram como participantes com
+  // o vinculo "experimental" (EXP-43): a pessoa que veio pela aula
+  // experimental ocupa a vaga da ocorrencia
+  for (const experimental of approvedExperimentals) {
+    participants.push({
+      id: experimental.id,
+      name: experimental.name,
+      kind: "experimental",
+    });
   }
 
   return { participants, fixed, notices };
@@ -200,6 +217,19 @@ export default async function AdminGradePage() {
     ? await db.select().from(bookings).where(inArray(bookings.classSessionId, sessionIds))
     : [];
 
+  // As experimentais aprovadas da semana: a grade lista cada uma como
+  // participante da ocorrencia (EXP-43)
+  const approvedExperimentals = await listApprovedExperimentalsBySession(
+    db,
+    sessionIds,
+  );
+  const experimentalsBySession = new Map<string, ApprovedExperimental[]>();
+  for (const experimental of approvedExperimentals) {
+    const list = experimentalsBySession.get(experimental.classSessionId) ?? [];
+    list.push(experimental);
+    experimentalsBySession.set(experimental.classSessionId, list);
+  }
+
   const slotIds = slots.map((slot) => slot.id);
   const enrollments = slotIds.length
     ? await db
@@ -254,6 +284,7 @@ export default async function AdminGradePage() {
                     enrollments,
                     occurrenceBookings,
                     nameById,
+                    experimentalsBySession.get(sessionId) ?? [],
                   );
                   const occurrenceCredits = allCredits.filter(
                     (credit) => credit.sourceSessionId === sessionId,

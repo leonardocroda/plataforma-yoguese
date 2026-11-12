@@ -590,9 +590,9 @@ Execução em ordem: T19, T20, T21, T22, T23, T24, T25, T26.
 
 **Done when**:
 
-- [ ] A aprovada aparece na ocorrência com nome e vínculo experimental
-- [ ] A contagem da grade continua vindo da composição
-- [ ] Gate: `npm run build; npm run lint`
+- [x] A aprovada aparece na ocorrência com nome e vínculo experimental
+- [x] A contagem da grade continua vindo da composição
+- [x] Gate: `npm run build; npm run lint`
 
 **Tests**: none
 **Gate**: build
