@@ -531,9 +531,9 @@ Execução em ordem: T19, T20, T21, T22, T23, T24, T25, T26.
 
 **Done when**:
 
-- [ ] Cancelamento pelo estúdio cancela a experimental com direito
-- [ ] O comportamento existente de reservas/créditos não muda
-- [ ] Gate: `npm test`
+- [x] Cancelamento pelo estúdio cancela a experimental com direito
+- [x] O comportamento existente de reservas/créditos não muda
+- [x] Gate: `npm test`
 
 **Tests**: integration
 **Gate**: full

@@ -12,6 +12,7 @@ import {
   fixedEnrollments,
 } from "../../../db/schema";
 import type { DbClient } from "../../bookings/services/sessions";
+import { cancelExperimentalsForOccurrence } from "../../experimentals/services/cancellations";
 import {
   hoursUntilOccurrence,
   isEligibleForCredit,
@@ -387,6 +388,11 @@ export async function cancelOccurrenceByStudio(
         if (returned.ok) returnedCredits += 1;
       }
     }
+
+    // As experimentais da ocorrencia cancelada pelo estudio perdem o
+    // direito a reagendar nao: viram CANCELADA_COM_DIREITO, porque a
+    // impossibilidade foi do estudio (EXP-45)
+    await cancelExperimentalsForOccurrence(tx, session.id, now);
 
     // Alunos fixos afetados: os do vinculo fixo e os da reserva fixa da
     // ocorrencia (inclusive quem ja avisou falta)
