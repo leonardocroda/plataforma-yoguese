@@ -9,7 +9,7 @@ export type DbClient = NodePgDatabase<typeof schema>;
 /** Recria o banco de teste vazio entre os testes de uma mesma suite. */
 export async function clearTables(db: DbClient): Promise<void> {
   await db.execute(
-    sql`truncate table credit_transactions, credits, bookings, class_sessions, fixed_enrollments, class_slots, class_types, students, holidays, studio_closures`,
+    sql`truncate table credit_transactions, credits, bookings, class_sessions, fixed_enrollments, class_slots, class_types, students, plans, users, holidays, studio_closures`,
   );
 }
 
@@ -61,6 +61,10 @@ export async function createStudents(
     .values(
       Array.from({ length: count }, (_, i) => ({
         name: `Aluno ${suffix} ${i + 1}`,
+        // E-mail unico com sufixo: uma suite pode criar varios alunos
+        phone: `1199999${String(1000 + i)}`,
+        email: `aluno-${suffix}-${i + 1}@teste.com`,
+        birthDate: "1990-01-01",
       })),
     )
     .returning();

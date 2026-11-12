@@ -15,6 +15,13 @@
       "when": 1794254593841,
       "tag": "0001_sad_wolfsbane",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794487814920,
+      "tag": "0002_easy_mariko_yashida",
+      "breakpoints": true
     }
   ]
 }

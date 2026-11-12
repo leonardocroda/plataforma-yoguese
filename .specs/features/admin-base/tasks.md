@@ -101,10 +101,10 @@ T8 → T13
 
 **Done when**:
 
-- [ ] Migration aplica do zero no Postgres do Testcontainers (suíte inteira sobe o banco novo)
-- [ ] `students.status` aceita EXPERIMENTAL, AGUARDANDO_MATRICULA, ATIVO, INATIVO
-- [ ] Fixtures e seed atualizados; suíte 188+ testes verde
-- [ ] Gate: `npm test` + `npm run build; npm run lint`
+- [x] Migration aplica do zero no Postgres do Testcontainers (suíte inteira sobe o banco novo)
+- [x] `students.status` aceita EXPERIMENTAL, AGUARDANDO_MATRICULA, ATIVO, INATIVO
+- [x] Fixtures e seed atualizados; suíte 188+ testes verde
+- [x] Gate: `npm test` + `npm run build; npm run lint`
 
 **Tests**: integration
 **Gate**: full
@@ -444,8 +444,8 @@ Proof: walk - plano criado com valor X aparece na /planos com X
 
 The feature's live state, written as it happens - a compaction gives no warning.
 
-**Settled mid-build:** [each answer the user gave during Execute, in their words, the turn it arrived - or none]
-**Dispatched:** [each sub-agent before it is sent: batch worker, Verifier, screens round 1 or 2 - at which `HEAD`, and `returned` when it does]
+**Settled mid-build:** 2026-11-12 - user: "pode seguir" (aprovação do plano de tasks; modo de execução por lotes com sub-agentes, padrão da skill, delegado ao orquestrador)
+**Dispatched:** 2026-11-12 - batch worker 1 (fases 1-2, T1-T6) em HEAD 8429c7d - aguardando retorno
 **Walked:** [each story's Independent Test as you did it - what the screen showed, and how the user reaches each state: sign-in, data, path]
 
 ---

@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   date,
   pgEnum,
@@ -7,18 +8,39 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { classSlots } from "./classes";
+import { plans } from "./plans";
+import { users } from "./users";
 
-export const studentStatusEnum = pgEnum("status_aluno", ["ATIVO", "INATIVO"]);
+// Os 4 status do PRD 4.4 (STUD-03): o ciclo de vida da aluna preserva o
+// historico por status, sem exclusao fisica (PRD 13.10).
+export const studentStatusEnum = pgEnum("status_aluno", [
+  "EXPERIMENTAL",
+  "AGUARDANDO_MATRICULA",
+  "ATIVO",
+  "INATIVO",
+]);
 
 export const statusEnrollmentEnum = pgEnum("status_enrollment", [
   "ATIVA",
   "INATIVA",
 ]);
 
+// Cadastro completo do PRD 4.4 (STUD-01): e-mail identifica a aluna (unico);
+// o nome deixa de ser UNIQUE - duas alunas podem ter o mesmo nome.
 export const students = pgTable("students", {
   id: uuid("id").primaryKey().defaultRandom(),
-  name: text("name").notNull().unique(),
+  name: text("name").notNull(),
+  phone: text("phone").notNull(),
+  email: text("email").notNull().unique(),
+  birthDate: date("birth_date").notNull(),
+  enrollmentDate: date("enrollment_date")
+    .notNull()
+    .default(sql`CURRENT_DATE`),
+  planId: uuid("plan_id").references(() => plans.id),
   status: studentStatusEnum("status").notNull().default("ATIVO"),
+  notes: text("notes"),
+  // Prepara a area do aluno (PRD 12) sem nova migracao futura
+  userId: uuid("user_id").references(() => users.id),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

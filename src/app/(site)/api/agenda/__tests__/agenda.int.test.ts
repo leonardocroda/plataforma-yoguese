@@ -45,7 +45,12 @@ describe("agenda", () => {
     // Um aluno com reserva ocupa uma vaga: a agenda mostra 7, sem dizer quem
     const [student] = await pg.db
       .insert(students)
-      .values({ name: "Ana Ribeiro" })
+      .values({
+        name: "Ana Ribeiro",
+        phone: "11999990000",
+        email: "ana.ribeiro@yoguese.com",
+        birthDate: "1990-01-01",
+      })
       .returning();
     const booking = await createBooking(pg.db, {
       studentId: student.id,

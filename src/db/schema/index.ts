@@ -3,3 +3,5 @@ export * from "./students";
 export * from "./sessions";
 export * from "./blocks";
 export * from "./credits";
+export * from "./plans";
+export * from "./users";
