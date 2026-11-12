@@ -633,9 +633,9 @@ Execução em ordem: T19, T20, T21, T22, T23, T24, T25, T26.
 
 **Done when**:
 
-- [ ] Action exige sessão `ADMIN`
-- [ ] Erros de campo chegam à tela
-- [ ] Gate: `npm test`
+- [x] Action exige sessão `ADMIN`
+- [x] Erros de campo chegam à tela
+- [x] Gate: `npm test`
 
 **Tests**: integration
 **Gate**: full

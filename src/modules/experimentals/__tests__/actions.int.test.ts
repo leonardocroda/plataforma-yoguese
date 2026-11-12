@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { experimentals } from "../../../db/schema";
+import { classSessions, experimentals } from "../../../db/schema";
 import {
   createExperimental,
   createTestClass,
@@ -12,13 +12,14 @@ import {
   TEST_AUTH_SECRET,
 } from "../../../test/auth";
 import { PostgresTestInstance, startPostgres } from "../../../test/postgres";
-import { nextOccurrence, todayInStudio } from "../../classes/domain/occurrences";
+import { addDays, nextOccurrence, todayInStudio } from "../../classes/domain/occurrences";
 import { materializeSession } from "../../bookings/services/sessions";
 import { setSessionCookie } from "../../auth/services/session";
 import {
   approveExperimentalAction,
   cancelExperimentalAction,
   changeExperimentalOccurrenceAction,
+  convertExperimentalAction,
   refuseExperimentalAction,
   registerNoShowAction,
   registerPaymentAction,
@@ -226,6 +227,38 @@ describe("experimental actions", () => {
       expect(inexistente.error).toContain("solicitacao nao encontrada");
     }
 
+    // A conversao devolve o erro do campo para a tela: uma experimental
+    // aprovada cuja aula ja acabou chega na validacao do e-mail
+    const passada = await createTestClass(pg.db, {
+      weekday: 5,
+      capacity: 2,
+    });
+    const [sessionPassada] = await pg.db
+      .insert(classSessions)
+      .values({
+        classSlotId: passada.slotId,
+        sessionDate: addDays(today, -7),
+        status: "AGENDADA",
+      })
+      .returning();
+    const convertivel = await createExperimental(pg.db, {
+      classSessionId: sessionPassada.id,
+      status: "APROVADA",
+      phone: "(11) 93333-2222",
+    });
+
+    const conversao = await convertExperimentalAction({
+      experimentalId: convertivel.id,
+      email: "nao-e-email",
+      birthDate: "1990-05-10",
+      planId: "00000000-0000-0000-0000-000000000000",
+      classSlotIds: [slotId],
+    });
+    expect(conversao.ok).toBe(false);
+    if (!conversao.ok) {
+      expect(conversao.field).toBe("email");
+    }
+
     // Com sessao de admin, a acao aplica e devolve o registro
     const pendente = await createExperimental(pg.db, {
       classSessionId: sessionId,
@@ -281,6 +314,16 @@ describe("experimental actions", () => {
       [
         "contato",
         registerWhatsAppContactAction({ experimentalId: experimental.id }),
+      ],
+      [
+        "converter",
+        convertExperimentalAction({
+          experimentalId: experimental.id,
+          email: "maria@teste.com",
+          birthDate: "1990-05-10",
+          planId: "00000000-0000-0000-0000-000000000000",
+          classSlotIds: [slotId],
+        }),
       ],
     ];
 

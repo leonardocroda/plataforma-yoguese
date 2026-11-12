@@ -14,6 +14,10 @@ import {
   rescheduleExperimental as rescheduleExperimentalService,
   type ExperimentalRequestInput,
 } from "./services/experimentals";
+import {
+  convertExperimental as convertExperimentalService,
+  type ConversionInput,
+} from "./services/conversion";
 
 /**
  * Actions da experimental. A solicitacao publica nao exige sessao: quem
@@ -107,4 +111,14 @@ export async function registerWhatsAppContactAction(input: {
 }) {
   await requireAdminSession();
   return registerWhatsAppContactService(await dbClient(), input);
+}
+
+/**
+ * Conversao em aluna (EXP-50): a experimental aprovada vira aluna ativa com
+ * plano, horarios fixos e a declaracao copiada. Os erros do servico voltam
+ * com o campo, para a tela mostrar a mensagem no lugar certo.
+ */
+export async function convertExperimentalAction(input: ConversionInput) {
+  await requireAdminSession();
+  return convertExperimentalService(await dbClient(), input);
 }
