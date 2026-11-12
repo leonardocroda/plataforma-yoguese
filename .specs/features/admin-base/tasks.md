@@ -328,9 +328,9 @@ T8 → T13
 
 **Done when**:
 
-- [ ] Criar aluna Ativa com plano funciona da tela
-- [ ] Seletor não oferece plano inativo
-- [ ] Gate: build
+- [x] Criar aluna Ativa com plano funciona da tela
+- [x] Seletor não oferece plano inativo
+- [x] Gate: build
 
 **Tests**: none (regras provadas no T8; tela provada por walk)
 **Gate**: build
