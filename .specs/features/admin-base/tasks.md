@@ -164,9 +164,9 @@ T8 → T13
 
 **Done when**:
 
-- [ ] Rodar o seed duas vezes deixa exatamente 1 admin, com hash verificável
-- [ ] `.env.example` cobre as 3 variáveis novas
-- [ ] Gate: full
+- [x] Rodar o seed duas vezes deixa exatamente 1 admin, com hash verificável
+- [x] `.env.example` cobre as 3 variáveis novas
+- [x] Gate: full
 
 **Tests**: integration
 **Gate**: full

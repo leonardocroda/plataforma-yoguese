@@ -14,15 +14,27 @@ construcao vive em `.specs/` (specs aprovadas, tarefas, verifications, decisoes)
 ```powershell
 docker compose up -d      # Postgres local (container yoguese-db, porta 55432)
 npm run db:migrate        # aplica as migrations de ./drizzle
-npm run db:seed           # 2 modalidades do PRD + 4 alunos de teste (idempotente)
+npm run db:seed           # 2 modalidades do PRD + 4 alunos de teste + admin do .env.local (idempotente)
 npm run dev               # app em http://localhost:3000 (ou 3001, se a 3000 estiver ocupada)
 ```
 
-A conexao vem do `.env.local` (copie de `.env.example`; o git ignora esse arquivo):
+A conexao e o login do admin vem do `.env.local` (copie de `.env.example`; o git
+ignora esse arquivo):
 
 ```
 DATABASE_URL=postgres://test:test@localhost:55432/test
+AUTH_SECRET=segredo-de-32-bytes-ou-mais (assina o cookie de sessao)
+ADMIN_EMAIL=admin@yoguese.com
+ADMIN_PASSWORD=senha-forte
 ```
+
+O `db:seed` cria o primeiro administrador (role ADMIN) com `ADMIN_EMAIL` e
+`ADMIN_PASSWORD`; rodar de novo atualiza a senha pelo env, sem duplicar a conta.
+Esse par entra no `/login` do painel.
+
+> O schema do banco evolui por feature. Um volume de Postgres antigo pode
+> quebrar na migration nova: se `db:migrate` reclamar, resete o banco local
+> com `docker compose down -v` (apaga o volume) e siga de novo do `up -d`.
 
 Paginas uteis: `/grade` (grade do admin: criar turma, reservar, vincular fixo) e
 `/api/agenda?from=AAAA-MM-DD&to=AAAA-MM-DD` (agenda publica, sem dados de aluno).
@@ -39,7 +51,7 @@ Paginas uteis: `/grade` (grade do admin: criar turma, reservar, vincular fixo) e
 | `npm run lint` | ESLint |
 | `npm test` | Suite completa (Vitest: unit + integracao) |
 | `npm run db:migrate` | Aplica as migrations no banco do `.env.local` |
-| `npm run db:seed` | Seed idempotente: modalidades do PRD e alunos de teste |
+| `npm run db:seed` | Seed idempotente: modalidades do PRD, alunos de teste e o admin do `.env.local` |
 | `npm run db:generate` | Gera migrations a partir do schema Drizzle |
 
 ## Testes

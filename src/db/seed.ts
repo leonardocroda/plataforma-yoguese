@@ -1,6 +1,7 @@
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "./schema";
-import { classTypes, students } from "./schema";
+import { classTypes, students, users } from "./schema";
+import { hashPassword } from "../modules/auth/domain/password";
 
 export type SeedDatabase = NodePgDatabase<typeof schema>;
 
@@ -14,6 +15,41 @@ const TEST_STUDENTS = [
   { name: "Aluno Teste 3", email: "aluno.teste.3@yoguese.com" },
   { name: "Aluno Teste 4", email: "aluno.teste.4@yoguese.com" },
 ];
+
+const ADMIN_NAME = "Admin Yogue-se";
+
+/**
+ * Primeiro administrador (AUTH-08): nasce do ambiente, nunca no codigo.
+ * Idempotente por e-mail - rodar de novo atualiza a senha do env, sem
+ * duplicar a conta.
+ */
+async function seedAdmin(db: SeedDatabase): Promise<void> {
+  const email = process.env.ADMIN_EMAIL;
+  const password = process.env.ADMIN_PASSWORD;
+  if (!email || !password) {
+    throw new Error(
+      "ADMIN_EMAIL e ADMIN_PASSWORD nao configuradas: defina as duas no .env.local",
+    );
+  }
+
+  await db
+    .insert(users)
+    .values({
+      name: ADMIN_NAME,
+      email: email.trim().toLowerCase(),
+      passwordHash: hashPassword(password),
+      role: "ADMIN",
+    })
+    .onConflictDoUpdate({
+      target: users.email,
+      set: {
+        name: ADMIN_NAME,
+        passwordHash: hashPassword(password),
+        role: "ADMIN",
+        updatedAt: new Date(),
+      },
+    });
+}
 
 export async function seed(db: SeedDatabase): Promise<void> {
   await db
@@ -34,4 +70,6 @@ export async function seed(db: SeedDatabase): Promise<void> {
       })),
     )
     .onConflictDoNothing({ target: students.email });
+
+  await seedAdmin(db);
 }
