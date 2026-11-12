@@ -14,8 +14,8 @@ export const dynamic = "force-dynamic";
 const statusLabel: Record<string, string> = {
   EXPERIMENTAL: "Experimental",
   AGUARDANDO_MATRICULA: "Aguardando matrícula",
-  ATIVO: "Ativa",
-  INATIVO: "Inativa",
+  ATIVO: "Ativo",
+  INATIVO: "Inativo",
 };
 
 /**

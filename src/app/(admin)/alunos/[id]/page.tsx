@@ -17,8 +17,8 @@ const WEEKDAY_LABELS = [
 const statusLabel: Record<string, string> = {
   EXPERIMENTAL: "Experimental",
   AGUARDANDO_MATRICULA: "Aguardando matrícula",
-  ATIVO: "Ativa",
-  INATIVO: "Inativa",
+  ATIVO: "Ativo",
+  INATIVO: "Inativo",
   ATIVA: "Ativa",
   CANCELADA: "Cancelada",
   FALTA: "Falta",

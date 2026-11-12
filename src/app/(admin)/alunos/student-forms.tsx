@@ -29,8 +29,8 @@ export type PlanOption = {
 const STATUS_OPTIONS = [
   { value: "EXPERIMENTAL", label: "Experimental" },
   { value: "AGUARDANDO_MATRICULA", label: "Aguardando matrícula" },
-  { value: "ATIVO", label: "Ativa" },
-  { value: "INATIVO", label: "Inativa" },
+  { value: "ATIVO", label: "Ativo" },
+  { value: "INATIVO", label: "Inativo" },
 ];
 
 export type StudentFormData = {
@@ -140,7 +140,7 @@ function StudentFields({
         </label>
       </div>
       <label className="block text-xs font-medium">
-        Plano (obrigatório para aluna Ativa)
+        Plano (obrigatório quando o status é Ativo)
         <select
           name="planId"
           defaultValue={student?.planId ?? ""}
