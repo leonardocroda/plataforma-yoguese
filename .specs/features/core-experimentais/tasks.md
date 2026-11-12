@@ -300,12 +300,12 @@ Execução em ordem: T19, T20, T21, T22, T23, T24, T25, T26.
 
 **Done when**:
 
-- [ ] Campos, R$ 45,00 e declaração exata aparecem antes do envio
-- [ ] Só ocorrências com vaga; filtro por modalidade
-- [ ] Sem vaga mostra estado vazio e não envia
-- [ ] Envio válido mostra confirmação de aprovação e contato via WhatsApp
-- [ ] Nenhum dado de outra pessoa aparece
-- [ ] Gate: `npm run build; npm run lint`
+- [x] Campos, R$ 45,00 e declaração exata aparecem antes do envio
+- [x] Só ocorrências com vaga; filtro por modalidade
+- [x] Sem vaga mostra estado vazio e não envia
+- [x] Envio válido mostra confirmação de aprovação e contato via WhatsApp
+- [x] Nenhum dado de outra pessoa aparece
+- [x] Gate: `npm run build; npm run lint`
 
 **Tests**: none
 **Gate**: build
