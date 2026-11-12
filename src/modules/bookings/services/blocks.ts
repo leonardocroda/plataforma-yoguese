@@ -23,6 +23,7 @@ import {
   resolveBlockTransition,
 } from "../domain/blocks";
 import { returnCredit } from "../../credits/services/credits";
+import { cancelExperimentalsForOccurrence } from "../../experimentals/services/cancellations";
 import { DbClient } from "./sessions";
 
 export type ReconcileBlockedOccurrencesInput = {
@@ -108,6 +109,11 @@ export async function reconcileBlockedOccurrences(
           .set({ status: "BLOQUEADA", updatedAt: now })
           .where(eq(classSessions.id, occurrence.id));
         result.blockedCount += 1;
+
+        // As experimentais da ocorrencia bloqueada perdem o direito a
+        // reagendar nao: viram CANCELADA_COM_DIREITO, porque a aula nao
+        // acontece por causa do estudio (EXP-45)
+        await cancelExperimentalsForOccurrence(tx, occurrence.id, now);
 
         // As reservas ativas da ocorrencia bloqueada sao canceladas pelo
         // estudio (FER-03, AD-026) e o credito da reposicao volta a

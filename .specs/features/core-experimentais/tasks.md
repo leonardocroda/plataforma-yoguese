@@ -551,9 +551,9 @@ Execução em ordem: T19, T20, T21, T22, T23, T24, T25, T26.
 
 **Done when**:
 
-- [ ] Feriado/recesso cancela pendente e aprovada com direito
-- [ ] Remover o bloqueio não restaura a experimental
-- [ ] Gate: `npm test`
+- [x] Feriado/recesso cancela pendente e aprovada com direito
+- [x] Remover o bloqueio não restaura a experimental
+- [x] Gate: `npm test`
 
 **Tests**: integration
 **Gate**: full
