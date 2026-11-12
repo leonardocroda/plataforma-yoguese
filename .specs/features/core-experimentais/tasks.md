@@ -675,7 +675,8 @@ Execução em ordem: T19, T20, T21, T22, T23, T24, T25, T26.
 **Run exp-reschedule**: `npx vitest run src/modules/experimentals/services/__tests__/reschedule.int.test.ts --reporter=verbose`
 **Run exp-cancellation**: `npx vitest run src/modules/experimentals/services/__tests__/cancellation.int.test.ts --reporter=verbose`
 **Run exp-reads**: `npx vitest run src/modules/experimentals/services/__tests__/reads.int.test.ts --reporter=verbose`
-**Run exp-hooks**: `npx vitest run src/modules/credits/services/__tests__/studio-cancellation-experimentals.int.test.ts src/modules/classes/services/__tests__/blocks-experimentals.int.test.ts --reporter=verbose`
+**Run exp-hooks**: `npx vitest run src/modules/classes/services/__tests__/blocks-experimentais.int.test.ts --reporter=verbose`
+**Run exp-hooks-studio**: `npx vitest run src/modules/credits/services/__tests__/studio-cancellation-experimentals.int.test.ts --reporter=verbose`
 **Run exp-conversion**: `npx vitest run src/modules/experimentals/services/__tests__/conversion.int.test.ts --reporter=verbose`
 **Run exp-actions**: `npx vitest run src/modules/experimentals/__tests__/actions.int.test.ts --reporter=verbose`
 **Build**: `npm run build; npm run lint`
@@ -696,7 +697,7 @@ Proof: walk - formulário filtra por modalidade e mostra data, horário e vagas
 Proof: walk - formulário sem vaga mostra estado vazio e não envia
 
 **C6** - Envio válido cria solicitação `PENDENTE` com pagamento `PENDENTE` (EXP-06, AC 6)
-Proof: run exp-requests | ✓ creates a pending request without occupying
+Proof: run exp-requests | ✓ cria solicitacao pendente sem ocupar vaga
 
 **C7** - Nome, telefone, declaração ou ocorrência inválidos são recusados com erro do campo (EXP-07, AC 7)
 Proof: run exp-unit | ✓ recusa nome vazio, telefone invalido e declaracao nao aceita
@@ -711,7 +712,7 @@ Proof: run exp-requests | ✓ registra a tentativa bloqueada como duplicada
 Proof: run exp-unit | ✓ mascara e codigo do pais nao mudam a identidade do telefone
 
 **C11** - Solicitação `PENDENTE` não ocupa vaga (EXP-11, AC 11)
-Proof: run exp-requests | ✓ creates a pending request without occupying
+Proof: run exp-requests | ✓ cria solicitacao pendente sem ocupar vaga
 
 **C12** - O envio mostra confirmação de aprovação pendente e contato via WhatsApp (EXP-12, AC 12)
 Proof: walk - envio válido mostra confirmação de aprovação e WhatsApp
@@ -814,6 +815,7 @@ Proof: run exp-occurrences | ✓ a aprovada reduz a vaga ofertada
 
 **C45** - Feriado, cancelamento do estúdio e edição de turma cancelam pendente/aprovada com direito (EXP-45, AC 45)
 Proof: run exp-hooks | ✓ bloqueio, cancelamento e edicao de turma cancelam a experimental com direito
+Proof: run exp-hooks-studio | ✓ cancela a experimental da ocorrencia com direito
 
 **C46** - Remover o bloqueio não restaura a experimental cancelada (EXP-46, AC 46)
 Proof: run exp-hooks | ✓ desbloquear nao restaura a experimental cancelada
