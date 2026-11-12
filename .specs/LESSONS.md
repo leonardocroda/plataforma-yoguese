@@ -132,6 +132,48 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: C7 (tests)
 - last seen: 2026-11-11T19:39:51Z
 
+### L-021 - A route guard checks the session role together with session presence, so any role added later cannot leak through a layout that only tests for null.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `auth` · harmful: 0
+- features: admin-base
+- evidence: src/app/(admin)/layout.tsx:26 (auth)
+- last seen: 2026-11-12T15:24:29Z
+
+### L-022 - Every service path that writes a state a validator guards must reapply the validator rule, because create/update coverage never protects a third path like a status transition.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `students` · harmful: 0
+- features: admin-base
+- evidence: src/modules/students/services/students.ts:207 (students)
+- last seen: 2026-11-12T15:24:29Z
+
+### L-023 - When a criterion fixes exact display terms, labels copy them verbatim instead of paraphrasing or inflecting them.
+- signal: `spec_deviation` · recurrence: 1 feature(s) · scope: `ui` · harmful: 0
+- features: admin-base
+- evidence: src/app/(admin)/alunos/student-forms.tsx:32 (ui)
+- last seen: 2026-11-12T15:24:48Z
+
+### L-024 - An optional field's edit path distinguishes omitted from empty, because empty is how the user clears the value.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `plans` · harmful: 0
+- features: admin-base
+- evidence: src/modules/plans/services/plans.ts:129 (plans)
+- last seen: 2026-11-12T15:24:54Z
+
+### L-025 - Uniqueness of an access-identity field ignores letter case and the stored value is normalized, because a future login normalizes before comparing.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `students` · harmful: 0
+- features: admin-base
+- evidence: src/modules/students/services/students.ts:87 (students)
+- last seen: 2026-11-12T15:24:59Z
+
+### L-026 - A referenced id reachable through a server action is validated for existence with a field error, because the form select is not the only entry point.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `repo-layer` · harmful: 0
+- features: admin-base
+- evidence: src/modules/students/services/students.ts:119 (repo-layer)
+- last seen: 2026-11-12T15:25:04Z
+
+### L-027 - A service signature change needs the Build gate, not only the targeted vitest run, because vitest's esbuild transform does not typecheck.
+- signal: `gate_fail` · recurrence: 1 feature(s) · scope: `repo` · harmful: 0
+- features: admin-base
+- evidence: proofs.md Build - plans.ts input.description (repo)
+- last seen: 2026-11-12T15:25:10Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

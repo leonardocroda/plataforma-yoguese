@@ -1,6 +1,6 @@
 # core-turmas-reservas proofs
 
-**HEAD**: 6843d1d
+**HEAD**: 4d8e313
 **Tree**: clean
 **Shell**: C:/Program Files/Git\bin\bash.exe
 **Result**: 33 pass, 0 fail
@@ -46,17 +46,17 @@
 `Run int` - exit 0
 
 ```
- ✓ src/__tests__/seed.int.test.ts > seed > migration applies on the empty container 8ms
- ✓ src/__tests__/seed.int.test.ts > seed > the two PRD class types 27ms
- ✓ src/__tests__/seed.int.test.ts > seed > test students are loaded 13ms
- ✓ src/modules/classes/__tests__/actions.int.test.ts > admin actions > creates a manual booking through the action 190ms
- ✓ src/modules/classes/__tests__/actions.int.test.ts > admin actions > propagates the no-vacancy error from the booking action 97ms
- ✓ src/modules/classes/__tests__/actions.int.test.ts > admin actions > creates and ends a fixed enrollment through the actions 90ms
+ ✓ src/modules/bookings/services/__tests__/composition.int.test.ts > occurrence composition > the single composition service feeds the booking and the reading paths 264ms
+ ✓ src/modules/credits/services/__tests__/credits.int.test.ts > credits > cancels a credit and keeps the history 77ms
+ ✓ src/modules/credits/services/__tests__/credits.int.test.ts > credits > lists the credits of a student with their transactions 106ms
+ ✓ src/modules/credits/services/__tests__/credits.int.test.ts > credits > lists the available credits expiring in the next 7 days 279ms
+ ✓ src/modules/credits/services/__tests__/credits.int.test.ts > credits > settles a reserved credit as UTILIZADO after the class ends 932ms
+ ✓ src/test/__tests__/postgres.int.test.ts > testcontainer postgres > starts the container and queries postgres 11ms
 
- Test Files  10 passed (10)
-      Tests  57 passed (57)
-   Start at  08:25:19
-   Duration  86.68s (tests 87%, import 13%)
+ Test Files  18 passed (18)
+      Tests  112 passed (112)
+   Start at  09:29:30
+   Duration  141.99s (tests 85%, import 15%)
 
 (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
   - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
@@ -73,10 +73,10 @@ Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
  ✓ src/modules/classes/domain/__tests__/occurrences.test.ts > occurrences > next occurrence advances to the following week 0ms
  ✓ src/modules/classes/domain/__tests__/occurrences.test.ts > occurrences > addDays crosses the month boundary 0ms
 
- Test Files  4 passed (4)
-      Tests  21 passed (21)
-   Start at  08:26:50
-   Duration  416ms (import 53%, worker 18%, transform 17%, tests 12%, environment 1%)
+ Test Files  7 passed (7)
+      Tests  37 passed (37)
+   Start at  09:31:56
+   Duration  726ms (import 56%, transform 19%, worker 14%, tests 10%, environment 1%)
 
 (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
   - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json

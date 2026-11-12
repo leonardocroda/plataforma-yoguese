@@ -40,6 +40,12 @@ Notas de estado: árvore com os artefatos esperados (`proofs.md` de features ant
 | C22 | `plans.int.test.ts` `inativa via update e o seletor omite o plano (PLAN-04)` - seletor vazio após INATIVO (e o teste irmão prova o plano atual mantido em edição) | yes |
 | C23 | `students.int.test.ts` `perfil mostra o plano mesmo depois de inativado (PLAN-05)` - perfil devolve o plano com status INATIVO | yes |
 | C24 | walk - plano criado com valor X aparece na /planos com X (`planos/page.tsx:11-18` formata `plan.price` vindo de `listPlansAction`/banco; sem tabela de preços no código) | yes |
+| C25 | `credentials.int.test.ts` `credenciais de role ALUNO nao autenticam no admin (AUTH-09)` - usuário com senha correta e role ALUNO devolve `{ ok: false }` idêntico ao desconhecido; layout do `(admin)` usa `requireAdminSession` (papel verificado, provado em `session.int.test.ts`) e walk C1 re-prova o redirect. *Linha adicionada pelo autor no fechamento (check novo do round de findings)* | yes |
+| C26 | `students.int.test.ts` `reativar aluna sem plano e recusado e com plano funciona (STUD-09)` - sem plano: `field: "planId"`, erro "plano obrigatorio"; com plano vinculado: ATIVO gravado. *Linha adicionada pelo autor no fechamento* | yes |
+| C27 | `plans.int.test.ts` `edita limpa a descricao e manter omitido preserva (PLAN-03)` - `""` grava `null`; chamada sem `description` (inativação) preserva. *Linha adicionada pelo autor no fechamento* | yes |
+| C28 | `students.int.test.ts` `e-mail igual diferindo so em maiusculas e duplicado (STUD-10)` - recusa no cadastro e na edição, zero e-mails em caixa original gravados. *Linha adicionada pelo autor no fechamento* | yes |
+| C29 | `students.int.test.ts` `plano inexistente e recusado com erro do campo, sem estourar FK (STUD-11)` - create e update com uuid inexistente: `field: "planId"`, "plano nao encontrado", 1 linha só. *Linha adicionada pelo autor no fechamento* | yes |
+| C30 | walk round 2 - `select de status oferece exatamente Experimental, Aguardando matrícula, Ativo e Inativo` (PASS, asserção de igualdade exata sobre os labels). *Linha adicionada pelo autor no fechamento* | yes |
 
 Todos os 24 checks seguram: o teste nomeado pela prova falharia se a afirmação fosse falsa, e as asserções são tão fortes quanto os critérios (C3 usa `toEqual` exato; C11/C19 re-lêem do banco; C16/C17 provam os dois branches L-015 nos dois caminhos da composição — matrícula e reserva FIXED, incluindo o fix 809b7f4).
 
