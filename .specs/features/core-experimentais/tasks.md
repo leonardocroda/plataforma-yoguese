@@ -258,11 +258,11 @@ Execução em ordem: T19, T20, T21, T22, T23, T24, T25, T26.
 
 **Done when**:
 
-- [ ] Só aparece ocorrência futura, ativa e com vaga
-- [ ] Bloqueada/cancelada/inativa não aparece
-- [ ] A aprovada reduz a vaga ofertada
-- [ ] A opção pública não carrega nome nem telefone
-- [ ] Gate: `npm test`
+- [x] Só aparece ocorrência futura, ativa e com vaga
+- [x] Bloqueada/cancelada/inativa não aparece
+- [x] A aprovada reduz a vaga ofertada
+- [x] A opção pública não carrega nome nem telefone
+- [x] Gate: `npm test`
 
 **Tests**: integration
 **Gate**: full

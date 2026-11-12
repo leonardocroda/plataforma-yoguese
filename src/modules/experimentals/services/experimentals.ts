@@ -7,12 +7,19 @@
 import { and, eq, isNull, ne } from "drizzle-orm";
 import { classSlots, experimentals } from "../../../db/schema";
 import {
+  getComposition,
   getOccurrenceComposition,
 } from "../../bookings/services/composition";
 import {
   materializeSession,
   type DbClient,
 } from "../../bookings/services/sessions";
+import { listActiveSlots } from "../../classes/services/classes";
+import {
+  addDays,
+  occurrenceDates,
+  todayInStudio,
+} from "../../classes/domain/occurrences";
 import { normalizePhone } from "../domain/phone";
 import {
   HEALTH_DECLARATION,
@@ -232,4 +239,70 @@ export async function createExperimentalRequest(
     });
     return { ok: false, error: DUPLICATE_ERROR, field: "phone" };
   }
+}
+
+/** Opcao de ocorrencia oferecida ao visitante (EXP-04). */
+export type OccurrenceOption = {
+  classTypeId: string;
+  classTypeName: string;
+  classSlotId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  availableSpots: number;
+};
+
+/** Janela da agenda do formulario publico: os proximos 30 dias. */
+const OCCURRENCE_WINDOW_DAYS = 30;
+
+/**
+ * Ocorrencias que o visitante pode escolher (EXP-04, EXP-05, EXP-13,
+ * EXP-15): futuras, de turma e modalidade ativas, agendadas e com pelo
+ * menos uma vaga. A opcao publica carrega data, horario, modalidade e
+ * vagas - nunca nome nem telefone de ninguem.
+ */
+export async function listExperimentalOccurrences(
+  db: DbClient,
+  input: { classTypeId?: string } = {},
+  now: Date = new Date(),
+): Promise<OccurrenceOption[]> {
+  const today = todayInStudio(now);
+  const to = addDays(today, OCCURRENCE_WINDOW_DAYS);
+
+  const slots = await listActiveSlots(db);
+  const options: OccurrenceOption[] = [];
+
+  for (const slot of slots) {
+    if (input.classTypeId && slot.classTypeId !== input.classTypeId) continue;
+
+    for (const date of occurrenceDates(slot, today, to)) {
+      const composition = await getComposition(db, {
+        classSlotId: slot.id,
+        date,
+      });
+      if (!composition.ok) continue;
+      // Ocorrencia bloqueada por feriado/recesso ou cancelada nao aparece
+      if (composition.value.sessionStatus !== "AGENDADA") continue;
+      // Sem vaga, nao ha o que oferecer
+      if (composition.value.availableSpots <= 0) continue;
+
+      options.push({
+        classTypeId: slot.classTypeId,
+        classTypeName: slot.classTypeName,
+        classSlotId: slot.id,
+        date,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        availableSpots: composition.value.availableSpots,
+      });
+    }
+  }
+
+  options.sort((a, b) =>
+    a.date === b.date
+      ? a.startTime.localeCompare(b.startTime)
+      : a.date.localeCompare(b.date),
+  );
+
+  return options;
 }
