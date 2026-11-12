@@ -82,3 +82,46 @@ export function nextOccurrence(
 export function isDatePast(date: string, today: string): boolean {
   return date < today;
 }
+
+/**
+ * Deslocamento do fuso do estudio (ms) no instante informado: o horario
+ * local lido no fuso menos o mesmo horario em UTC.
+ */
+function studioOffsetMs(instant: Date): number {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: STUDIO_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(instant);
+
+  const values: Record<string, number> = {};
+  for (const part of parts) {
+    if (part.type !== "literal") values[part.type] = Number(part.value);
+  }
+  const localAsUtc = Date.UTC(
+    values.year,
+    values.month - 1,
+    values.day,
+    values.hour,
+    values.minute,
+    values.second,
+  );
+  return localAsUtc - instant.getTime();
+}
+
+/**
+ * Data + horario do estudio -> instante absoluto (EXP-34, EXP-56). A
+ * regua das 24 horas e o fim da aula dependem do fuso do estudio, nao do
+ * fuso do servidor. O deslocamento e lido do fuso, e nao fixo no codigo.
+ */
+export function studioDateTimeToInstant(date: string, time: string): Date {
+  const [year, month, day] = date.split("-").map(Number);
+  const [hour, minute, second] = time.split(":").map(Number);
+  const guess = Date.UTC(year, month - 1, day, hour, minute, second);
+  return new Date(guess - studioOffsetMs(new Date(guess)));
+}

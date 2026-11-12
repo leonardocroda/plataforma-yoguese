@@ -5,6 +5,7 @@ import {
   todayInStudio,
   isDatePast,
   nextOccurrence,
+  studioDateTimeToInstant,
   weekdayOf,
 } from "../occurrences";
 
@@ -83,5 +84,27 @@ describe("occurrences", () => {
 
   it("addDays crosses the month boundary", () => {
     expect(addDays("2026-10-31", 1)).toBe("2026-11-01");
+  });
+
+  it("studioDateTimeToInstant usa o fuso de Sao Paulo", () => {
+    // 19:00 de America/Sao_Paulo e 22:00 UTC (UTC-3)
+    expect(
+      studioDateTimeToInstant("2026-11-12", "19:00:00").toISOString(),
+    ).toBe("2026-11-12T22:00:00.000Z");
+    expect(
+      studioDateTimeToInstant("2026-11-12", "20:00:00").toISOString(),
+    ).toBe("2026-11-12T23:00:00.000Z");
+
+    // O mesmo instante lido no fuso do estudio devolve a data e a hora
+    // digitadas: a regra das 24 horas nao depende do fuso do servidor
+    const instant = studioDateTimeToInstant("2026-11-12", "19:00:00");
+    expect(todayInStudio(instant)).toBe("2026-11-12");
+    const hour = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Sao_Paulo",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).format(instant);
+    expect(hour).toBe("19:00");
   });
 });

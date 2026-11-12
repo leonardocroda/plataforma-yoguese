@@ -193,11 +193,11 @@ Execução em ordem: T19, T20, T21, T22, T23, T24, T25, T26.
 
 **Done when**:
 
-- [ ] 24h exatas mantêm o direito; 23h59 perdem
-- [ ] Status terminal recusa cancelar e reagendar
-- [ ] Conversão só a partir de `APROVADA` com ocorrência terminada
-- [ ] `studioDateTimeToInstant` respeita America/Sao_Paulo
-- [ ] Gate: `npx vitest run src/modules/experimentals/domain src/modules/classes/domain/__tests__/occurrences.test.ts`
+- [x] 24h exatas mantêm o direito; 23h59 perdem
+- [x] Status terminal recusa cancelar e reagendar
+- [x] Conversão só a partir de `APROVADA` com ocorrência terminada
+- [x] `studioDateTimeToInstant` respeita America/Sao_Paulo
+- [x] Gate: `npx vitest run src/modules/experimentals/domain src/modules/classes/domain/__tests__/occurrences.test.ts`
 
 **Tests**: unit
 **Gate**: quick
