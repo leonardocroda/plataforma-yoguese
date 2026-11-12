@@ -511,9 +511,9 @@ Execução em ordem: T19, T20, T21, T22, T23, T24, T25, T26.
 
 **Done when**:
 
-- [ ] Só pendente/aprovada mudam; status terminal fica intacto
-- [ ] A vaga é liberada pela mudança de status
-- [ ] Gate: `npm test`
+- [x] Só pendente/aprovada mudam; status terminal fica intacto
+- [x] A vaga é liberada pela mudança de status
+- [x] Gate: `npm test`
 
 **Tests**: integration
 **Gate**: full
@@ -870,7 +870,7 @@ Proof: run exp-conversion | ✓ aluna convertida nao recebe login nesta versao
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** none
-**Dispatched:** batch 1 (Fases 1-2, T1-T10) RETORNADO - 10 tasks, 10 commits (fc64e38, b088fb3, 8847e1c, 95d7e99, a0519a8, 18353cb, 09d6f70, eab6e0a, be30a5a, bef8d35), 298 testes verdes. 1a tentativa morreu por limite de uso no meio da T1 (sem commit) e foi retomada do estado parcial em disco. batch 2 (Fase 3, T11-T18): T11 e T12 commitadas (e7628a2, fa86c60); o worker caiu no meio da T13 (servico + testes em disco, sem commit) e a continuacao foi despachada a partir de fa86c60 - running
+**Dispatched:** batch 1 (Fases 1-2, T1-T10) RETORNADO - 10 tasks, 10 commits (fc64e38, b088fb3, 8847e1c, 95d7e99, a0519a8, 18353cb, 09d6f70, eab6e0a, be30a5a, bef8d35), 298 testes verdes. 1a tentativa morreu por limite de uso no meio da T1 (sem commit) e foi retomada do estado parcial em disco. batch 2 (Fase 3, T11-T18) RETORNADO - T11-T18 commitadas (e7628a2, fa86c60, 1c63939, cba2470, 423fab8, cca5e21, ef2e058, bd459b3), 322 testes verdes; o worker caiu no meio da T13 e a continuacao retomou do estado em disco. batch 3 (Fase 4, T19-T26) despachado a partir de bd459b3 - running
 **Walked:** none
 
 ---
