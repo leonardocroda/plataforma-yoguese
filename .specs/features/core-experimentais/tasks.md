@@ -363,11 +363,11 @@ Execução em ordem: T19, T20, T21, T22, T23, T24, T25, T26.
 
 **Done when**:
 
-- [ ] Troca de pendente mantém pendente; de aprovada troca a vaga atomicamente; sem vaga recusa mantendo a anterior
-- [ ] Reagendamento com vaga grava a ocorrência anterior e vira `APROVADA`
-- [ ] Reagendamento sem vaga mantém o direito
-- [ ] O direito só se exerce no mesmo registro; nova solicitação do telefone é recusada
-- [ ] Gate: `npm test`
+- [x] Troca de pendente mantém pendente; de aprovada troca a vaga atomicamente; sem vaga recusa mantendo a anterior
+- [x] Reagendamento com vaga grava a ocorrência anterior e vira `APROVADA`
+- [x] Reagendamento sem vaga mantém o direito
+- [x] O direito só se exerce no mesmo registro; nova solicitação do telefone é recusada
+- [x] Gate: `npm test`
 
 **Tests**: integration
 **Gate**: full

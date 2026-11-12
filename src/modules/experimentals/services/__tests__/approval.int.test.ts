@@ -3,6 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   classSessions,
   classSlots,
+  experimentalReschedules,
   experimentals,
 } from "../../../../db/schema";
 import {
@@ -16,6 +17,7 @@ import { getOccurrenceComposition } from "../../../bookings/services/composition
 import { materializeSession } from "../../../bookings/services/sessions";
 import {
   approveExperimental,
+  changeExperimentalOccurrence,
   createExperimentalRequest,
   refuseExperimental,
 } from "../experimentals";
@@ -42,13 +44,13 @@ describe("experimental approval", () => {
     await pg.container.stop();
   });
 
-  /** Turma com a modalidade e a ocorrencia do proximo dia da semana. */
-  async function occurrence(capacity = 2) {
+  /** Turma com a modalidade e a ocorrencia do dia da semana informado. */
+  async function occurrence(weekday = 3, capacity = 2) {
     const { classTypeId, slotId } = await createTestClass(pg.db, {
-      weekday: 3,
+      weekday,
       capacity,
     });
-    const date = nextOccurrence({ weekday: 3 }, today);
+    const date = nextOccurrence({ weekday }, today);
     const materialized = await materializeSession(pg.db, {
       classSlotId: slotId,
       date,
@@ -77,7 +79,7 @@ describe("experimental approval", () => {
   }
 
   it("aprova com vaga e ocupa a ocorrencia", async () => {
-    const { classTypeId, slotId, date, sessionId } = await occurrence(2);
+    const { classTypeId, slotId, date, sessionId } = await occurrence(3, 2);
     const request = await pendingRequest({ classTypeId, classSlotId: slotId, date });
     const now = new Date();
 
@@ -104,7 +106,7 @@ describe("experimental approval", () => {
   });
 
   it("recusa aprovacao sem vaga, bloqueada ou cancelada e mantem pendente", async () => {
-    const { classTypeId, slotId, date, sessionId } = await occurrence(1);
+    const { classTypeId, slotId, date, sessionId } = await occurrence(3, 1);
 
     // A unica vaga ja esta ocupada por uma aprovada
     await createExperimental(pg.db, {
@@ -195,7 +197,7 @@ describe("experimental approval", () => {
   });
 
   it("duas aprovacoes concorrentes na ultima vaga confirmam uma", async () => {
-    const { classTypeId, slotId, date, sessionId } = await occurrence(1);
+    const { classTypeId, slotId, date, sessionId } = await occurrence(3, 1);
     const primeira = await pendingRequest({
       classTypeId,
       classSlotId: slotId,
@@ -240,7 +242,7 @@ describe("experimental approval", () => {
   });
 
   it("recusa libera o telefone e mantem o registro", async () => {
-    const { classTypeId, slotId, date } = await occurrence(2);
+    const { classTypeId, slotId, date } = await occurrence(3, 2);
     const request = await pendingRequest({ classTypeId, classSlotId: slotId, date });
 
     const result = await refuseExperimental(pg.db, {
@@ -274,5 +276,108 @@ describe("experimental approval", () => {
       expect(nova.value.status).toBe("PENDENTE");
       expect(nova.value.id).not.toBe(request.id);
     }
+  });
+
+  it("troca de data de pendente mantem pendente e de aprovada troca a vaga", async () => {
+    const origem = await occurrence(3);
+    const destino = await occurrence(4);
+
+    // A pendente troca de ocorrencia e continua pendente
+    const pendente = await pendingRequest({
+      classTypeId: origem.classTypeId,
+      classSlotId: origem.slotId,
+      date: origem.date,
+    });
+    const trocaPendente = await changeExperimentalOccurrence(pg.db, {
+      experimentalId: pendente.id,
+      classSlotId: destino.slotId,
+      date: destino.date,
+    });
+
+    expect(trocaPendente.ok).toBe(true);
+    if (!trocaPendente.ok) return;
+    expect(trocaPendente.value.status).toBe("PENDENTE");
+    expect(trocaPendente.value.classSessionId).toBe(destino.sessionId);
+    expect(trocaPendente.value.approvedAt).toBeNull();
+
+    // A aprovada troca a vaga ocupada de forma atomica
+    const aprovada = await createExperimental(pg.db, {
+      classSessionId: origem.sessionId,
+      status: "APROVADA",
+      phone: "(11) 97777-6666",
+    });
+    const trocaAprovada = await changeExperimentalOccurrence(pg.db, {
+      experimentalId: aprovada.id,
+      classSlotId: destino.slotId,
+      date: destino.date,
+    });
+
+    expect(trocaAprovada.ok).toBe(true);
+    if (!trocaAprovada.ok) return;
+    expect(trocaAprovada.value.status).toBe("APROVADA");
+    expect(trocaAprovada.value.classSessionId).toBe(destino.sessionId);
+
+    // A vaga saiu da ocorrencia de origem e entrou na de destino
+    const composicaoOrigem = await getOccurrenceComposition(pg.db, {
+      classSlotId: origem.slotId,
+      sessionId: origem.sessionId,
+      date: origem.date,
+      capacity: 2,
+    });
+    expect(composicaoOrigem.experimentalCount).toBe(0);
+    expect(composicaoOrigem.availableSpots).toBe(2);
+
+    const composicaoDestino = await getOccurrenceComposition(pg.db, {
+      classSlotId: destino.slotId,
+      sessionId: destino.sessionId,
+      date: destino.date,
+      capacity: 2,
+    });
+    expect(composicaoDestino.experimentalCount).toBe(1);
+    expect(composicaoDestino.availableSpots).toBe(1);
+
+    // A ocorrencia anterior fica no historico
+    const history = await pg.db.select().from(experimentalReschedules);
+    expect(history).toHaveLength(2);
+    expect(history.every((row) => row.experimentalId === pendente.id || row.experimentalId === aprovada.id)).toBe(true);
+  });
+
+  it("troca sem vaga recusa e mantem a ocorrencia anterior", async () => {
+    const origem = await occurrence(3);
+    const lotada = await occurrence(5, 1);
+
+    // A unica vaga da outra ocorrencia esta ocupada por uma aprovada
+    await createExperimental(pg.db, {
+      classSessionId: lotada.sessionId,
+      status: "APROVADA",
+      phone: "(11) 96666-5555",
+    });
+
+    const pendente = await createExperimental(pg.db, {
+      classSessionId: origem.sessionId,
+      status: "PENDENTE",
+      phone: "(11) 98888-7777",
+    });
+    const resultado = await changeExperimentalOccurrence(pg.db, {
+      experimentalId: pendente.id,
+      classSlotId: lotada.slotId,
+      date: lotada.date,
+    });
+
+    expect(resultado.ok).toBe(false);
+    if (!resultado.ok) {
+      expect(resultado.error).toContain("sem vaga");
+    }
+
+    // A ocorrencia anterior foi mantida
+    const [registro] = await pg.db
+      .select()
+      .from(experimentals)
+      .where(eq(experimentals.id, pendente.id));
+    expect(registro.classSessionId).toBe(origem.sessionId);
+    expect(registro.status).toBe("PENDENTE");
+
+    const history = await pg.db.select().from(experimentalReschedules);
+    expect(history).toHaveLength(0);
   });
 });

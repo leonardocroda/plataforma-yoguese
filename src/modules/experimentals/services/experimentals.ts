@@ -10,6 +10,7 @@ import {
   classSessions,
   classSlots,
   classTypes,
+  experimentalReschedules,
   experimentals,
 } from "../../../db/schema";
 import {
@@ -27,6 +28,7 @@ import {
   todayInStudio,
 } from "../../classes/domain/occurrences";
 import { normalizePhone } from "../domain/phone";
+import { canReschedule } from "../domain/rules";
 import {
   HEALTH_DECLARATION,
   validateExperimentalRequest,
@@ -485,4 +487,244 @@ export async function refuseExperimental(
     return { ok: false, error: "falha ao recusar a solicitacao" };
   }
   return { ok: true, value: updated };
+}
+
+/** Nova ocorrencia escolhida pelo admin (data e horario). */
+export type ChangeOccurrenceInput = {
+  experimentalId: string;
+  classSlotId: string;
+  date: string;
+};
+
+/**
+ * Materializa a ocorrencia escolhida e recusa a que nao vai acontecer:
+ * data passada, ocorrencia bloqueada ou cancelada nao aceitam experimental
+ * (EXP-24).
+ */
+async function resolveTargetOccurrence(
+  db: DbClient,
+  input: { classSlotId: string; date: string },
+  now: Date,
+): Promise<
+  | { ok: true; value: typeof classSessions.$inferSelect }
+  | { ok: false; error: string; field?: string }
+> {
+  const materialized = await materializeSession(
+    db,
+    { classSlotId: input.classSlotId, date: input.date },
+    now,
+  );
+  if (!materialized.ok) {
+    return { ok: false, error: materialized.error, field: materialized.field };
+  }
+  const session = materialized.value;
+  if (session.status === "BLOQUEADA") {
+    return { ok: false, error: "ocorrencia bloqueada por feriado/recesso" };
+  }
+  if (session.status === "CANCELADA") {
+    return { ok: false, error: "ocorrencia cancelada" };
+  }
+  return { ok: true, value: session };
+}
+
+/**
+ * Trava as duas ocorrencias de uma troca em ordem estavel: duas trocas
+ * simultaneas nao se cruzam.
+ */
+async function lockOccurrences(tx: DbClient, sessionIds: string[]): Promise<void> {
+  for (const id of [...new Set(sessionIds)].sort()) {
+    await tx
+      .select({ id: classSessions.id })
+      .from(classSessions)
+      .where(eq(classSessions.id, id))
+      .for("update");
+  }
+}
+
+/**
+ * Troca de data/horario (EXP-24): a solicitacao pendente continua pendente
+ * e a aprovada troca a vaga ocupada de forma atomica. A nova ocorrencia
+ * precisa existir, estar agendada e ter vaga - sem vaga a troca e recusada e
+ * a ocorrencia anterior e mantida.
+ *
+ * A ocorrencia anterior fica gravada no historico de reagendamentos.
+ */
+export async function changeExperimentalOccurrence(
+  db: DbClient,
+  input: ChangeOccurrenceInput,
+  now: Date = new Date(),
+): Promise<ExperimentalResult> {
+  const [experimental] = await db
+    .select()
+    .from(experimentals)
+    .where(eq(experimentals.id, input.experimentalId));
+  if (!experimental) {
+    return {
+      ok: false,
+      error: "solicitacao nao encontrada",
+      field: "experimentalId",
+    };
+  }
+  if (experimental.status === "DUPLICADA") {
+    return { ok: false, error: "tentativa duplicada e somente leitura" };
+  }
+  if (
+    experimental.status !== "PENDENTE" &&
+    experimental.status !== "APROVADA"
+  ) {
+    return {
+      ok: false,
+      error: "somente solicitacao pendente ou aprovada troca de data/horario",
+      field: "status",
+    };
+  }
+
+  const target = await resolveTargetOccurrence(
+    db,
+    { classSlotId: input.classSlotId, date: input.date },
+    now,
+  );
+  if (!target.ok) {
+    return { ok: false, error: target.error, field: target.field };
+  }
+  const session = target.value;
+
+  // Troca para a mesma ocorrencia nao muda nada
+  if (session.id === experimental.classSessionId) {
+    return { ok: true, value: experimental };
+  }
+
+  const [slot] = await db
+    .select()
+    .from(classSlots)
+    .where(eq(classSlots.id, session.classSlotId));
+  if (!slot) {
+    return { ok: false, error: "turma nao encontrada" };
+  }
+
+  return db.transaction(async (tx): Promise<ExperimentalResult> => {
+    await lockOccurrences(tx, [experimental.classSessionId, session.id]);
+
+    const composition = await getOccurrenceComposition(tx, {
+      classSlotId: slot.id,
+      sessionId: session.id,
+      date: session.sessionDate,
+      capacity: slot.capacity,
+    });
+    if (composition.availableSpots <= 0) {
+      return { ok: false, error: "sem vaga disponivel na nova ocorrencia" };
+    }
+
+    const [updated] = await tx
+      .update(experimentals)
+      .set({ classSessionId: session.id, updatedAt: now })
+      .where(eq(experimentals.id, experimental.id))
+      .returning();
+    if (!updated) {
+      return { ok: false, error: "falha ao trocar a ocorrencia" };
+    }
+
+    await tx.insert(experimentalReschedules).values({
+      experimentalId: experimental.id,
+      fromSessionId: experimental.classSessionId,
+      toSessionId: session.id,
+      reason: "Troca de data/horario",
+      rescheduledAt: now,
+    });
+
+    return { ok: true, value: updated };
+  });
+}
+
+/**
+ * Reagendamento (EXP-39, EXP-40): a cancelada com direito volta a
+ * APROVADA em outra ocorrencia com vaga, na mesma transacao, e a ocorrencia
+ * anterior fica gravada no historico. Sem vaga o reagendamento e recusado e
+ * o status e o direito anteriores ficam como estavam.
+ *
+ * O direito so se exerce no mesmo registro (EXP-47): o telefone continua
+ * bloqueado para uma nova solicitacao publica.
+ */
+export async function rescheduleExperimental(
+  db: DbClient,
+  input: ChangeOccurrenceInput,
+  now: Date = new Date(),
+): Promise<ExperimentalResult> {
+  const [experimental] = await db
+    .select()
+    .from(experimentals)
+    .where(eq(experimentals.id, input.experimentalId));
+  if (!experimental) {
+    return {
+      ok: false,
+      error: "solicitacao nao encontrada",
+      field: "experimentalId",
+    };
+  }
+  if (experimental.status === "DUPLICADA") {
+    return { ok: false, error: "tentativa duplicada e somente leitura" };
+  }
+  if (!canReschedule(experimental.status)) {
+    return {
+      ok: false,
+      error: "somente cancelada com direito pode ser reagendada",
+      field: "status",
+    };
+  }
+
+  const target = await resolveTargetOccurrence(
+    db,
+    { classSlotId: input.classSlotId, date: input.date },
+    now,
+  );
+  if (!target.ok) {
+    return { ok: false, error: target.error, field: target.field };
+  }
+  const session = target.value;
+
+  const [slot] = await db
+    .select()
+    .from(classSlots)
+    .where(eq(classSlots.id, session.classSlotId));
+  if (!slot) {
+    return { ok: false, error: "turma nao encontrada" };
+  }
+
+  return db.transaction(async (tx): Promise<ExperimentalResult> => {
+    await lockOccurrences(tx, [experimental.classSessionId, session.id]);
+
+    const composition = await getOccurrenceComposition(tx, {
+      classSlotId: slot.id,
+      sessionId: session.id,
+      date: session.sessionDate,
+      capacity: slot.capacity,
+    });
+    if (composition.availableSpots <= 0) {
+      return { ok: false, error: "sem vaga disponivel na nova ocorrencia" };
+    }
+
+    const [updated] = await tx
+      .update(experimentals)
+      .set({
+        classSessionId: session.id,
+        status: "APROVADA",
+        approvedAt: now,
+        updatedAt: now,
+      })
+      .where(eq(experimentals.id, experimental.id))
+      .returning();
+    if (!updated) {
+      return { ok: false, error: "falha ao reagendar a solicitacao" };
+    }
+
+    await tx.insert(experimentalReschedules).values({
+      experimentalId: experimental.id,
+      fromSessionId: experimental.classSessionId,
+      toSessionId: session.id,
+      reason: "Reagendamento apos cancelamento com direito",
+      rescheduledAt: now,
+    });
+
+    return { ok: true, value: updated };
+  });
 }
