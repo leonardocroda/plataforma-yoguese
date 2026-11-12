@@ -131,7 +131,7 @@ export async function updatePlan(
         description:
           input.description === undefined
             ? current.description
-            : input.description.trim() === ""
+            : input.description === null || input.description.trim() === ""
               ? null
               : input.description.trim(),
         status: input.status ?? current.status,
