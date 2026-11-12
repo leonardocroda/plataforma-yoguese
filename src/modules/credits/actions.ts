@@ -1,6 +1,9 @@
 "use server";
 
+import { eq } from "drizzle-orm";
+import { users } from "../../db/schema";
 import type { DbClient } from "../bookings/services/sessions";
+import { requireAdminSession } from "../auth/services/session";
 import {
   cancelCredit as cancelCreditService,
   grantCredit as grantCreditService,
@@ -16,9 +19,9 @@ import { bookMakeupByAdmin as bookMakeupByAdminService } from "./services/makeup
 /**
  * Server actions do admin para creditos (CRD-34 a CRD-36, CRD-40 a CRD-43).
  * Finas: cada action chama um servico e devolve o resultado dele (ok/value ou
- * error/field). Nenhuma regra e repetida aqui - o motivo obrigatorio
- * (CRD-16) e a escolha do credito da reposicao (CRD-43) sao decididos pelos
- * servicos. Sem auth nesta slice: o responsavel fica por rotulo (AD-016).
+ * error/field). Nenhuma regra e repetida aqui. Toda action exige sessao de
+ * ADMIN no servidor (AUTH-01, PRD 13.3) e o rotulo de auditoria sai da
+ * administradora logada (AD-016).
  */
 
 /**
@@ -30,8 +33,19 @@ async function dbClient(): Promise<DbClient> {
   return db;
 }
 
-/** Rotulo do responsavel enquanto nao ha auth (AD-016, AD-023). */
-const DEFAULT_ADMIN_LABEL = "admin";
+/**
+ * Sessao + rotulo da admin logada: o nome gravado nas transacoes vem da
+ * sessao (AD-016). O guard roda antes de qualquer leitura no banco.
+ */
+async function adminContext(): Promise<{ db: DbClient; adminLabel: string }> {
+  const session = await requireAdminSession();
+  const db = await dbClient();
+  const [admin] = await db
+    .select({ name: users.name })
+    .from(users)
+    .where(eq(users.id, session.userId));
+  return { db, adminLabel: admin?.name ?? "admin" };
+}
 
 // ---- creditos (CRD-34 a CRD-36, CRD-40) ----
 
@@ -42,14 +56,14 @@ const DEFAULT_ADMIN_LABEL = "admin";
 export async function grantCreditAction(input: {
   studentId: string;
   reason: string;
-  adminLabel?: string;
 }) {
-  return grantCreditService(await dbClient(), {
+  const { db, adminLabel } = await adminContext();
+  return grantCreditService(db, {
     studentId: input.studentId,
     // Concessao do admin e sempre da origem CONCESSAO_MANUAL (CRD-34)
     source: "CONCESSAO_MANUAL",
     reason: input.reason,
-    adminLabel: input.adminLabel ?? DEFAULT_ADMIN_LABEL,
+    adminLabel,
   });
 }
 
@@ -60,12 +74,12 @@ export async function grantCreditAction(input: {
 export async function returnCreditAction(input: {
   creditId: string;
   reason: string;
-  adminLabel?: string;
 }) {
-  return returnCreditService(await dbClient(), {
+  const { db, adminLabel } = await adminContext();
+  return returnCreditService(db, {
     creditId: input.creditId,
     reason: input.reason,
-    adminLabel: input.adminLabel ?? DEFAULT_ADMIN_LABEL,
+    adminLabel,
   });
 }
 
@@ -76,12 +90,12 @@ export async function returnCreditAction(input: {
 export async function cancelCreditAction(input: {
   creditId: string;
   reason: string;
-  adminLabel?: string;
 }) {
-  return cancelCreditService(await dbClient(), {
+  const { db, adminLabel } = await adminContext();
+  return cancelCreditService(db, {
     creditId: input.creditId,
     reason: input.reason,
-    adminLabel: input.adminLabel ?? DEFAULT_ADMIN_LABEL,
+    adminLabel,
   });
 }
 
@@ -95,12 +109,12 @@ export async function cancelCreditAction(input: {
 export async function registerNonAttendanceAction(input: {
   studentId: string;
   classSessionId: string;
-  adminLabel?: string;
 }) {
-  return registerNonAttendanceService(await dbClient(), {
+  const { db, adminLabel } = await adminContext();
+  return registerNonAttendanceService(db, {
     studentId: input.studentId,
     classSessionId: input.classSessionId,
-    adminLabel: input.adminLabel ?? DEFAULT_ADMIN_LABEL,
+    adminLabel,
   });
 }
 
@@ -110,11 +124,11 @@ export async function registerNonAttendanceAction(input: {
  */
 export async function cancelOccurrenceByStudioAction(input: {
   classSessionId: string;
-  adminLabel?: string;
 }) {
-  return cancelOccurrenceByStudioService(await dbClient(), {
+  const { db, adminLabel } = await adminContext();
+  return cancelOccurrenceByStudioService(db, {
     classSessionId: input.classSessionId,
-    adminLabel: input.adminLabel ?? DEFAULT_ADMIN_LABEL,
+    adminLabel,
   });
 }
 
@@ -129,7 +143,8 @@ export async function bookMakeupByAdminAction(input: {
   date: string;
   creditId?: string | null;
 }) {
-  return bookMakeupByAdminService(await dbClient(), {
+  const { db } = await adminContext();
+  return bookMakeupByAdminService(db, {
     studentId: input.studentId,
     classSlotId: input.classSlotId,
     date: input.date,
@@ -140,5 +155,6 @@ export async function bookMakeupByAdminAction(input: {
 
 /** Creditos do aluno com geracao, vencimento, status, origem e transacoes. */
 export async function listStudentCreditsAction(studentId: string) {
-  return listStudentCreditsService(await dbClient(), studentId);
+  const { db } = await adminContext();
+  return listStudentCreditsService(db, studentId);
 }

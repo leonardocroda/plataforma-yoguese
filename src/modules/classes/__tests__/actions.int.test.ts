@@ -8,11 +8,19 @@ import {
   fixedEnrollments,
   holidays,
   studioClosures,
+  users,
 } from "../../../db/schema";
 import { createStudents, createTestClass, clearTables, grantTestCredit } from "../../../test/fixtures";
+import {
+  authTestState,
+  nextHeadersMock,
+  resetAuthTestState,
+  TEST_AUTH_SECRET,
+} from "../../../test/auth";
 import { PostgresTestInstance, startPostgres } from "../../../test/postgres";
 import { addDays, nextOccurrence, todayInStudio } from "../domain/occurrences";
 import { materializeSession } from "../../bookings/services/sessions";
+import { setSessionCookie } from "../../auth/services/session";
 import {
   createBookingAction,
   createClassTypeAction,
@@ -29,6 +37,11 @@ import {
   updateStudioClosureAction,
 } from "../actions";
 
+// AUTH-01 nas actions admin: toda action exige sessao de ADMIN no servidor.
+// O cookie passa pelo mock de next/headers (src/test/auth.ts).
+
+vi.mock("next/headers", () => nextHeadersMock());
+
 describe("admin actions", () => {
   let pg: PostgresTestInstance;
   let today: string;
@@ -42,6 +55,18 @@ describe("admin actions", () => {
 
   beforeEach(async () => {
     await clearTables(pg.db);
+    resetAuthTestState();
+    // A admin logada da sessao para os testes de action
+    const [admin] = await pg.db
+      .insert(users)
+      .values({
+        name: "Ana Admin",
+        email: `admin-${Math.random().toString(16).slice(2, 10)}@yoguese.com`,
+        passwordHash: "hash-de-teste",
+        role: "ADMIN",
+      })
+      .returning();
+    await setSessionCookie({ id: admin.id, role: "ADMIN" });
     today = todayInStudio(new Date());
   });
 
@@ -422,4 +447,26 @@ describe("admin actions", () => {
       .where(eq(classSessions.sessionDate, date));
     expect(session.status).toBe("AGENDADA");
   });
+
+  it("recusa action sem sessao com redirect ao login (AUTH-01)", async () => {
+    // Sem cookie: o guard manda para o login antes de tocar o banco
+    authTestState.jar.clear();
+
+    const error = await createClassTypeAction({
+      name: "Superioga Sem Sessao",
+    }).then(
+      () => null,
+      (reason: unknown) => reason,
+    );
+
+    expect(error).toBeInstanceOf(Error);
+    expect((error as { digest?: string }).digest ?? "").toContain("/login");
+
+    // Nada foi gravado: a recusa vem antes do servico
+    const rows = await pg.db.select().from(classTypes);
+    expect(rows).toHaveLength(0);
+  });
 });
+
+// Segredo do ambiente de teste: setSessionCookie assina com ele
+process.env.AUTH_SECRET = TEST_AUTH_SECRET;

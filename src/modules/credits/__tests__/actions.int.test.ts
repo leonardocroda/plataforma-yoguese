@@ -1,17 +1,24 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { bookings, creditTransactions, credits } from "../../../db/schema";
+import { bookings, creditTransactions, credits, users } from "../../../db/schema";
 import {
   createStudents,
   createTestClass,
   clearTables,
   grantTestCredit,
 } from "../../../test/fixtures";
+import {
+  authTestState,
+  nextHeadersMock,
+  resetAuthTestState,
+  TEST_AUTH_SECRET,
+} from "../../../test/auth";
 import { PostgresTestInstance, startPostgres } from "../../../test/postgres";
 import { createBooking } from "../../bookings/services/bookings";
 import { materializeSession } from "../../bookings/services/sessions";
 import { weekdayOf } from "../../classes/domain/occurrences";
 import { createEnrollment } from "../../students/services/enrollments";
+import { setSessionCookie } from "../../auth/services/session";
 import {
   bookMakeupByAdminAction,
   cancelCreditAction,
@@ -21,7 +28,13 @@ import {
   returnCreditAction,
 } from "../actions";
 
-// Server actions de creditos (CRD-34 a CRD-36, CRD-40 a CRD-43).
+// Server actions de creditos (CRD-34 a CRD-36, CRD-40 a CRD-43). Toda action
+// exige sessao de ADMIN (AUTH-01) e o rotulo de auditoria sai da sessao
+// (AD-016). O cookie passa pelo mock de next/headers.
+
+vi.mock("next/headers", () => nextHeadersMock());
+
+const ADMIN_NAME = "Ana Admin";
 
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
@@ -39,6 +52,18 @@ describe("credit actions", () => {
 
   beforeEach(async () => {
     await clearTables(pg.db);
+    resetAuthTestState();
+    // A admin logada da sessao: o rotulo das transacoes e o nome dela
+    const [admin] = await pg.db
+      .insert(users)
+      .values({
+        name: ADMIN_NAME,
+        email: `admin-${Math.random().toString(16).slice(2, 10)}@yoguese.com`,
+        passwordHash: "hash-de-teste",
+        role: "ADMIN",
+      })
+      .returning();
+    await setSessionCookie({ id: admin.id, role: "ADMIN" });
   });
 
   afterAll(async () => {
@@ -124,7 +149,8 @@ describe("credit actions", () => {
     expect(transaction.previousStatus).toBeNull();
     expect(transaction.newStatus).toBe("DISPONIVEL");
     expect(transaction.reason).toBe("Bonificacao do estudio");
-    expect(transaction.adminLabel).toBe("admin");
+    // AD-016 substituido: o rotulo e o nome da admin logada na sessao
+    expect(transaction.adminLabel).toBe(ADMIN_NAME);
 
     const storedCredits = await pg.db
       .select()
@@ -400,4 +426,45 @@ describe("credit actions", () => {
     const storedCredits = await pg.db.select().from(credits);
     expect(storedCredits).toHaveLength(0);
   });
+
+  it("recusa action sem sessao com redirect ao login (AUTH-01)", async () => {
+    // Sem cookie: o guard manda para o login antes de tocar o banco
+    authTestState.jar.clear();
+
+    const [student] = await createStudents(pg.db, 1);
+    const error = await grantCreditAction({
+      studentId: student,
+      reason: "Bonificacao",
+    }).then(
+      () => null,
+      (reason: unknown) => reason,
+    );
+
+    expect(error).toBeInstanceOf(Error);
+    expect((error as { digest?: string }).digest ?? "").toContain("/login");
+
+    // Nada foi gravado: a recusa vem antes do servico
+    const storedCredits = await pg.db.select().from(credits);
+    expect(storedCredits).toHaveLength(0);
+  });
+
+  it("a transacao registra o nome da admin logada, nao um rotulo fixo (AD-016)", async () => {
+    const [student] = await createStudents(pg.db, 1);
+
+    const granted = await grantCreditAction({
+      studentId: student,
+      reason: "Bonificacao do estudio",
+    });
+    expect(granted.ok).toBe(true);
+
+    const [transaction] = await pg.db
+      .select()
+      .from(creditTransactions)
+      .where(eq(creditTransactions.action, "CONCESSAO"));
+    expect(transaction.adminLabel).toBe(ADMIN_NAME);
+    expect(transaction.adminLabel).not.toBe("admin");
+  });
 });
+
+// Segredo do ambiente de teste: setSessionCookie assina com ele
+process.env.AUTH_SECRET = TEST_AUTH_SECRET;

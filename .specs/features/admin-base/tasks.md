@@ -287,10 +287,10 @@ T8 → T13
 
 **Done when**:
 
-- [ ] Action sem sessão é recusada (teste com mock sem cookie)
-- [ ] Transações de crédito registram o nome da admin logada
-- [ ] Suíte de actions verdes com o mock
-- [ ] Gate: full
+- [x] Action sem sessão é recusada (teste com mock sem cookie)
+- [x] Transações de crédito registram o nome da admin logada
+- [x] Suíte de actions verdes com o mock
+- [x] Gate: full
 
 **Tests**: integration
 **Gate**: full
