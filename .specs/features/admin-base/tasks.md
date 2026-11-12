@@ -441,6 +441,9 @@ Proof: walk - plano criado com valor X aparece na /planos com X
 **C25** - Credenciais válidas de um usuário que não é ADMIN são recusadas com a mensagem genérica, sem sessão (AUTH-09, AC 9) *check da verificação (F1)*
 Proof: run auth-int | ✓ credentials > credenciais de role ALUNO nao autenticam no admin (AUTH-09)
 
+**C26** - Marcar aluna sem plano como Ativa é recusado com erro do campo; com plano funciona (STUD-09, AC 9) *check da verificação (F2)*
+Proof: run students | ✓ students services > reativar aluna sem plano e recusado e com plano funciona (STUD-09)
+
 ---
 
 ## Handoff

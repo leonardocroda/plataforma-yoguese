@@ -10,6 +10,7 @@ import {
 import { credits, plans, students } from "../../../../db/schema";
 import {
   clearTables,
+  createStudents,
   createTestClass,
   grantTestCredit,
 } from "../../../../test/fixtures";
@@ -238,7 +239,11 @@ describe("students services", () => {
   });
 
   it("setStudentStatus inativa e reativa sem tocar nas matriculas", async () => {
-    const created = await createStudent(pg.db, studentInput());
+    const plan = await createTestPlan();
+    const created = await createStudent(
+      pg.db,
+      studentInput({ planId: plan.id }),
+    );
     expect(created.ok).toBe(true);
     if (!created.ok) return;
 
@@ -252,6 +257,36 @@ describe("students services", () => {
 
     const reactivated = await setStudentStatus(pg.db, {
       studentId: created.value.id,
+      status: "ATIVO",
+    });
+    expect(reactivated.ok).toBe(true);
+    if (!reactivated.ok) return;
+    expect(reactivated.value.status).toBe("ATIVO");
+  });
+
+  it("reativar aluna sem plano e recusado e com plano funciona (STUD-09)", async () => {
+    const [created] = await createStudents(pg.db, 1);
+    expect(created).toBeTruthy();
+    if (!created) return;
+
+    // A aluna fixture nasce sem plano: reativar recusa com erro do campo
+    const refused = await setStudentStatus(pg.db, {
+      studentId: created,
+      status: "ATIVO",
+    });
+    expect(refused.ok).toBe(false);
+    if (refused.ok) return;
+    expect(refused.field).toBe("planId");
+    expect(refused.error).toContain("plano obrigatorio");
+
+    // Vinculando um plano, a reativacao funciona
+    const plan = await createTestPlan();
+    await pg.db
+      .update(students)
+      .set({ planId: plan.id })
+      .where(eq(students.id, created));
+    const reactivated = await setStudentStatus(pg.db, {
+      studentId: created,
       status: "ATIVO",
     });
     expect(reactivated.ok).toBe(true);

@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { classSessions, fixedEnrollments } from "../../../../db/schema";
+import { classSessions, fixedEnrollments, plans, students } from "../../../../db/schema";
 import { createStudents, createTestClass, clearTables, grantTestCredit } from "../../../../test/fixtures";
 import { PostgresTestInstance, startPostgres } from "../../../../test/postgres";
 import { todayInStudio, nextOccurrence } from "../../../classes/domain/occurrences";
@@ -26,6 +26,23 @@ describe("occurrence composition", () => {
     await pg.pool.end();
     await pg.container.stop();
   });
+
+  // Reativar exige plano (STUD-09): as alunas fixture nascem sem plano e os
+  // testes de ciclo de status as vinculam a um plano antes do ATIVO
+  async function linkPlan(studentId: string): Promise<void> {
+    const [plan] = await pg.db
+      .insert(plans)
+      .values({
+        name: `Plano ${Math.random().toString(16).slice(2, 8)}`,
+        price: "150.00",
+        weeklyFrequency: 2,
+      })
+      .returning();
+    await pg.db
+      .update(students)
+      .set({ planId: plan.id })
+      .where(eq(students.id, studentId));
+  }
 
   it("the single composition service feeds the booking and the reading paths", async () => {
     const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 2 });
@@ -97,6 +114,7 @@ describe("occurrence composition", () => {
     const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 1 });
     const date = nextOccurrence({ weekday: 3 }, today);
     const [student] = await createStudents(pg.db, 1);
+    await linkPlan(student);
 
     const enrollment = await createEnrollment(pg.db, {
       studentId: student,
@@ -144,6 +162,7 @@ describe("occurrence composition", () => {
     const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 1 });
     const date = nextOccurrence({ weekday: 3 }, today);
     const [student] = await createStudents(pg.db, 1);
+    await linkPlan(student);
 
     // Aluna sem matricula fixa: o admin reserva a ocorrencia como fixo pela
     // grade (a reserva e a linha FIXED criada na ocorrencia, AD-008)

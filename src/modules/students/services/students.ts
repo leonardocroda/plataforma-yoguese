@@ -209,6 +209,22 @@ export async function setStudentStatus(
   input: { studentId: string; status: StudentStatus },
   now: Date = new Date(),
 ): Promise<StudentResult> {
+  const [current] = await db
+    .select({ planId: students.planId })
+    .from(students)
+    .where(eq(students.id, input.studentId));
+  if (!current) return { ok: false, error: "aluna nao encontrada" };
+
+  // O invariante do cadastro vale no ciclo de vida tambem (STUD-09):
+  // reativar uma aluna sem plano contornaria "plano obrigatorio quando Ativo"
+  if (input.status === "ATIVO" && !current.planId) {
+    return {
+      ok: false,
+      error: "planId: plano obrigatorio para aluna ativa",
+      field: "planId",
+    };
+  }
+
   const [updated] = await db
     .update(students)
     .set({ status: input.status, updatedAt: now })
