@@ -184,9 +184,9 @@ T8 → T13
 
 **Done when**:
 
-- [ ] Erro de credencial mostra exatamente "E-mail ou senha inválidos"
-- [ ] loginAction recusa campo vazio sem tocar cookies
-- [ ] Gate: full (int das actions com o mock de cookies) + build
+- [x] Erro de credencial mostra exatamente "E-mail ou senha inválidos"
+- [x] loginAction recusa campo vazio sem tocar cookies
+- [x] Gate: full (int das actions com o mock de cookies) + build
 
 **Tests**: integration
 **Gate**: full

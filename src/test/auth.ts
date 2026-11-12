@@ -6,8 +6,6 @@
 //
 // O jar e compartilhado: setSessionCookie grava nele e getSession le dele.
 
-import { vi } from "vitest";
-
 /** Segredo de teste: qualquer valor estavel serve (o dominio so assina/verifica). */
 export const TEST_AUTH_SECRET =
   "segredo-de-teste-da-suite-yoguese-32-bytes";
