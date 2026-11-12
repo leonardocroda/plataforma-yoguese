@@ -215,9 +215,9 @@ Execução em ordem: T19, T20, T21, T22, T23, T24, T25, T26.
 
 **Done when**:
 
-- [ ] Aprovada ocupa vaga; pendente, recusada, cancelada, falta, convertida e duplicada não ocupam
-- [ ] Reservation `EXPERIMENTAL` existente continua contando (sem regressão)
-- [ ] Gate: `npm test`
+- [x] Aprovada ocupa vaga; pendente, recusada, cancelada, falta, convertida e duplicada não ocupam
+- [x] Reservation `EXPERIMENTAL` existente continua contando (sem regressão)
+- [x] Gate: `npm test`
 
 **Tests**: integration
 **Gate**: full

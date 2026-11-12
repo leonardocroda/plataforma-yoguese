@@ -1,5 +1,12 @@
 import { and, eq, gt, inArray, isNull, lte, or } from "drizzle-orm";
-import { bookings, classSessions, classSlots, fixedEnrollments, students } from "../../../db/schema";
+import {
+  bookings,
+  classSessions,
+  classSlots,
+  experimentals,
+  fixedEnrollments,
+  students,
+} from "../../../db/schema";
 import {
   Composition,
   calculateComposition,
@@ -103,6 +110,20 @@ export async function getOccurrenceComposition(
       else if (booking.type === "MAKEUP") makeupCount += 1;
       else experimentalCount += 1;
     }
+
+    // A experimental aprovada ocupa a vaga da ocorrencia (EXP-41): ela soma
+    // ao lado dos fixos, reposicoes e reservas EXPERIMENTAL. Os demais
+    // status nao contam (EXP-42).
+    const approved = await db
+      .select({ id: experimentals.id })
+      .from(experimentals)
+      .where(
+        and(
+          eq(experimentals.classSessionId, input.sessionId),
+          eq(experimentals.status, "APROVADA"),
+        ),
+      );
+    experimentalCount += approved.length;
   }
 
   return calculateComposition({
