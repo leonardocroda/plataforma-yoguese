@@ -7,6 +7,7 @@ import { users } from "../../db/schema";
 const NAV_LINKS = [
   { href: "/grade", label: "Grade" },
   { href: "/alunos", label: "Alunos" },
+  { href: "/experimentais", label: "Experimentais" },
   { href: "/planos", label: "Planos" },
   { href: "/creditos", label: "Créditos" },
   { href: "/feriados", label: "Feriados" },
