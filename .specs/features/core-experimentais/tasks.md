@@ -428,9 +428,9 @@ Execução em ordem: T19, T20, T21, T22, T23, T24, T25, T26.
 
 **Done when**:
 
-- [ ] Cada action admin exige sessão `ADMIN` no servidor
-- [ ] Erros do serviço chegam à tela
-- [ ] Gate: `npm test`
+- [x] Cada action admin exige sessão `ADMIN` no servidor
+- [x] Erros do serviço chegam à tela
+- [x] Gate: `npm test`
 
 **Tests**: integration
 **Gate**: full

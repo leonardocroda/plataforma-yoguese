@@ -67,6 +67,11 @@ const PAYMENT_STATUSES: readonly ExperimentalPaymentStatus[] = [
   "REEMBOLSADO",
 ];
 
+/** O valor recebido e um dos quatro status do PRD 8.4. */
+function isPaymentStatus(value: string): value is ExperimentalPaymentStatus {
+  return (PAYMENT_STATUSES as readonly string[]).includes(value);
+}
+
 const DUPLICATE_ERROR = "ja existe uma aula experimental para este telefone";
 
 /** O Drizzle embrulha o erro do Postgres: a mensagem original vem no cause. */
@@ -881,11 +886,11 @@ export async function registerPayment(
   db: DbClient,
   input: {
     experimentalId: string;
-    paymentStatus: ExperimentalPaymentStatus;
+    paymentStatus: string;
   },
   now: Date = new Date(),
 ): Promise<ExperimentalResult> {
-  if (!PAYMENT_STATUSES.includes(input.paymentStatus)) {
+  if (!isPaymentStatus(input.paymentStatus)) {
     return {
       ok: false,
       error: "status de pagamento invalido",
