@@ -7,6 +7,7 @@ import {
   setStudentStatusAction,
   updateStudentAction,
 } from "../../../modules/students/actions";
+import { Button, Field, Toast } from "../../../modules/ui/components/kit";
 
 type ActionState = {
   ok: boolean;
@@ -14,11 +15,6 @@ type ActionState = {
 };
 
 const INITIAL_STATE: ActionState = { ok: false, message: "" };
-
-const inputClass =
-  "mt-1 w-full rounded border border-[var(--yoguese-bege)] bg-white px-2 py-1 text-xs text-[var(--yoguese-cinza)]";
-const buttonClass =
-  "rounded bg-[var(--yoguese-salvia)] px-3 py-1 text-xs text-white disabled:opacity-60";
 
 export type PlanOption = {
   id: string;
@@ -65,6 +61,26 @@ function formDataOf(
   };
 }
 
+/** Sucesso na pilula preta do guia; falha em texto puro no token de erro. */
+function Feedback({ state }: { state: ActionState }) {
+  if (!state.message) return null;
+  if (state.ok) {
+    return (
+      <div className="mt-3">
+        <Toast>{state.message}</Toast>
+      </div>
+    );
+  }
+  return (
+    <p
+      role="alert"
+      className="mt-2 text-[14px] font-medium text-[color:var(--erro)]"
+    >
+      {state.message}
+    </p>
+  );
+}
+
 function StudentFields({
   plans,
   student,
@@ -74,62 +90,58 @@ function StudentFields({
 }) {
   return (
     <>
-      <div className="grid grid-cols-2 gap-2">
-        <label className="block text-xs font-medium">
-          Nome
+      <div className="mt-4 grid gap-x-4 sm:grid-cols-2">
+        <Field label="Nome" id="aluno-nome">
           <input
+            id="aluno-nome"
             name="name"
+            type="text"
             required
             defaultValue={student?.name}
-            className={inputClass}
           />
-        </label>
-        <label className="block text-xs font-medium">
-          Telefone
+        </Field>
+        <Field label="Telefone" id="aluno-telefone">
           <input
+            id="aluno-telefone"
             name="phone"
+            type="tel"
             required
             defaultValue={student?.phone}
-            className={inputClass}
             placeholder="Ex.: 11999990000"
           />
-        </label>
-        <label className="block text-xs font-medium">
-          E-mail
+        </Field>
+        <Field label="E-mail" id="aluno-email">
           <input
+            id="aluno-email"
             name="email"
             type="email"
             required
             defaultValue={student?.email}
-            className={inputClass}
           />
-        </label>
-        <label className="block text-xs font-medium">
-          Data de nascimento
+        </Field>
+        <Field label="Data de nascimento" id="aluno-nascimento">
           <input
+            id="aluno-nascimento"
             name="birthDate"
             type="date"
             required
             defaultValue={student?.birthDate}
-            className={inputClass}
           />
-        </label>
-        <label className="block text-xs font-medium">
-          Data de matrícula
+        </Field>
+        <Field label="Data de matrícula" id="aluno-matricula">
           <input
+            id="aluno-matricula"
             name="enrollmentDate"
             type="date"
             defaultValue={student?.enrollmentDate}
-            className={inputClass}
           />
-        </label>
-        <label className="block text-xs font-medium">
-          Status
+        </Field>
+        <Field label="Status" id="aluno-status">
           <select
+            id="aluno-status"
             name="status"
             required
             defaultValue={student?.status ?? "EXPERIMENTAL"}
-            className={inputClass}
           >
             {STATUS_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -137,14 +149,16 @@ function StudentFields({
               </option>
             ))}
           </select>
-        </label>
+        </Field>
       </div>
-      <label className="block text-xs font-medium">
-        Plano (obrigatório quando o status é Ativo)
+      <Field
+        label="Plano (obrigatório quando o status é Ativo)"
+        id="aluno-plano"
+      >
         <select
+          id="aluno-plano"
           name="planId"
           defaultValue={student?.planId ?? ""}
-          className={inputClass}
         >
           <option value="">Sem plano</option>
           {plans.map((plan) => (
@@ -153,15 +167,15 @@ function StudentFields({
             </option>
           ))}
         </select>
-      </label>
-      <label className="block text-xs font-medium">
-        Observações
+      </Field>
+      <Field label="Observações" id="aluno-observacoes">
         <input
+          id="aluno-observacoes"
           name="notes"
+          type="text"
           defaultValue={student?.notes ?? ""}
-          className={inputClass}
         />
-      </label>
+      </Field>
     </>
   );
 }
@@ -185,22 +199,12 @@ export function CreateStudentForm({ plans }: { plans: PlanOption[] }) {
   }, [state.ok, router]);
 
   return (
-    <form action={formAction} className="space-y-2">
+    <form action={formAction}>
       <StudentFields plans={plans} />
-      <button type="submit" disabled={pending} className={buttonClass}>
-        {pending ? "Cadastrando..." : "Cadastrar aluna"}
-      </button>
-      {state.message ? (
-        <p
-          className={
-            state.ok
-              ? "text-xs text-[var(--yoguese-cinza)]"
-              : "text-xs text-red-700"
-          }
-        >
-          {state.message}
-        </p>
-      ) : null}
+      <Button type="submit" variant="prim" disabled={pending}>
+        {pending ? "Cadastrando…" : "Cadastrar aluna"}
+      </Button>
+      <Feedback state={state} />
     </form>
   );
 }
@@ -233,22 +237,12 @@ export function EditStudentForm({
   }, [state.ok, router]);
 
   return (
-    <form action={formAction} className="space-y-2">
+    <form action={formAction}>
       <StudentFields plans={plans} student={student} />
-      <button type="submit" disabled={pending} className={buttonClass}>
-        {pending ? "Salvando..." : "Salvar alterações"}
-      </button>
-      {state.message ? (
-        <p
-          className={
-            state.ok
-              ? "text-xs text-[var(--yoguese-cinza)]"
-              : "text-xs text-red-700"
-          }
-        >
-          {state.message}
-        </p>
-      ) : null}
+      <Button type="submit" variant="prim" disabled={pending}>
+        {pending ? "Salvando…" : "Salvar alterações"}
+      </Button>
+      <Feedback state={state} />
     </form>
   );
 }
@@ -281,19 +275,20 @@ export function StudentStatusButton({
 
   return (
     <form action={formAction}>
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded border border-[var(--yoguese-bege)] px-2 py-0.5 text-xs hover:bg-[var(--yoguese-off-white)]"
-      >
+      <Button type="submit" variant="sec" small disabled={pending}>
         {pending
-          ? "Atualizando..."
+          ? "Atualizando…"
           : status === "ATIVO"
             ? "Inativar"
             : "Reativar"}
-      </button>
+      </Button>
       {state.message && !state.ok ? (
-        <p className="mt-1 text-xs text-red-700">{state.message}</p>
+        <p
+          role="alert"
+          className="mt-1 text-[13px] font-medium text-[color:var(--erro)]"
+        >
+          {state.message}
+        </p>
       ) : null}
     </form>
   );

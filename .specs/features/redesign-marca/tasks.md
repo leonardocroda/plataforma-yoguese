@@ -289,10 +289,10 @@ Phase 3:  T1 -> T8
 
 **Done when**:
 
-- [ ] List + forms follow the guide components; no zebra table, no colored alert box; create/edit flows unchanged in behavior
+- [x] List + forms follow the guide components; no zebra table, no colored alert box; create/edit flows unchanged in behavior
 - [ ] Walk evidence recorded at the feature walk (step 9 - capture `captures/alunos.running.png`)
-- [ ] Build gate passes: `npm run build; npm run lint; npm test`
-- [ ] Test count: existing suite green (no deletions)
+- [x] Build gate passes: `npm run build; npm run lint; npm test`
+- [x] Test count: existing suite green (no deletions)
 
 **Tests**: none (route layer - walk + browser captures per the matrix)
 **Gate**: build

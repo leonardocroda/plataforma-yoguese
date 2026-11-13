@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { listSelectablePlans } from "../../../modules/plans/services/plans";
 import { listStudents } from "../../../modules/students/services/students";
+import { Chip } from "../../../modules/ui/components/kit";
 import {
   CreateStudentForm,
   EditStudentForm,
@@ -24,6 +25,9 @@ const statusLabel: Record<string, string> = {
  * ?editar=<id>. O seletor de plano usa listSelectablePlans: plano inativo
  * nao e oferecido, mas a aluna em edicao mantem o plano atual (PLAN-04,
  * PLAN-05).
+ *
+ * A pele e a do guia: superficie pena com borda preta de 2px no formulario e
+ * a lista em divisores, com o status em chip e as acoes em pilula de texto.
  */
 export default async function AdminStudentsPage({
   searchParams,
@@ -65,74 +69,84 @@ export default async function AdminStudentsPage({
     : undefined;
 
   return (
-    <main className="min-h-screen bg-[var(--yoguese-off-white)] p-6 text-[var(--yoguese-cinza)]">
+    <main>
       <header className="mb-6">
-        <h1 className="text-2xl font-light">Alunas</h1>
-        <p className="text-xs">
-          Cadastro completo com telefone, e-mail, plano, status e observações
+        <h1 className="text-[34px]">Alunas</h1>
+        <p className="mt-1.5 max-w-[48em] text-[15px] text-[color:var(--cinza)]">
+          Cadastro completo com telefone, e-mail, plano, status e observações.
         </p>
       </header>
 
-      <div className="max-w-lg rounded-lg border border-[var(--yoguese-bege)] bg-white p-3">
-        <h2 className="text-sm font-medium">
-          {editingForm ? `Editar ${editingForm.name}` : "Nova aluna"}
-        </h2>
-        {editingForm ? (
-          <>
-            <EditStudentForm student={editingForm} plans={editPlans} />
-            <p className="mt-2 text-xs">
-              <Link href="/alunos" className="underline">
-                Cancelar edição e cadastrar nova
-              </Link>
-            </p>
-          </>
-        ) : (
-          <CreateStudentForm plans={createPlans} />
-        )}
-      </div>
+      <div className="grid gap-8 xl:grid-cols-[minmax(0,430px)_minmax(0,1fr)] xl:items-start">
+        <section className="rounded-[var(--r-lg)] border-2 border-[var(--preto)] bg-[var(--pena)] p-5">
+          <h2 className="text-[22px]">
+            {editingForm ? `Editar ${editingForm.name}` : "Nova aluna"}
+          </h2>
+          {editingForm ? (
+            <>
+              <EditStudentForm student={editingForm} plans={editPlans} />
+              <p className="mt-3 text-[14px]">
+                <Link
+                  href="/alunos"
+                  className="underline decoration-2 underline-offset-4"
+                >
+                  Cancelar edição e cadastrar nova
+                </Link>
+              </p>
+            </>
+          ) : (
+            <CreateStudentForm plans={createPlans} />
+          )}
+        </section>
 
-      <h2 className="mt-6 text-sm font-medium">Alunas cadastradas</h2>
-      {students.length === 0 ? (
-        <p className="mt-2 text-xs opacity-70">
-          Nenhuma aluna cadastrada ainda.
-        </p>
-      ) : (
-        <ul className="mt-2 space-y-2">
-          {students.map((student) => (
-            <li
-              key={student.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[var(--yoguese-bege)] bg-white p-3 text-xs"
-            >
-              <dl className="grid grid-cols-2 gap-x-4 gap-y-1">
-                <dt className="opacity-70">Nome</dt>
-                <dd>{student.name}</dd>
-                <dt className="opacity-70">Status</dt>
-                <dd>{statusLabel[student.status]}</dd>
-                <dt className="opacity-70">Plano</dt>
-                <dd>{student.planName ?? "Sem plano"}</dd>
-              </dl>
-              <div className="flex items-center gap-2">
-                <Link
-                  href={`/alunos/${student.id}`}
-                  className="rounded border border-[var(--yoguese-bege)] px-2 py-0.5 text-xs hover:bg-[var(--yoguese-off-white)]"
+        <section>
+          <h2 className="text-[22px]">Alunas cadastradas</h2>
+          {students.length === 0 ? (
+            <p className="mt-2 text-[15px] text-[color:var(--cinza)]">
+              Nenhuma aluna cadastrada ainda.
+            </p>
+          ) : (
+            <ul className="mt-2 list-none p-0">
+              {students.map((student) => (
+                <li
+                  key={student.id}
+                  className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t border-t-[var(--linha)] py-3"
                 >
-                  Ver detalhe
-                </Link>
-                <Link
-                  href={`/alunos?editar=${student.id}`}
-                  className="rounded border border-[var(--yoguese-bege)] px-2 py-0.5 text-xs hover:bg-[var(--yoguese-off-white)]"
-                >
-                  Editar
-                </Link>
-                <StudentStatusButton
-                  studentId={student.id}
-                  status={student.status}
-                />
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+                  <div className="min-w-0">
+                    <p className="truncate text-[17px] font-extrabold tracking-[-0.02em]">
+                      {student.name}
+                    </p>
+                    <p className="mt-0.5 text-[13.5px] text-[color:var(--cinza)]">
+                      {student.planName ?? "Sem plano"}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <Chip variant={student.status === "ATIVO" ? undefined : "cl"}>
+                      {statusLabel[student.status]}
+                    </Chip>
+                    <Link
+                      href={`/alunos/${student.id}`}
+                      className="btn btn-txt peq"
+                    >
+                      Ver detalhe
+                    </Link>
+                    <Link
+                      href={`/alunos?editar=${student.id}`}
+                      className="btn btn-txt peq"
+                    >
+                      Editar
+                    </Link>
+                    <StudentStatusButton
+                      studentId={student.id}
+                      status={student.status}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
     </main>
   );
 }
