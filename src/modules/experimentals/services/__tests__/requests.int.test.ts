@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { experimentals, holidays } from "../../../../db/schema";
 import {
@@ -152,13 +152,14 @@ describe("experimental requests", () => {
   });
 
   it("bloqueia telefone com experimental anterior mesmo com mascara diferente", async () => {
-    const { classTypeId, slotId, date } = await occurrence(2);
+    const { classTypeId, slotId, date, sessionId } = await occurrence(2);
 
     const first = await createExperimentalRequest(
       pg.db,
       requestData({ classTypeId, classSlotId: slotId, date }),
     );
     expect(first.ok).toBe(true);
+    if (!first.ok) return;
 
     // Mesma pessoa, outra mascara
     const second = await createExperimentalRequest(
@@ -176,6 +177,66 @@ describe("experimental requests", () => {
     if (!second.ok) {
       expect(second.error).toContain("ja existe uma aula experimental");
       expect(second.field).toBe("phone");
+    }
+
+    const primeiraTentativa = await pg.db
+      .select()
+      .from(experimentals)
+      .where(
+        and(
+          eq(experimentals.status, "DUPLICADA"),
+          eq(experimentals.phoneNormalized, "11988887777"),
+        ),
+      );
+    expect(primeiraTentativa).toHaveLength(1);
+    expect(primeiraTentativa[0].duplicateOfId).toBe(first.value.id);
+
+    // EXP-08: o bloqueio alcanca a canonica em QUALQUER status diferente
+    // de RECUSADA - a identidade do telefone sobrevive a mascara. Cada
+    // tentativa e recusada com o erro de duplicidade e gravada como
+    // DUPLICADA ligada a canonica (EXP-09). A recusada, nao: ela fica fora
+    // do indice e libera o telefone (EXP-48, prova do outro titulo).
+    for (const [status, phone] of [
+      ["APROVADA", "11988800001"],
+      ["CANCELADA_COM_DIREITO", "11988800002"],
+      ["CANCELADA_SEM_DIREITO", "11988800003"],
+      ["FALTA", "11988800004"],
+      ["CONVERTIDA", "11988800005"],
+    ] as const) {
+      const canonical = await createExperimental(pg.db, {
+        classSessionId: sessionId,
+        status,
+        phone,
+      });
+
+      const attempt = await createExperimentalRequest(
+        pg.db,
+        requestData({
+          classTypeId,
+          classSlotId: slotId,
+          date,
+          name: "Mesma pessoa",
+          phone: `(11) 98880-000${phone.slice(-1)}`,
+        }),
+      );
+
+      expect(attempt.ok).toBe(false);
+      if (!attempt.ok) {
+        expect(attempt.error).toContain("ja existe uma aula experimental");
+        expect(attempt.field).toBe("phone");
+      }
+
+      const tentativas = await pg.db
+        .select()
+        .from(experimentals)
+        .where(
+          and(
+            eq(experimentals.status, "DUPLICADA"),
+            eq(experimentals.phoneNormalized, phone),
+          ),
+        );
+      expect(tentativas).toHaveLength(1);
+      expect(tentativas[0].duplicateOfId).toBe(canonical.id);
     }
   });
 
