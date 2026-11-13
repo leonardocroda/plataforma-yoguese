@@ -56,11 +56,24 @@ describe("experimental validators", () => {
     const semDeclaracao = validateExperimentalRequest(
       requestData({ declarationAccepted: false }),
     );
+    // EXP-07: a ocorrencia escolhida tambem e obrigatoria. O servidor
+    // devolve errors[0].field como `field` da recusa, e o formulario
+    // mostra o erro no lugar certo.
+    const semModalidade = validateExperimentalRequest(
+      requestData({ classTypeId: "  " }),
+    );
+    const semTurma = validateExperimentalRequest(
+      requestData({ classSlotId: "" }),
+    );
+    const semData = validateExperimentalRequest(requestData({ date: " " }));
 
     for (const [result, field] of [
       [semNome, "name"],
       [telefoneInvalido, "phone"],
       [semDeclaracao, "healthDeclaration"],
+      [semModalidade, "classTypeId"],
+      [semTurma, "classSlotId"],
+      [semData, "date"],
     ] as const) {
       expect(result.ok).toBe(false);
       if (!result.ok) {
