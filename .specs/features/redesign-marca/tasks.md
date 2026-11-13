@@ -126,11 +126,11 @@ Phase 3:  T1 -> T8
 
 **Done when**:
 
-- [ ] Each control renders with the guide's shape, border, radius and focus ring; disabled Button keeps 35% opacity
-- [ ] Field error state shows the help text in the error token
-- [ ] Toast is the black pill, `role="status"`
-- [ ] Quick gate passes: `npx vitest run src/modules/ui/__tests__/kit.test.ts --reporter=verbose`
-- [ ] Test count: 5 tests pass (no silent deletions)
+- [x] Each control renders with the guide's shape, border, radius and focus ring; disabled Button keeps 35% opacity
+- [x] Field error state shows the help text in the error token
+- [x] Toast is the black pill, `role="status"`
+- [x] Quick gate passes: `npx vitest run src/modules/ui/__tests__/kit.test.ts --reporter=verbose`
+- [x] Test count: 5 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick

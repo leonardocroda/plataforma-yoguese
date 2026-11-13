@@ -113,6 +113,161 @@ textarea {
   );
 }
 
+/* ============ BOTOES (guia: secao "Componentes") ============
+   Pilula com borda preta de 2px, 48px de altura. Um botao preto por tela;
+   pessego para acoes de credito e reposicao. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 26px;
+  border-radius: var(--r-pill);
+  border: 2px solid var(--preto);
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.btn-prim {
+  background: var(--preto);
+  color: var(--papel);
+}
+.btn-prim:hover {
+  background: var(--grafite);
+}
+.btn-sec {
+  background: transparent;
+  color: var(--preto);
+}
+.btn-sec:hover {
+  background: var(--preto);
+  color: var(--papel);
+}
+.btn-pes {
+  background: var(--pessego);
+  color: var(--preto);
+}
+.btn-pes:hover {
+  background: #ffb77a;
+}
+.btn-txt {
+  background: transparent;
+  border-color: transparent;
+  color: var(--preto);
+  padding: 0 8px;
+  min-height: 36px;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+.btn[disabled] {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.btn.peq {
+  min-height: 38px;
+  padding: 0 18px;
+  font-size: 14.5px;
+}
+
+/* ============ CHIPS ============ */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 12px 3px 10px;
+  border-radius: var(--r-pill);
+  font-size: 13.5px;
+  font-weight: 600;
+  background: var(--pena);
+  border: 1.5px solid var(--preto);
+  white-space: nowrap;
+}
+.chip.pes {
+  background: var(--pessego);
+}
+.chip.cl {
+  background: var(--pessego-claro);
+  border-color: transparent;
+}
+.chip.erro {
+  background: var(--erro-claro);
+  border-color: var(--erro);
+  color: var(--erro);
+}
+
+/* ============ CAMPOS ============ */
+.campo {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.campo label {
+  font-weight: 600;
+  font-size: 15px;
+}
+.campo input[type="text"],
+.campo input[type="tel"],
+.campo input[type="email"],
+.campo input[type="password"],
+.campo input[type="date"],
+.campo select {
+  min-height: 50px;
+  padding: 0 16px;
+  border-radius: var(--r-md);
+  border: 2px solid var(--preto);
+  background: var(--pena);
+  width: 100%;
+}
+.campo input:focus,
+.campo select:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--pessego);
+}
+.campo .ajuda {
+  font-size: 13.5px;
+  color: var(--cinza);
+}
+.campo.erro input {
+  border-color: var(--erro);
+}
+.campo.erro .ajuda {
+  color: var(--erro);
+  font-weight: 500;
+}
+.check {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 15px;
+  cursor: pointer;
+  margin: 6px 0 20px;
+}
+.check input {
+  width: 24px;
+  height: 24px;
+  accent-color: var(--preto);
+  flex: none;
+}
+
+/* ============ TOAST (confirmacao rapida) ============
+   Pilula preta na base da tela, 4 segundos. Sem caixa colorida de alerta. */
+.toast {
+  display: inline-flex;
+  gap: 12px;
+  align-items: center;
+  background: var(--preto);
+  color: var(--papel);
+  padding: 13px 20px;
+  border-radius: var(--r-pill);
+  font-size: 15px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
