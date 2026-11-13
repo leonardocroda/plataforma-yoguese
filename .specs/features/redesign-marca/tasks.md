@@ -147,11 +147,11 @@ Phase 3:  T1 -> T8
 
 **Done when**:
 
-- [ ] Every state paints exactly as the guide (solid black / pena+outline / peach dotted / solid peach / grey dashed); only the person's own duck is solid peach
-- [ ] The accessible label is `aria-label` (or sr-only text) with the free count, invisible on screen
-- [ ] The sm variant renders the 4x2 grid; xs/md/lg exist
-- [ ] Quick gate passes: `npx vitest run src/modules/ui/__tests__/vacancy-ducks.test.ts --reporter=verbose`
-- [ ] Test count: 6 tests pass (no silent deletions)
+- [x] Every state paints exactly as the guide (solid black / pena+outline / peach dotted / solid peach / grey dashed); only the person's own duck is solid peach
+- [x] The accessible label is `aria-label` (or sr-only text) with the free count, invisible on screen
+- [x] The sm variant renders the 4x2 grid; xs/md/lg exist
+- [x] Quick gate passes: `npx vitest run src/modules/ui/__tests__/vacancy-ducks.test.ts --reporter=verbose`
+- [x] Test count: 6 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick

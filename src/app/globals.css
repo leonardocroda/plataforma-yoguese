@@ -268,6 +268,127 @@ textarea {
   font-size: 15px;
 }
 
+/* ============ VAGAS: PATINHOS (guia: secao "Vagas") ============
+   Toda turma tem 8 vagas e cada vaga e um patinho - nunca "3/8" em texto
+   puro nem barra de progresso. O desenho e o do guia; so o preenchimento
+   muda por estado. */
+.vagas {
+  display: inline-flex;
+  gap: 4px;
+  align-items: flex-end;
+}
+.pato {
+  width: 20px;
+  height: 26px;
+  flex: none;
+  --d-fill: transparent;
+  --d-over: none;
+  --d-stroke: #8c8a87;
+  --d-sw: 1.3;
+  --d-dash: 2 2;
+  --d-beak: none;
+}
+.pato .corpo {
+  fill: var(--d-fill);
+  stroke: var(--d-stroke);
+  stroke-width: var(--d-sw);
+  stroke-dasharray: var(--d-dash);
+  stroke-linejoin: round;
+}
+.pato.exp .corpo {
+  fill: var(--d-over);
+  stroke: var(--preto);
+}
+.pato .bico {
+  fill: var(--d-beak);
+}
+.pato.fixo {
+  --d-fill: var(--preto);
+  --d-stroke: var(--preto);
+  --d-dash: none;
+  --d-beak: var(--pessego);
+}
+.pato.rep {
+  --d-fill: var(--pena);
+  --d-stroke: var(--preto);
+  --d-dash: none;
+  --d-beak: var(--pessego);
+}
+.pato.exp {
+  --d-fill: var(--pena);
+  --d-over: url(#pontilhado);
+  --d-stroke: var(--preto);
+  --d-dash: none;
+  --d-beak: var(--pessego);
+}
+.pato.eu {
+  --d-fill: var(--pessego);
+  --d-stroke: var(--preto);
+  --d-sw: 1.8;
+  --d-dash: none;
+  --d-beak: var(--preto);
+}
+.pato.livre {
+  --d-fill: transparent;
+  --d-stroke: #8c8a87;
+  --d-dash: 2 2;
+  --d-beak: none;
+}
+.vagas.xs .pato {
+  width: 12px;
+  height: 16px;
+}
+.vagas.xs {
+  gap: 2px;
+}
+.vagas.lg .pato {
+  width: 40px;
+  height: 52px;
+}
+.vagas.lg {
+  gap: 8px;
+}
+.vagas.md .pato {
+  width: 28px;
+  height: 36px;
+}
+.vagas.md {
+  gap: 6px;
+}
+/* versao miniatura (calendario): bolinhas em grade 4x2 */
+.vagas.sm {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px;
+  width: 100%;
+}
+.dot {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1.5px dashed #8c8a87;
+  min-width: 0;
+}
+.dot.fixo {
+  background: var(--preto);
+  border: 1.5px solid var(--preto);
+}
+.dot.rep {
+  background: var(--pena);
+  border: 1.5px solid var(--preto);
+}
+.dot.exp {
+  background: radial-gradient(
+    circle,
+    var(--pessego-forte) 0 26%,
+    var(--pena) 30%
+  );
+  border: 1.5px solid var(--preto);
+}
+.dot.eu {
+  background: var(--pessego);
+  border: 1.5px solid var(--preto);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
