@@ -316,52 +316,49 @@ automatic charge (PRD 8.4).
 
 Snapshot - updated when work pauses.
 
-### Handoff snapshot (2026-11-12)
+### Handoff snapshot (2026-11-12) - `core-experimentais` FECHADA
 
-- Feature `core-experimentais` em PLANEJAMENTO: spec aprovado pelo usuario ("bora");
-  `context.md`, `spec.md` (EXP-01 a EXP-61), `design.md` e `tasks.md` (26 tasks em 4 fases)
-  escritos. `validate_spec.py` e `validate_tasks.py` com 0 erros (7 warnings esperados de
-  `Tests: none` nas telas). PARADO antes do Execute aguardando aprovacao das tasks pelo
-  usuario; so depois gravar `**Approved**` em `tasks.md` e rodar
-  `validate_tasks.py core-experimentais --execute`.
-- Arquitetura fechada: tabela `experimentals` + `experimental_reschedules`, indice unico
-  parcial por telefone, composicao contando `APROVADA`, hooks nos dois caminhos de
-  cancelamento do estudio, conversao transacional para aluna `ATIVO` com matriculas fixas.
-- Feature `admin-base` EXECUTADA e FECHADA: 13 tasks (T1-T13) em 2 batches (Fases 1-2, Fases
-  3-4), uma commit atomica por task sobre o commit de planejamento 8429c7d. Achado do walk
-  fechado antes do Verifier (reserva FIXED de aluna inativa contava na composicao - branch sem
-  teste; fix 809b7f4 com teste dos dois branches). Verifier (author != verifier) devolveu FAIL
-  com 6 findings (F1-F6): todos fechados em uma passada, um commit por finding (94d70dc,
-  1e3c822, 78eb0ad, 1594143, 39cdce4, 717ec90), com criterios novos no spec (AUTH-09,
-  STUD-09, STUD-10, STUD-11) e checks C25-C30. Tipo `null` do F4 flagado pelo Build do
-  check_proofs e corrigido em 1e19399.
-- Suite: 267 testes verdes (37 arquivos), build e lint limpos, walk round 2 com 27/27 PASS
-  (banco local resetado), `check_proofs.py` com 32 pass / 0 fail no HEAD b15df66 e
-  `validate_verification.py` com 0 erro e 0 warning (feature fechada). HEAD de fechamento:
-  b15df66. Estado local esperado pos-gate: `proofs.md` regenerado (HEAD b15df66) e as linhas
-  C25-C30 autorais em `verification.md` ficam como modificacao local nao commitada (commitar
-  movimenta o HEAD e invalida o hash das provas).
-- Login/logout prontos: `/login` fora dos route groups; guard com papel no layout
-  (`requireAdminSession`); login recusa credenciais de role ALUNO com o erro generico
-  (AUTH-09); sessao cookie httpOnly 7 dias (AD-035). `.env.local` tem AUTH_SECRET,
-  ADMIN_EMAIL e ADMIN_PASSWORD (documentados no `.env.example`/README). AD-016 cumprida:
-  `adminLabel` sai do `users.name` da sessao, actions de credito nao aceitam mais rótulo.
-- Regras novas de aluna: reativar exige plano (STUD-09); e-mail gravado normalizado em
-  minusculas e unicidade case-insensitive (STUD-10); plano inexistente recusa com erro de
-  campo, sem estourar FK (STUD-11). Termos de status na tela agora sao os do PRD: "Ativo" e
-  "Inativo" (F3). Migracao nova quebra o volume local: `docker compose down -v` -> migrate ->
-  seed (documentado no README).
-- Licoes destiladas (7, todas candidate): L-021 guard checa papel junto com presenca; L-022
-  todo caminho que grava estado revalida a regra do validator; L-023 termos fixos por
-  criterio aparecem verbatim na UI; L-024 campo opcional distingue omitido de vazio; L-025
-  unicidade de identidade ignora caixa e grava normalizado; L-026 id referenciado por action
-  valida existencia; L-027 service que muda assinatura precisa do gate Build (vitest nao
-  typecheck). NOTA OPERACIONAL: rodar `lessons.py add` SEQUENCIAL - duas chamadas em
-  paralelo fizeram race no `lessons.json` e uma lição se perdeu (re-adicionada).
-- Proxima feature da ordem do AD-034: experimentais (PRD modulo 8) - antes do resto do
-  AD-009. Dev server: subir com `npm run dev` APÓS qualquer `npm run build` (o build de
-  producao sobrescreve `.next` e corrompe o cache do dev server rodando - reiniciar e limpar
-  `.next`).
+- Feature `core-experimentais` EXECUTADA e FECHADA: 26 tasks (T1-T26) em 4 fases, uma commit
+  atomica por task sobre o commit de planejamento a8c3595, em 3 batches de sub-agentes
+  (Fases 1-2, Fase 3, Fase 4). Dois workers cairam por limite de uso do provider no meio da
+  T1 e da T13 e foram retomados do estado parcial em disco - commitar por task e o que torna
+  o resume barato. 0 desvios de spec.
+- Verifier (author != verifier) devolveu FAIL com 7 findings (F1-F7) mais 1 bug pre-existente
+  (F8); fechados em uma passada, um commit por finding (1b62fe1 C7, 8abe4c5 C8, 01713c3 C15,
+  d9de766 C21, 1c73ef1 C42, a6d85c3 F8) e a prova de walk das telas de C27/C43 em 3c4af45;
+  `verification.md` com os 8 findings fechados na coluna `Closed` (6a7a892).
+- `check_proofs.py` com 66 pass / 0 fail e `validate_verification.py` com 0 erro e 0 warning no
+  HEAD de fechamento. Suite verde (unit + integration), build e lint limpos.
+- O que a feature entrega: formulario publico `/experimental` (nome, telefone, modalidade,
+  dia/horario com vaga, R$ 45,00, declaracao do PRD), painel admin `/experimentais` (lista,
+  busca por telefone, detalhe com aprovar/recusar/trocar ocorrencia/reagendar/cancelar/falta/
+  pagamento/contato por WhatsApp/conversao), grade listando a aprovada como `(experimental)`,
+  composicao contando APROVADA e conversao transacional em aluna ATIVA com plano e horarios
+  fixos (AD-037).
+- Bug pre-existente corrigido (F8, achado pelo Verifier): o default `enrollment_date` usava
+  `CURRENT_DATE` do Postgres (UTC) e a suite ficava vermelha entre 21h e 23h59; agora segue o
+  calendario do estudio (`(now() AT TIME ZONE 'America/Sao_Paulo')::date`, migracao 0004) e o
+  teste compara com `todayInStudio()`.
+- Decisoes do usuario desta feature: AD-036 (tabela propria, aprovada ocupa vaga), AD-037
+  (conversao transacional em aluna ATIVA, sem estado intermediario), AD-038 (duplicidade: tudo
+  exceto RECUSADA bloqueia e a tentativa fica gravada como DUPLICADA), AD-039 (admin registra
+  cancelamento/falta com a regra de 24h; cancelamento do estudio mantem o direito), AD-040
+  (o formulario escolhe a ocorrencia concreta com vaga; preco R$ 45,00 manual).
+- Licoes destiladas dos findings: L-028 (criterio que nomeia uma tela e provado pelo walk do
+  browser, nao pelo gate Build) e L-029 (data escrita por default do banco segue o calendario
+  do estudio; teste que compara com a data local da maquina fica vermelho no fim do dia) - as
+  duas candidate. L-002 (a prova nomeia o teste que cobre toda a claim) reincidiu em 5
+  findings desta feature e foi penalizada (harmful=1).
+- Feature `admin-base` EXECUTADA e FECHADA antes desta: 13 tasks, 6 findings do Verifier
+  fechados (94d70dc, 1e3c822, 78eb0ad, 1594143, 39cdce4, 717ec90), com criterios novos no
+  spec (AUTH-09, STUD-09, STUD-10, STUD-11) e checks C25-C30.
+- Estado local esperado pos-gate: `proofs.md`, `.specs/LESSONS.md` e `.specs/lessons.json` sao
+  artefatos gerados e ficam como modificacao local nao commitada (commitar movimenta o HEAD e
+  invalida o hash das provas).
+- Proxima feature da ordem do AD-009 (emendada pela AD-034): area do aluno (PRD modulos 12 e
+  13) e o resto da FASE 1 do PRD 16. Dev server: subir com `npm run dev` APOS qualquer
+  `npm run build` (o build de producao sobrescreve `.next` e corrompe o cache do dev server
+  rodando - reiniciar e limpar `.next`).
 
 ### Handoff snapshot (2026-11-11)
 

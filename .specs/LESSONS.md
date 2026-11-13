@@ -9,10 +9,10 @@
 Corroborated across multiple features. Safe to apply as guidance.
 
 ### L-002 - A proof line must name a test that asserts every case the check names, so one test covers the whole claim.
-- signal: `weak_test` · recurrence: 2 feature(s) · scope: `tests` · harmful: 0
+- signal: `weak_test` · recurrence: 2 feature(s) · scope: `tests` · harmful: 1
 - features: core-turmas-reservas, core-creditos-cancelamentos
 - evidence: C3, C7, C9, C10 (tests) (+2 more)
-- last seen: 2026-11-10T12:17:03Z
+- last seen: 2026-11-13T02:09:55Z
 
 ### L-009 - Every rule the source document states gets its own check, because behavior that is correct only by probe breaks silently when no test names it.
 - signal: `weak_test` · recurrence: 2 feature(s) · scope: `tests` · harmful: 0
@@ -173,6 +173,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - features: admin-base
 - evidence: proofs.md Build - plans.ts input.description (repo)
 - last seen: 2026-11-12T15:25:10Z
+
+### L-028 - A criterion that names a screen is proved by the browser walk that visits that screen, not by the build gate that only compiles it.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `ui` · harmful: 0
+- features: core-experimentais
+- evidence: verification.md C27 (F6) e C43 (F7) (ui)
+- last seen: 2026-11-13T02:09:55Z
+
+### L-029 - A date written by a database default follows the studio calendar, and a test that compares it with the machine local date turns red at the end of the day.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `db` · harmful: 0
+- features: core-experimentais
+- evidence: src/db/__tests__/students-schema.int.test.ts:102 (db)
+- last seen: 2026-11-13T02:09:55Z
 
 ## Quarantined (failed when applied - ignore)
 

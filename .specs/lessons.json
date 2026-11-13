@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 28,
+  "next_id": 30,
   "lessons": [
     {
       "id": "L-001",
@@ -35,14 +35,14 @@
         "core-creditos-cancelamentos"
       ],
       "recurrence": 2,
-      "harmful": 0,
+      "harmful": 1,
       "evidence": [
         "C3, C7, C9, C10 (tests)",
         "C41 (tests)",
         "C40 (tests)"
       ],
       "created": "2026-11-07T11:24:38Z",
-      "last_seen": "2026-11-10T12:17:03Z"
+      "last_seen": "2026-11-13T02:09:55Z"
     },
     {
       "id": "L-003",
@@ -497,6 +497,42 @@
       ],
       "created": "2026-11-12T15:25:10Z",
       "last_seen": "2026-11-12T15:25:10Z"
+    },
+    {
+      "id": "L-028",
+      "key": "weak_test::a criterion that names a screen is proved by the browser walk that visits that screen not by the build gate that only compiles it",
+      "text": "A criterion that names a screen is proved by the browser walk that visits that screen, not by the build gate that only compiles it.",
+      "signal": "weak_test",
+      "scope": "ui",
+      "status": "candidate",
+      "features": [
+        "core-experimentais"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md C27 (F6) e C43 (F7) (ui)"
+      ],
+      "created": "2026-11-13T02:09:55Z",
+      "last_seen": "2026-11-13T02:09:55Z"
+    },
+    {
+      "id": "L-029",
+      "key": "ac_gap::a date written by a database default follows the studio calendar and a test that compares it with the machine local date turns red at the end of the day",
+      "text": "A date written by a database default follows the studio calendar, and a test that compares it with the machine local date turns red at the end of the day.",
+      "signal": "ac_gap",
+      "scope": "db",
+      "status": "candidate",
+      "features": [
+        "core-experimentais"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/db/__tests__/students-schema.int.test.ts:102 (db)"
+      ],
+      "created": "2026-11-13T02:09:55Z",
+      "last_seen": "2026-11-13T02:09:55Z"
     }
   ]
 }
