@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { plans, students, users } from "../schema";
+import { todayInStudio } from "../../modules/classes/domain/occurrences";
 import { clearTables } from "../../test/fixtures";
 import { startPostgres, type PostgresTestInstance } from "../../test/postgres";
 
@@ -98,10 +99,10 @@ describe("students schema", () => {
     expect(student.phone).toBe("11999990000");
     expect(student.email).toBe("ana.ribeiro@yoguese.com");
     expect(student.birthDate).toBe("1990-05-10");
-    // A data de matricula nasce preenchida com hoje (default do PRD 4.4)
-    expect(student.enrollmentDate).toBe(
-      new Date().toLocaleDateString("sv-SE"),
-    );
+    // A data de matricula nasce preenchida com hoje (default do PRD 4.4),
+    // no calendario do estudio: o default da coluna e a data de
+    // America/Sao_Paulo, e nao a data do fuso do Postgres
+    expect(student.enrollmentDate).toBe(todayInStudio(new Date()));
     expect(student.planId).toBe(plan.id);
     expect(student.userId).toBe(user.id);
     expect(student.notes).toBe("Prefere manhãs");

@@ -33,9 +33,13 @@ export const students = pgTable("students", {
   phone: text("phone").notNull(),
   email: text("email").notNull().unique(),
   birthDate: date("birth_date").notNull(),
+  // Data de matricula: o default segue o calendario do estudio
+  // (America/Sao_Paulo, RES-06/RES-10) - CURRENT_DATE puro seria avaliado
+  // no fuso do Postgres e divergiria do calendario do estudio. O app grava
+  // a data explicitamente com todayInStudio().
   enrollmentDate: date("enrollment_date")
     .notNull()
-    .default(sql`CURRENT_DATE`),
+    .default(sql`(now() AT TIME ZONE 'America/Sao_Paulo')::date`),
   planId: uuid("plan_id").references(() => plans.id),
   status: studentStatusEnum("status").notNull().default("ATIVO"),
   notes: text("notes"),
