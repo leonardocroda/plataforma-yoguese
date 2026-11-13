@@ -411,6 +411,7 @@ function TurmaPanel({
           classSlotId={occurrence.classSlotId}
           classSessionId={occurrence.classSessionId}
           date={occurrence.date}
+          quando={occurrenceTitle(occurrence)}
         />
       </div>
     </>
@@ -469,6 +470,7 @@ export function OccurrenceForms({
   classSessionId,
   fixedStudents = [],
   creditsByStudent = {},
+  quando = "",
 }: {
   students: StudentOption[];
   classSlotId: string;
@@ -479,8 +481,11 @@ export function OccurrenceForms({
   fixedStudents?: StudentOption[];
   /** Creditos DISPONIVEL por aluno, para a reposicao manual. */
   creditsByStudent?: Record<string, CreditOption[]>;
+  /** Dia e hora da ocorrencia, para o feedback nomear a turma. */
+  quando?: string;
 }) {
   const router = useRouter();
+  const quandoLabel = quando;
 
   // A reserva manual e a reposicao manual compartilham o form: quando o tipo
   // e MAKEUP o admin escolhe o credito do aluno (CRD-43).
@@ -522,9 +527,13 @@ export function OccurrenceForms({
       date,
       type: selectedType,
     });
-    return result.ok
-      ? { ok: true, message: "Reserva confirmada." }
-      : { ok: false, message: result.error };
+    if (!result.ok) return { ok: false, message: result.error };
+    // O guia nomeia a turma no feedback: "Reserva confirmada para segunda, 19h."
+    const quando = quandoLabel || dayLabel(date);
+    return {
+      ok: true,
+      message: `Reserva confirmada para ${quando.toLowerCase()}.`,
+    };
   }, INITIAL_STATE);
 
   const [enrollment, enrollmentAction, enrollmentPending] = useActionState<
@@ -664,7 +673,7 @@ export function OccurrenceForms({
         <Button type="submit" variant="sec" small disabled={bookingPending}>
           {bookingPending ? "Reservando…" : "Reservar"}
         </Button>
-        <Feedback state={booking} />
+        <Feedback state={booking} duck />
       </form>
 
       <form action={enrollmentAction}>
@@ -726,12 +735,24 @@ export function OccurrenceForms({
 }
 
 /** Sucesso na pilula preta do guia; falha em texto puro no token de erro. */
-function Feedback({ state }: { state: ActionState }) {
+function Feedback({
+  state,
+  duck = false,
+}: {
+  state: ActionState;
+  /** O guia mostra o patinho da vaga na confirmacao da reserva. */
+  duck?: boolean;
+}) {
   if (!state.message) return null;
   if (state.ok) {
     return (
       <div className="mt-3">
-        <Toast>{state.message}</Toast>
+        <Toast>
+          {duck ? (
+            <VacancyDucks own size="xs" label="a vaga desta pessoa" />
+          ) : null}
+          {state.message}
+        </Toast>
       </div>
     );
   }
