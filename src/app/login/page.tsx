@@ -17,7 +17,7 @@ export default async function LoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center px-5 py-10">
-      <div className="caixa w-full max-w-[380px]">
+      <div className="w-full max-w-[380px] rounded-[var(--r-lg)] border-2 border-[var(--preto)] bg-[var(--pena)] p-7">
         <Image
           src="/assets/logo.png"
           alt="Yogue-se"

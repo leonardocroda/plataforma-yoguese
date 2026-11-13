@@ -67,6 +67,11 @@ function formatWhen(date: string, startTime: string): string {
   return `${WEEKDAYS[weekdayOf(date) - 1]}, ${startTime.slice(0, 5)}`;
 }
 
+/** Duas semanas com a mesma turma precisam de data para nao empatar. */
+function formatDay(date: string): string {
+  return `${date.slice(8, 10)}/${date.slice(5, 7)}`;
+}
+
 /** Ocupadas de uma turma na leitura publica: 8 vagas menos as livres. */
 function occupied(availableSpots: number): number {
   return Math.max(0, TURMA_VAGAS - availableSpots);
@@ -221,6 +226,9 @@ export function ExperimentalRequestForm({
                 <span>
                   <b className="tnum block text-[18px] font-extrabold tracking-[-0.02em]">
                     {formatWhen(option.date, option.startTime)}
+                    <span className="ml-2 align-middle text-[14px] font-semibold text-[color:var(--cinza)]">
+                      {formatDay(option.date)}
+                    </span>
                   </b>
                   <small className="text-[13.5px] text-[color:var(--cinza)]">
                     {option.classTypeName}

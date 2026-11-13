@@ -38,6 +38,11 @@ function formatWhen(date: string, startTime: string): string {
   return `${WEEKDAYS[weekdayOf(date) - 1]}, ${startTime.slice(0, 5)}`;
 }
 
+/** A data curta aparece porque a mesma turma se repete em varias semanas. */
+function formatDay(date: string): string {
+  return `${date.slice(8, 10)}/${date.slice(5, 7)}`;
+}
+
 export default async function SiteHome() {
   // A consulta so existe em tempo de execucao; se ela nao carregar, a tela
   // mostra o texto de carregamento do guia, nunca uma tela quebrada.
@@ -139,17 +144,27 @@ export default async function SiteHome() {
               >
                 <div className="tnum text-[22px] font-extrabold leading-[1.1] tracking-[-0.02em]">
                   {formatWhen(occurrence.date, occurrence.startTime)}
+                  <span className="ml-2 align-middle text-[15px] font-semibold text-[color:var(--cinza)]">
+                    {formatDay(occurrence.date)}
+                  </span>
                 </div>
                 <div className="text-[14.5px] text-[color:var(--cinza)]">
                   {occurrence.classTypeName}
                 </div>
-                <VacancyDucks
-                  fixed={Math.max(
-                    0,
-                    TURMA_VAGAS - occurrence.availableSpots,
-                  )}
-                  size="md"
-                />
+                <div className="flex items-center justify-between gap-3">
+                  <VacancyDucks
+                    fixed={Math.max(
+                      0,
+                      TURMA_VAGAS - occurrence.availableSpots,
+                    )}
+                    size="md"
+                  />
+                  <span className="text-[13.5px] font-semibold text-[color:var(--cinza)]">
+                    {occurrence.availableSpots === 1
+                      ? "1 vaga"
+                      : `${occurrence.availableSpots} vagas`}
+                  </span>
+                </div>
               </li>
             ))}
           </ul>
