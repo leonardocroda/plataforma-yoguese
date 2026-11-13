@@ -1,6 +1,12 @@
 import { and, eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { experimentals, holidays } from "../../../../db/schema";
+import {
+  classSessions,
+  classSlots,
+  classTypes,
+  experimentals,
+  holidays,
+} from "../../../../db/schema";
 import {
   createExperimental,
   createTestClass,
@@ -43,12 +49,12 @@ describe("experimental requests", () => {
   });
 
   /** Turma com a modalidade e a ocorrencia do proximo dia da semana. */
-  async function occurrence(capacity = 2) {
+  async function occurrence(capacity = 2, weekday = 3) {
     const { classTypeId, slotId } = await createTestClass(pg.db, {
-      weekday: 3,
+      weekday,
       capacity,
     });
-    const date = nextOccurrence({ weekday: 3 }, today);
+    const date = nextOccurrence({ weekday }, today);
     const materialized = await materializeSession(pg.db, {
       classSlotId: slotId,
       date,
@@ -381,6 +387,69 @@ describe("experimental requests", () => {
     expect(bloqueada.ok).toBe(false);
     if (!bloqueada.ok) {
       expect(bloqueada.error).toContain("bloqueada");
+    }
+
+    // Ocorrencia cancelada pelo estudio (EXP-15)
+    const cancelada = await occurrence(2, 4);
+    await pg.db
+      .update(classSessions)
+      .set({ status: "CANCELADA" })
+      .where(eq(classSessions.id, cancelada.sessionId));
+    const emCancelada = await createExperimentalRequest(
+      pg.db,
+      requestData({
+        classTypeId: cancelada.classTypeId,
+        classSlotId: cancelada.slotId,
+        date: cancelada.date,
+        phone: "11977775555",
+      }),
+    );
+    expect(emCancelada.ok).toBe(false);
+    if (!emCancelada.ok) {
+      expect(emCancelada.error).toContain("cancelada");
+      expect(emCancelada.field).toBe("date");
+    }
+
+    // Turma inativa nao aceita experimental (EXP-15)
+    const turmaInativa = await occurrence(2, 5);
+    await pg.db
+      .update(classSlots)
+      .set({ status: "INATIVA" })
+      .where(eq(classSlots.id, turmaInativa.slotId));
+    const emTurmaInativa = await createExperimentalRequest(
+      pg.db,
+      requestData({
+        classTypeId: turmaInativa.classTypeId,
+        classSlotId: turmaInativa.slotId,
+        date: turmaInativa.date,
+        phone: "11977774444",
+      }),
+    );
+    expect(emTurmaInativa.ok).toBe(false);
+    if (!emTurmaInativa.ok) {
+      expect(emTurmaInativa.error).toContain("turma inativa");
+      expect(emTurmaInativa.field).toBe("status");
+    }
+
+    // Modalidade inativa nao aceita experimental (EXP-15)
+    const modalidadeInativa = await occurrence(2, 6);
+    await pg.db
+      .update(classTypes)
+      .set({ status: "INATIVA" })
+      .where(eq(classTypes.id, modalidadeInativa.classTypeId));
+    const emModalidadeInativa = await createExperimentalRequest(
+      pg.db,
+      requestData({
+        classTypeId: modalidadeInativa.classTypeId,
+        classSlotId: modalidadeInativa.slotId,
+        date: modalidadeInativa.date,
+        phone: "11977773333",
+      }),
+    );
+    expect(emModalidadeInativa.ok).toBe(false);
+    if (!emModalidadeInativa.ok) {
+      expect(emModalidadeInativa.error).toContain("modalidade inativa");
+      expect(emModalidadeInativa.field).toBe("status");
     }
 
     // Nenhuma solicitacao foi criada
