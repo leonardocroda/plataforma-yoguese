@@ -110,7 +110,7 @@ describe("voice", () => {
 
   it("bans the forbidden vocabulary", () => {
     // Termos do PRD que a marca nao usa, nem em botao nem em texto.
-    for (const term of [
+    const forbidden = [
       /(^|[^\p{L}\p{N}_])slot([^\p{L}\p{N}_]|$)/iu,
       /(^|[^\p{L}\p{N}_])booking([^\p{L}\p{N}_]|$)/iu,
       /sess(ã|a)o/i,
@@ -119,8 +119,21 @@ describe("voice", () => {
       /(^|[^\p{L}\p{N}_])Enviar([^\p{L}\p{N}_]|$)/u,
       /(^|[^\p{L}\p{N}_])OK([^\p{L}\p{N}_]|$)/u,
       /Ocorreu um erro inesperado/i,
-    ]) {
+    ];
+    for (const term of forbidden) {
       expect(find(term), `vocabulário proibido: ${term}`).toHaveLength(0);
+    }
+    // A varredura alcança toda a camada de tela e de modulos - nao so as
+    // telas reescritas - para que um rotulo importado de outro modulo
+    // tambem seja julgado.
+    const wide = [...walk("src/app"), ...walk("src/modules")]
+      .filter((path) => !path.includes("__tests__"))
+      .map((path) => ({ path, copy: copyOf(readFileSync(path, "utf8")) }));
+    for (const term of forbidden) {
+      const offenders = wide
+        .filter((file) => term.test(file.copy))
+        .map((file) => file.path);
+      expect(offenders, `vocabulário proibido fora das telas tocadas: ${term}`).toEqual([]);
     }
   });
 
