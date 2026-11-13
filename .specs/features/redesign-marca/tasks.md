@@ -269,10 +269,10 @@ Phase 3:  T1 -> T8
 
 **Done when**:
 
-- [ ] Composition matches the guide's admin screen; each slot shows its 8 mini ducks; success confirms with the black pill toast naming the result; failures show plain error text; 1280px renders without overflow
+- [x] Composition matches the guide's admin screen; each slot shows its 8 mini ducks; success confirms with the black pill toast naming the result; failures show plain error text; 1280px renders without overflow
 - [ ] Walk evidence recorded at the feature walk (step 9 - captures `captures/grade.running.png`, `captures/grade-panel.running.png`)
-- [ ] Build gate passes: `npm run build; npm run lint; npm test`
-- [ ] Test count: existing suite green (no deletions)
+- [x] Build gate passes: `npm run build; npm run lint; npm test`
+- [x] Test count: existing suite green (no deletions)
 
 **Tests**: none (route layer - walk + browser captures per the matrix)
 **Gate**: build

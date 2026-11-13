@@ -21,19 +21,14 @@ import {
   type StudentCredit,
 } from "../../../modules/credits/services/credits";
 import { bookings, fixedEnrollments, students } from "../../../db/schema";
-import { OccurrenceForms, type CreditOption, type StudentOption } from "./booking-forms";
+import {
+  GradeBoard,
+  type CreditOption,
+  type GradeDay,
+  type StudentOption,
+} from "./booking-forms";
 
 export const dynamic = "force-dynamic";
-
-const WEEKDAY_LABELS = [
-  "Domingo",
-  "Segunda-feira",
-  "Terça-feira",
-  "Quarta-feira",
-  "Quinta-feira",
-  "Sexta-feira",
-  "Sábado",
-];
 
 type EnrollmentRow = typeof fixedEnrollments.$inferSelect;
 type BookingRow = typeof bookings.$inferSelect;
@@ -145,11 +140,11 @@ function occurrenceParticipants(
 }
 
 /**
- * Grade minima do admin (RES-05, RES-08, RES-27): a semana com as turmas
- * ativas e, em cada ocorrencia, as tres perguntas do negocio (quantos
- * fixos, reposicoes e experimentais) e as vagas restantes. As contagens vem
- * da composicao (fonte unica dos numeros); a grade mostra tambem quem
- * participa e o resultado das acoes de credito (CRD-41, CRD-42).
+ * Grade do admin (RES-05, RES-08, RES-27) na composicao do guia (tela
+ * "Admin: calendário e turma"): a semana em grade, cada horario com os 8
+ * patinhos da turma, e um painel com a turma escolhida. As contagens vem da
+ * composicao (fonte unica dos numeros); a tela nao muda nenhuma regra - so a
+ * leitura. A escolha da turma e interativa e vive no cliente.
  */
 export default async function AdminGradePage() {
   // O client so e necessario em tempo de execucao: o build roda sem
@@ -243,175 +238,82 @@ export default async function AdminGradePage() {
         )
     : [];
 
+  const allStudentsOptions: StudentOption[] = activeStudents.map((student) => ({
+    id: student.id,
+    name: student.name,
+  }));
+
+  const gradeDays: GradeDay[] = days.map((day) => ({
+    date: day.date,
+    occurrences: day.occurrences.map((occurrence) => {
+      const sessionId = occurrence.composition.sessionId;
+      const occurrenceBookings = sessionBookings.filter(
+        (booking) => booking.classSessionId === sessionId,
+      );
+      const { participants, fixed, notices } = occurrenceParticipants(
+        {
+          slotId: occurrence.slot.id,
+          sessionId,
+          date: day.date,
+        },
+        enrollments,
+        occurrenceBookings,
+        nameById,
+        experimentalsBySession.get(sessionId) ?? [],
+      );
+      const occurrenceCredits = allCredits.filter(
+        (credit) => credit.sourceSessionId === sessionId,
+      );
+      const studioCredits = occurrenceCredits.filter(
+        (credit) => credit.source === "CANCELAMENTO_ESTUDIO",
+      );
+      const cancelledByStudio = occurrenceBookings.filter(
+        (booking) =>
+          booking.status === "CANCELADA" && booking.cancelledBy === "ESTUDIO",
+      ).length;
+
+      return {
+        key: `${occurrence.slot.id}|${day.date}`,
+        classSlotId: occurrence.slot.id,
+        classSessionId: sessionId,
+        date: day.date,
+        startTime: formatTime(occurrence.slot.startTime),
+        endTime: formatTime(occurrence.slot.endTime),
+        classTypeName: occurrence.slot.classTypeName,
+        sessionStatus: occurrence.composition.sessionStatus,
+        fixedCount: occurrence.composition.fixedCount,
+        makeupCount: occurrence.composition.makeupCount,
+        experimentalCount: occurrence.composition.experimentalCount,
+        availableSpots: occurrence.composition.availableSpots,
+        fixedStudents: fixed,
+        participants,
+        notices: notices.map((notice) => {
+          const credit = occurrenceCredits.find(
+            (item) =>
+              item.studentId === notice.studentId &&
+              item.source === "CANCELAMENTO_AULA_FIXA",
+          );
+          return {
+            id: notice.id,
+            name: notice.name,
+            status: notice.status,
+            creditExpiresAt: credit ? formatDate(credit.expiresAt) : null,
+          };
+        }),
+        studioCancelled: cancelledByStudio,
+        studioCredits: studioCredits.length,
+      };
+    }),
+  }));
+
   return (
-    <main className="min-h-screen bg-[var(--yoguese-off-white)] p-6 text-[var(--yoguese-cinza)]">
-      <header className="mb-6">
-        <h1 className="text-2xl font-light">Grade da semana</h1>
-        <p className="text-xs">
-          {weekStart} a {weekEnd} - fixos, reposições, experimentais e vagas
-          por ocorrência
-        </p>
-      </header>
-
-      {slots.length === 0 ? (
-        <p className="text-sm">Nenhuma turma ativa cadastrada.</p>
-      ) : (
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-7">
-          {days.map((day) => (
-            <section
-              key={day.date}
-              className="rounded-lg border border-[var(--yoguese-bege)] bg-white p-3"
-            >
-              <h2 className="text-sm font-medium uppercase tracking-wide">
-                {WEEKDAY_LABELS[weekdayOf(day.date) - 1]}
-              </h2>
-              <p className="text-xs opacity-70">{day.date}</p>
-
-              {day.occurrences.length === 0 ? (
-                <p className="mt-3 text-xs opacity-60">Sem aulas</p>
-              ) : (
-                day.occurrences.map((occurrence) => {
-                  const sessionId = occurrence.composition.sessionId;
-                  const occurrenceBookings = sessionBookings.filter(
-                    (booking) => booking.classSessionId === sessionId,
-                  );
-                  const { participants, fixed, notices } = occurrenceParticipants(
-                    {
-                      slotId: occurrence.slot.id,
-                      sessionId,
-                      date: day.date,
-                    },
-                    enrollments,
-                    occurrenceBookings,
-                    nameById,
-                    experimentalsBySession.get(sessionId) ?? [],
-                  );
-                  const occurrenceCredits = allCredits.filter(
-                    (credit) => credit.sourceSessionId === sessionId,
-                  );
-                  const studioCredits = occurrenceCredits.filter(
-                    (credit) => credit.source === "CANCELAMENTO_ESTUDIO",
-                  );
-                  const cancelledByStudio = occurrenceBookings.filter(
-                    (booking) =>
-                      booking.status === "CANCELADA" &&
-                      booking.cancelledBy === "ESTUDIO",
-                  ).length;
-
-                  return (
-                    <article
-                      key={occurrence.slot.id}
-                      className="mt-3 rounded-md border border-[var(--yoguese-bege)] bg-[var(--yoguese-off-white)] p-3"
-                    >
-                      <p className="text-sm font-medium">
-                        {occurrence.slot.classTypeName}
-                      </p>
-                      <p className="text-xs opacity-80">
-                        {formatTime(occurrence.slot.startTime)} -{" "}
-                        {formatTime(occurrence.slot.endTime)}
-                      </p>
-
-                      <dl className="mt-2 space-y-1 text-xs">
-                        <div className="flex justify-between">
-                          <dt>Fixos</dt>
-                          <dd>{occurrence.composition.fixedCount}</dd>
-                        </div>
-                        <div className="flex justify-between">
-                          <dt>Reposições</dt>
-                          <dd>{occurrence.composition.makeupCount}</dd>
-                        </div>
-                        <div className="flex justify-between">
-                          <dt>Experimentais</dt>
-                          <dd>{occurrence.composition.experimentalCount}</dd>
-                        </div>
-                        <div className="flex justify-between border-t border-[var(--yoguese-bege)] pt-1 font-medium">
-                          <dt>Vagas</dt>
-                          <dd>{occurrence.composition.availableSpots}</dd>
-                        </div>
-                      </dl>
-
-                      {occurrence.composition.sessionStatus === "BLOQUEADA" ? (
-                        <p className="mt-2 text-xs text-red-700">
-                          Bloqueada por feriado ou recesso
-                        </p>
-                      ) : null}
-
-                      {occurrence.composition.sessionStatus === "CANCELADA" ? (
-                        <p className="mt-2 text-xs text-red-700">
-                          Cancelada - a grade da turma mudou
-                        </p>
-                      ) : null}
-
-                      {participants.length > 0 ? (
-                        <div className="mt-2 text-xs">
-                          <p className="font-medium">Participantes</p>
-                          <ul>
-                            {participants.map((participant) => (
-                              <li key={`${participant.kind}-${participant.id}`}>
-                                {participant.name} ({participant.kind})
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ) : null}
-
-                      {notices.length > 0 ||
-                      studioCredits.length > 0 ||
-                      cancelledByStudio > 0 ? (
-                        <div className="mt-2 rounded border border-[var(--yoguese-bege)] bg-white p-2 text-xs">
-                          <p className="font-medium">Resultado</p>
-                          {notices.map((notice) => {
-                            const credit = occurrenceCredits.find(
-                              (item) =>
-                                item.studentId === notice.studentId &&
-                                item.source === "CANCELAMENTO_AULA_FIXA",
-                            );
-                            return (
-                              <p key={notice.id}>
-                                {notice.name}:{" "}
-                                {notice.status === "FALTA"
-                                  ? "falta"
-                                  : "cancelamento"}{" "}
-                                -{" "}
-                                {credit
-                                  ? `crédito gerado, vence em ${formatDate(credit.expiresAt)}`
-                                  : "sem crédito"}
-                              </p>
-                            );
-                          })}
-                          {cancelledByStudio > 0 ? (
-                            <p>
-                              {cancelledByStudio} reservas canceladas pelo
-                              estúdio
-                            </p>
-                          ) : null}
-                          {studioCredits.length > 0 ? (
-                            <p>
-                              {studioCredits.length} créditos do estúdio gerados
-                            </p>
-                          ) : null}
-                        </div>
-                      ) : null}
-
-                      <OccurrenceForms
-                        students={activeStudents.map((student) => ({
-                          id: student.id,
-                          name: student.name,
-                        }))}
-                        fixedStudents={fixed}
-                        creditsByStudent={creditsByStudentOptions}
-                        classSlotId={occurrence.slot.id}
-                        classSessionId={sessionId}
-                        date={day.date}
-                      />
-                    </article>
-                  );
-                })
-              )}
-            </section>
-          ))}
-        </div>
-      )}
+    <main>
+      <GradeBoard
+        days={gradeDays}
+        students={allStudentsOptions}
+        creditsByStudent={creditsByStudentOptions}
+        period={`${formatDate(new Date(`${weekStart}T12:00:00Z`))} a ${formatDate(new Date(`${weekEnd}T12:00:00Z`))}`}
+      />
     </main>
   );
 }
