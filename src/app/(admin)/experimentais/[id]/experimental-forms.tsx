@@ -101,7 +101,12 @@ function SimpleActionForm({
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
     async () => {
       const result = await run();
-      if (!result.ok) return { ok: false, message: result.error ?? "erro" };
+      if (!result.ok) {
+        return {
+          ok: false,
+          message: result.error ?? "Não foi possível concluir a ação. Tente de novo.",
+        };
+      }
       return { ok: true, message: `${label} concluído.` };
     },
     INITIAL_STATE,
@@ -156,7 +161,12 @@ function OccurrenceActionForm({
         return { ok: false, message: "Escolha a nova data e horário." };
       }
       const result = await run({ classSlotId, date });
-      if (!result.ok) return { ok: false, message: result.error ?? "erro" };
+      if (!result.ok) {
+        return {
+          ok: false,
+          message: result.error ?? "Não foi possível concluir a ação. Tente de novo.",
+        };
+      }
       return { ok: true, message: `${label} concluído.` };
     },
     INITIAL_STATE,

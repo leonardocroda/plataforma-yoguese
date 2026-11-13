@@ -349,9 +349,9 @@ Phase 3:  T1 -> T8
 
 **Done when**:
 
-- [ ] The copy test passes on every touched file: fixed vocabulary present, forbidden vocabulary absent, no "N/8" vacancy shortcut, no emoji, no apology/humor in error strings, and zero PRD palette variables or `#[hex]` literals under `src/`
-- [ ] Quick gate passes: `npx vitest run src/app/__tests__/brand-copy.test.ts --reporter=verbose`
-- [ ] Test count: 6 tests pass (no silent deletions)
+- [x] The copy test passes on every touched file: fixed vocabulary present, forbidden vocabulary absent, no "N/8" vacancy shortcut, no emoji, no apology/humor in error strings, and zero PRD palette variables or `#[hex]` literals under `src/`
+- [x] Quick gate passes: `npx vitest run src/app/__tests__/brand-copy.test.ts --reporter=verbose`
+- [x] Test count: 6 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
