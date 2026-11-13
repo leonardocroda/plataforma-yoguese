@@ -302,9 +302,12 @@ export function ExperimentalRequestForm({
           </b>
         </div>
 
-        <Button type="submit" variant="prim" disabled={pending || !complete}>
-          Pedir aula experimental
-        </Button>
+        {/* O guia desenha a acao principal ocupando a coluna do formulario. */}
+        <div className="[&>button]:w-full">
+          <Button type="submit" variant="prim" disabled={pending || !complete}>
+            Pedir aula experimental
+          </Button>
+        </div>
 
         {error && error.field === "form" ? (
           <p

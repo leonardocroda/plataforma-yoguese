@@ -151,7 +151,7 @@ export default async function SiteHome() {
                 <div className="text-[14.5px] text-[color:var(--cinza)]">
                   {occurrence.classTypeName}
                 </div>
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-col gap-2">
                   <VacancyDucks
                     fixed={Math.max(
                       0,
@@ -159,7 +159,7 @@ export default async function SiteHome() {
                     )}
                     size="md"
                   />
-                  <span className="text-[13.5px] font-semibold text-[color:var(--cinza)]">
+                  <span className="text-[14px] font-semibold">
                     {occurrence.availableSpots === 1
                       ? "1 vaga"
                       : `${occurrence.availableSpots} vagas`}

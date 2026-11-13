@@ -21,7 +21,9 @@ export default async function ExperimentalPage() {
 
   return (
     <main className="flex justify-center px-5 py-10">
-      <div className="celular">
+      {/* Cartao-desenho do guia (`.celular`): 390px, papel com manchinhas,
+          borda preta de 2px, canto de 38px. */}
+      <div className="w-[min(100%,390px)] rounded-[38px] border-2 border-[var(--preto)] bg-[var(--papel)] p-[24px_20px_28px] [background-image:var(--manchinhas)]">
         <h1 className="mb-2.5 text-[44px] leading-[0.92] tracking-[-0.04em]">
           Aula experimental
         </h1>

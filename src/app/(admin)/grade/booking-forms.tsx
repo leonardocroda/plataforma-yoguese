@@ -100,6 +100,14 @@ const SLOT_BASE =
 const SLOT_IDLE = `${SLOT_BASE} border-[var(--linha)] bg-[var(--pena)] hover:border-[var(--preto)]`;
 const SLOT_PRESSED = `${SLOT_BASE} border-[var(--preto)] bg-[var(--pessego)]`;
 
+/** O slot do guia mostra o tipo curto ("Clássico"/"Intenso"), nao o nome inteiro. */
+function shortClassName(name: string): string {
+  const match = name.match(/(cl[áa]ssico|intenso)$/i);
+  if (!match) return name;
+  const kind = match[1].toLowerCase();
+  return kind.charAt(0).toUpperCase() + kind.slice(1);
+}
+
 /** "19:00" vira "19h"; "19:30" vira "19h30" (voz do guia). */
 function hourLabel(time: string): string {
   const [hour, minute] = time.split(":");
@@ -208,8 +216,8 @@ export function GradeBoard({
                                 : SLOT_IDLE
                             }
                           >
-                            <span className="truncate text-[12.5px] font-extrabold tracking-[-0.01em]">
-                              {occurrence.classTypeName}
+                            <span className="truncate text-[13.5px] font-extrabold tracking-[-0.01em]">
+                              {shortClassName(occurrence.classTypeName)}
                             </span>
                             <VacancyDucks
                               fixed={occurrence.fixedCount}
