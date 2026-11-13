@@ -360,7 +360,7 @@ Phase 3:  T1 -> T8
 
 ## Checks
 
-**Run brand**: `npx vitest run src/modules/ui/__tests__/kit.test.ts src/modules/ui/__tests__/vacancy-ducks.test.ts src/app/__tests__/brand-tokens.test.ts src/app/__tests__/brand-copy.test.ts --reporter=verbose`
+**Run brand**: `npx vitest run src/modules/ui/__tests__/kit.test.ts src/modules/ui/__tests__/vacancy-ducks.test.ts src/app/__tests__/brand-tokens.test.ts src/app/__tests__/brand-font.test.ts src/app/__tests__/brand-copy.test.ts --reporter=verbose`
 
 **C1** - `globals.css` exposes every guide token with the exact hex (papel #F3F2F1, pena #FFFBF9, preto #000, pêssego #FFC798, erro #B3261E, radii 999/28/16px) (BRAND-01, AC 1)
 Proof: run brand | ✓ src/app/__tests__/brand-tokens.test.ts > brand tokens > exposes every guide token with the exact value
