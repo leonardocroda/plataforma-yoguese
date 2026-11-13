@@ -168,10 +168,10 @@ Phase 3:  T1 -> T8
 
 **Done when**:
 
-- [ ] `<html>` carries the Outfit CSS variable (latin subset + guide fallback) and `<body>` the papel + texture background; no `bg-[#...]` literal survives in `src/app`
-- [ ] Quick gate passes: `npx vitest run src/app/__tests__/brand-font.test.ts --reporter=verbose`
-- [ ] Build gate passes: `npm run build`
-- [ ] Test count: 2 tests pass (no silent deletions)
+- [x] `<html>` carries the Outfit CSS variable (latin subset + guide fallback) and `<body>` the papel + texture background; no `bg-[#...]` literal survives in `src/app`
+- [x] Quick gate passes: `npx vitest run src/app/__tests__/brand-font.test.ts --reporter=verbose`
+- [x] Build gate passes: `npm run build`
+- [x] Test count: 2 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: build
