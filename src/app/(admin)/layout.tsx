@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { logoutAction } from "../../modules/auth/actions";
 import { requireAdminSession } from "../../modules/auth/services/session";
 import { users } from "../../db/schema";
+import { Button } from "../../modules/ui/components/kit";
 
 const NAV_LINKS = [
   { href: "/grade", label: "Grade" },
@@ -17,14 +18,18 @@ const NAV_LINKS = [
  * Shell da area logada (AUTH-01, SHELL-01, SHELL-02): nenhuma rota do grupo
  * responde sem sessao - o guard vive aqui, antes do render. A administradora
  * logada e identificada pelo nome e o "Sair" encerra a sessao.
+ *
+ * A pele e a do guia (tela "Admin: calendário e turma"): superfícies pena sobre
+ * o papel, bordas pretas de 2px, ações em pílula, navegação sóbria e sem
+ * mascote. Desktop-first: a linha única do topo só quebra em telas estreitas.
  */
 export default async function AdminLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Guard do grupo inteiro (AUTH-01, AUTH-09): sem sessao de ADMIN a rota
-  // nao responde - o papel e verificado junto com a sessao, nao so a presenca
+  // Guard do grupo inteiro (AUTH-01, AUTH-09): sem sessão de ADMIN a rota
+  // não responde - o papel e verificado junto com a sessao, nao so a presenca
   const session = await requireAdminSession();
 
   // O client so e necessario em tempo de execucao: o build roda sem
@@ -36,31 +41,44 @@ export default async function AdminLayout({
     .where(eq(users.id, session.userId));
 
   return (
-    <div className="min-h-screen bg-[var(--yoguese-off-white)] text-[var(--yoguese-cinza)]">
-      <header className="border-b border-[#e8ded0] bg-white px-6 py-3">
-        <div className="flex items-center justify-between gap-4">
-          <p className="text-sm">Yogue-se - Painel Admin</p>
-          <form action={logoutAction}>
-            <button
-              type="submit"
-              className="rounded border border-[var(--yoguese-bege)] px-2 py-0.5 text-xs hover:bg-[var(--yoguese-off-white)]"
+    <div className="min-h-screen">
+      <header className="border-b-2 border-b-[var(--preto)] bg-[var(--pena)] px-5 py-3.5 sm:px-8">
+        <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-x-8 gap-y-3">
+          <div className="flex flex-wrap items-center gap-x-7 gap-y-2">
+            <span className="text-[17px] font-extrabold tracking-[-0.03em]">
+              Yogue-se
+            </span>
+            <nav
+              aria-label="Rotas da área administrativa"
+              className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[14.5px] font-semibold text-[color:var(--grafite)]"
             >
-              Sair
-            </button>
-          </form>
+              {NAV_LINKS.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="rounded-[var(--r-sm)] hover:underline hover:decoration-2 hover:underline-offset-4"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+          <div className="flex items-center gap-3.5">
+            <span className="text-[13.5px] text-[color:var(--cinza)]">
+              {admin?.name ?? "Admin"}
+            </span>
+            <form action={logoutAction}>
+              <Button type="submit" variant="sec" small>
+                Sair
+              </Button>
+            </form>
+          </div>
         </div>
-        <nav className="mt-2 flex flex-wrap items-center gap-4 text-xs">
-          {NAV_LINKS.map((link) => (
-            <Link key={link.href} href={link.href} className="hover:underline">
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-        <p className="mt-1 text-xs text-[var(--yoguese-salvia)]">
-          {admin?.name ?? "Admin"} logada
-        </p>
       </header>
-      {children}
+
+      <div className="mx-auto max-w-[1440px] px-5 py-7 sm:px-8">
+        {children}
+      </div>
     </div>
   );
 }

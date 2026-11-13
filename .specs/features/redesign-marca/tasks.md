@@ -249,10 +249,10 @@ Phase 3:  T1 -> T8
 
 **Done when**:
 
-- [ ] Shell follows the guide's admin tone on brand tokens; every admin route keeps its current guard and behavior
+- [x] Shell follows the guide's admin tone on brand tokens; every admin route keeps its current guard and behavior
 - [ ] Walk evidence recorded at the feature walk (step 9 - capture `captures/admin-shell.running.png`)
-- [ ] Build gate passes: `npm run build; npm run lint; npm test`
-- [ ] Test count: existing suite green (no deletions)
+- [x] Build gate passes: `npm run build; npm run lint; npm test`
+- [x] Test count: existing suite green (no deletions)
 
 **Tests**: none (route layer - walk + browser captures per the matrix)
 **Gate**: build
@@ -489,7 +489,7 @@ Proof: run brand | ✓ src/app/__tests__/brand-font.test.ts > brand font > serve
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** Fix de fuso autorizado pelo usuario antes da T1 ("Eu corrijo agora"): commit 2ed8cd1 `fix(db): stamp enrollment_date in America/Sao_Paulo` + migracao 0004 - o gate do repo estava vermelho depois das 21h (default do Banco em UTC vs. data local) e bloquearia as 13 tasks.
-**Dispatched:** batch worker 1 (Phase 2: T5-T7) at HEAD 56a2552 - dispatched 2026-11-13
+**Dispatched:** batch worker 1 (Phase 2: T5-T7) at HEAD 56a2552 - dispatched 2026-11-13 - returned: T5 @ ccd92cb, T6 @ b9a1fd0, T7 @ f4f0ce6, suite 355 passed. Desvios reportados: CTAs como `<Link>` com classes `.btn` (kit nao tem variante link), classes de tela (.opt/.valor/.confirma/.msg-erro/.lista-aulas) compostas com utilitarios Tailwind dentro das rotas em vez de globals.css, declaracao de saude com o texto do servidor, erro de telefone ao vivo no campo.
 **Walked:** none
 
 ---
