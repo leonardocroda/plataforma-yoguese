@@ -7,6 +7,7 @@ import {
   deactivatePlanAction,
   updatePlanAction,
 } from "../../../modules/plans/actions";
+import { Button, Field, Toast } from "../../../modules/ui/components/kit";
 
 type ActionState = {
   ok: boolean;
@@ -15,10 +16,30 @@ type ActionState = {
 
 const INITIAL_STATE: ActionState = { ok: false, message: "" };
 
-const inputClass =
-  "mt-1 w-full rounded border border-[var(--yoguese-bege)] bg-white px-2 py-1 text-xs text-[var(--yoguese-cinza)]";
-const buttonClass =
-  "rounded bg-[var(--yoguese-salvia)] px-3 py-1 text-xs text-white disabled:opacity-60";
+// O guia estiliza os campos pelo tipo; o campo numerico de aulas por semana
+// completa a forma do campo com os mesmos tokens.
+const NUMBER_CLASS =
+  "w-full min-h-[50px] rounded-[var(--r-md)] border-2 border-[var(--preto)] bg-[var(--pena)] px-4";
+
+/** Sucesso na pilula preta do guia; falha em texto puro no token de erro. */
+function Feedback({ state }: { state: ActionState }) {
+  if (!state.message) return null;
+  if (state.ok) {
+    return (
+      <div className="mt-3">
+        <Toast>{state.message}</Toast>
+      </div>
+    );
+  }
+  return (
+    <p
+      role="alert"
+      className="mt-2 text-[14px] font-medium text-[color:var(--erro)]"
+    >
+      {state.message}
+    </p>
+  );
+}
 
 /**
  * Formularios de plano (PLAN-01 a PLAN-04): criar, editar e inativar. O
@@ -47,54 +68,44 @@ export function CreatePlanForm() {
   }, [state.ok, router]);
 
   return (
-    <form action={formAction} className="space-y-2">
-      <label className="block text-xs font-medium">
-        Nome
-        <input name="name" required className={inputClass} />
-      </label>
-      <label className="block text-xs font-medium">
-        Valor mensal (R$)
-        <input
-          name="price"
-          required
-          inputMode="decimal"
-          className={inputClass}
-          placeholder="Ex.: 180.00"
-        />
-      </label>
-      <label className="block text-xs font-medium">
-        Aulas por semana
-        <input
-          name="weeklyFrequency"
-          type="number"
-          min={1}
-          required
-          className={inputClass}
-        />
-      </label>
-      <label className="block text-xs font-medium">
-        Descrição (opcional)
-        <input name="description" className={inputClass} />
-      </label>
-      <button type="submit" disabled={pending} className={buttonClass}>
-        {pending ? "Criando..." : "Criar plano"}
-      </button>
-      {state.message ? (
-        <p
-          className={
-            state.ok
-              ? "text-xs text-[var(--yoguese-cinza)]"
-              : "text-xs text-red-700"
-          }
-        >
-          {state.message}
-        </p>
-      ) : null}
+    <form action={formAction}>
+      <div className="mt-4">
+        <Field label="Nome" id="plano-nome">
+          <input id="plano-nome" name="name" type="text" required />
+        </Field>
+        <Field label="Valor mensal (R$)" id="plano-valor">
+          <input
+            id="plano-valor"
+            name="price"
+            type="text"
+            inputMode="decimal"
+            required
+            placeholder="Ex.: 180.00"
+          />
+        </Field>
+        <Field label="Aulas por semana" id="plano-aulas">
+          <input
+            id="plano-aulas"
+            name="weeklyFrequency"
+            type="number"
+            min={1}
+            required
+            className={NUMBER_CLASS}
+          />
+        </Field>
+        <Field label="Descrição (opcional)" id="plano-descricao">
+          <input id="plano-descricao" name="description" type="text" />
+        </Field>
+      </div>
+      <Button type="submit" variant="prim" disabled={pending}>
+        {pending ? "Criando…" : "Criar plano"}
+      </Button>
+      <Feedback state={state} />
     </form>
   );
 }
 
-/** Edicao e inativacao de um plano, no proprio cartao do plano. */
+/** Edicao e inativacao de um plano, no proprio item da lista. */
 export function PlanCardForms({
   planId,
   name,
@@ -143,79 +154,65 @@ export function PlanCardForms({
   }, [edited.ok, deactivated.ok, router]);
 
   return (
-    <div className="mt-2 space-y-2">
-      <form action={editAction} className="space-y-2">
-        <div className="grid grid-cols-2 gap-2">
-          <label className="block text-xs font-medium">
-            Nome
-            <input name="name" defaultValue={name} required className={inputClass} />
-          </label>
-          <label className="block text-xs font-medium">
-            Valor mensal (R$)
+    <div className="mt-3 space-y-4">
+      <form action={editAction}>
+        <div className="grid gap-x-4 sm:grid-cols-2">
+          <Field label="Nome" id={`plano-nome-${planId}`}>
             <input
+              id={`plano-nome-${planId}`}
+              name="name"
+              type="text"
+              defaultValue={name}
+              required
+            />
+          </Field>
+          <Field label="Valor mensal (R$)" id={`plano-valor-${planId}`}>
+            <input
+              id={`plano-valor-${planId}`}
               name="price"
+              type="text"
+              inputMode="decimal"
               defaultValue={price}
               required
-              inputMode="decimal"
-              className={inputClass}
             />
-          </label>
-          <label className="block text-xs font-medium">
-            Aulas por semana
+          </Field>
+          <Field label="Aulas por semana" id={`plano-aulas-${planId}`}>
             <input
+              id={`plano-aulas-${planId}`}
               name="weeklyFrequency"
               type="number"
               min={1}
               defaultValue={weeklyFrequency}
               required
-              className={inputClass}
+              className={NUMBER_CLASS}
             />
-          </label>
-          <label className="block text-xs font-medium">
-            Descrição
+          </Field>
+          <Field label="Descrição" id={`plano-descricao-${planId}`}>
             <input
+              id={`plano-descricao-${planId}`}
               name="description"
+              type="text"
               defaultValue={description ?? ""}
-              className={inputClass}
             />
-          </label>
+          </Field>
         </div>
-        <button type="submit" disabled={editPending} className={buttonClass}>
-          {editPending ? "Salvando..." : "Salvar alterações"}
-        </button>
-        {edited.message ? (
-          <p
-            className={
-              edited.ok
-                ? "text-xs text-[var(--yoguese-cinza)]"
-                : "text-xs text-red-700"
-            }
-          >
-            {edited.message}
-          </p>
-        ) : null}
+        <Button type="submit" variant="sec" small disabled={editPending}>
+          {editPending ? "Salvando…" : "Salvar alterações"}
+        </Button>
+        <Feedback state={edited} />
       </form>
 
       {status === "ATIVO" ? (
-        <form action={deactivateAction} className="space-y-2">
-          <button
+        <form action={deactivateAction}>
+          <Button
             type="submit"
+            variant="sec"
+            small
             disabled={deactivatePending}
-            className="rounded border border-[var(--yoguese-bege)] px-2 py-1 text-xs hover:bg-[var(--yoguese-off-white)]"
           >
-            {deactivatePending ? "Inativando..." : "Inativar plano"}
-          </button>
-          {deactivated.message ? (
-            <p
-              className={
-                deactivated.ok
-                  ? "text-xs text-[var(--yoguese-cinza)]"
-                  : "text-xs text-red-700"
-              }
-            >
-              {deactivated.message}
-            </p>
-          ) : null}
+            {deactivatePending ? "Inativando…" : "Inativar plano"}
+          </Button>
+          <Feedback state={deactivated} />
         </form>
       ) : null}
     </div>

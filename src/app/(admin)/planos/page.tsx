@@ -1,4 +1,5 @@
 import { listPlansAction } from "../../../modules/plans/actions";
+import { Chip } from "../../../modules/ui/components/kit";
 import { CreatePlanForm, PlanCardForms } from "./plan-forms";
 
 export const dynamic = "force-dynamic";
@@ -19,8 +20,9 @@ function formatPrice(price: string): string {
 
 /**
  * Tela de planos (PLAN-01 a PLAN-03, PLAN-06): o admin cria, edita e
- * inativa planos; o valor mostrado vem do banco. Os formularios mostram o
- * feedback fora da listagem, no padrao visual das telas admin.
+ * inativa planos; o valor mostrado vem do banco. A pele e a do admin do
+ * guia: superficie pena para o cadastro, a lista em divisores com o status em
+ * chip e o feedback de cada operacao no proprio formulario.
  */
 export default async function AdminPlansPage() {
   // As actions leem via dbClient dinamico: a tela nao importa o banco no
@@ -28,57 +30,67 @@ export default async function AdminPlansPage() {
   const plans = await listPlansAction();
 
   return (
-    <main className="min-h-screen bg-[var(--yoguese-off-white)] p-6 text-[var(--yoguese-cinza)]">
+    <main>
       <header className="mb-6">
-        <h1 className="text-2xl font-light">Planos</h1>
-        <p className="text-xs">
+        <h1 className="text-[34px]">Planos</h1>
+        <p className="mt-1.5 max-w-[48em] text-[15px] text-[color:var(--cinza)]">
           A tabela de preços é sua: crie, edite e inative planos com valor e
-          frequência
+          frequência.
         </p>
       </header>
 
-      <div className="max-w-sm rounded-lg border border-[var(--yoguese-bege)] bg-white p-3">
-        <h2 className="text-sm font-medium">Criar plano</h2>
+      <section className="max-w-[520px] rounded-[var(--r-lg)] border-2 border-[var(--preto)] bg-[var(--pena)] p-5">
+        <h2 className="text-[22px]">Criar plano</h2>
         <CreatePlanForm />
-      </div>
+      </section>
 
-      <h2 className="mt-6 text-sm font-medium">Planos cadastrados</h2>
-      {plans.length === 0 ? (
-        <p className="mt-2 text-xs opacity-70">
-          Nenhum plano cadastrado ainda.
-        </p>
-      ) : (
-        <ul className="mt-2 space-y-3">
-          {plans.map((plan) => (
-            <li
-              key={plan.id}
-              className="rounded-lg border border-[var(--yoguese-bege)] bg-white p-3 text-xs"
-            >
-              <dl className="grid grid-cols-2 gap-1">
-                <dt className="opacity-70">Nome</dt>
-                <dd>{plan.name}</dd>
-                <dt className="opacity-70">Valor mensal</dt>
-                <dd>{formatPrice(plan.price)}</dd>
-                <dt className="opacity-70">Aulas por semana</dt>
-                <dd>{plan.weeklyFrequency}</dd>
-                <dt className="opacity-70">Descrição</dt>
-                <dd>{plan.description ?? "-"}</dd>
-                <dt className="opacity-70">Status</dt>
-                <dd>{statusLabel[plan.status]}</dd>
-              </dl>
+      <section className="mt-8">
+        <h2 className="text-[22px]">Planos cadastrados</h2>
+        {plans.length === 0 ? (
+          <p className="mt-2 text-[15px] text-[color:var(--cinza)]">
+            Nenhum plano cadastrado ainda.
+          </p>
+        ) : (
+          <ul className="mt-2 list-none p-0">
+            {plans.map((plan) => (
+              <li
+                key={plan.id}
+                className="border-t border-t-[var(--linha)] py-4"
+              >
+                <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+                  <p className="text-[19px] font-extrabold tracking-[-0.02em]">
+                    {plan.name}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="tnum text-[19px] font-extrabold tracking-[-0.02em]">
+                      {formatPrice(plan.price)}
+                    </span>
+                    <Chip variant={plan.status === "ATIVO" ? undefined : "cl"}>
+                      {statusLabel[plan.status]}
+                    </Chip>
+                  </div>
+                </div>
+                <p className="mt-1 text-[13.5px] text-[color:var(--cinza)]">
+                  {plan.weeklyFrequency}{" "}
+                  {plan.weeklyFrequency === 1
+                    ? "aula por semana"
+                    : "aulas por semana"}{" "}
+                  · {plan.description ?? "-"}
+                </p>
 
-              <PlanCardForms
-                planId={plan.id}
-                name={plan.name}
-                price={plan.price}
-                weeklyFrequency={plan.weeklyFrequency}
-                description={plan.description}
-                status={plan.status}
-              />
-            </li>
-          ))}
-        </ul>
-      )}
+                <PlanCardForms
+                  planId={plan.id}
+                  name={plan.name}
+                  price={plan.price}
+                  weeklyFrequency={plan.weeklyFrequency}
+                  description={plan.description}
+                  status={plan.status}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </main>
   );
 }
