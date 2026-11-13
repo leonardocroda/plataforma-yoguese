@@ -312,6 +312,42 @@ pending request never occupies, and approval rechecks the same vacancy (PRD
 8.3). The experimental price stays R$ 45,00 with manual payment and no
 automatic charge (PRD 8.4).
 
+### AD-041 - ACTIVE - Brand: the studio guide supersedes the PRD palette (2026-11-12)
+
+User decision: PRD section 14's "paleta sugerida" (off-white, bege, verde
+sálvia, tons terrosos) is superseded. The frontend of every existing screen
+(home publica, /experimental, /login, admin) adopts the studio's own direction of
+art, authored in `captures/yogue-se-brand.html` of feature `redesign-marca`:
+papel #F3F2F1 with manchinhas texture, pena #FFFBF9 surfaces, preto #000 titles
+and 2px borders, pêssego #FFC798 as the only real color, Outfit as the sole
+font, mascot (pato.png) only in home/confirmation/empty/404, vacancies always as
+8 ducks with the five states of the guide, and the guide voice/vocabulary in all
+copy. Implementation lives as CSS custom properties in `globals.css` plus
+components in `src/modules/ui/` over the existing Tailwind v4. PRD section 14
+non-color requirements (responsive, mobile-first student area, clear feedback,
+fast loading) stand unchanged. Rationale: the user built the guide ("montei um
+html com toda a direção de arte e branding do site"), the PRD palette was
+provisional and the result "ficou meio ruim". Trade-off: every reskinned screen
+must be re-verified against the design, and the area do aluno inherits this
+system when it lands. NOTA: AD-041 is numbered for the redesign worktree
+(checkout 2026-11-12); the mainline agent may take the same number - renumber on
+merge if both survive.
+
+### AD-042 - ACTIVE - Approved departures from the binding brand guide (2026-11-12)
+
+Bundle of the differences between `captures/yogue-se-brand.html` and the product,
+each confirmed by the user during the redesign Specify ("Tudo que existe hoje",
+delegated mechanics in `context.md` of feature `redesign-marca`): (1) home nav
+drops "Metodo/Professora/Horarios/Contato" - the product has no such pages - and
+keeps logo + "Entrar" + the experimental CTA; (2) the guide's three method cards
+stay out, the home keeps the upcoming-classes list only; (3) the guide's student
+area screen ("Oi, Marina", credits, fixed classes) is not built - the route does
+not exist - and inherits this design system when the student-area feature lands;
+(4) the admin week grid keeps the guide composition with real `/grade` data
+instead of the mock times and names; (5) the voice table's example dates are
+computed from the product's credit rules. Same numbering caveat as AD-041:
+renumber on merge if the mainline agent took the number.
+
 ## Handoff
 
 Snapshot - updated when work pauses.
