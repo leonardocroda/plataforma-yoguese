@@ -1,14 +1,10 @@
 import { listStudentCreditsAction } from "../../../modules/credits/actions";
 import { STUDIO_TIMEZONE } from "../../../modules/classes/domain/occurrences";
 import { listActiveStudents } from "../../../modules/students/services/students";
+import { Button, Chip, Field } from "../../../modules/ui/components/kit";
 import { CreditChangeForms, GrantCreditForm } from "./credit-forms";
 
 export const dynamic = "force-dynamic";
-
-const inputClass =
-  "mt-1 w-full rounded border border-[var(--yoguese-bege)] bg-white px-2 py-1 text-xs text-[var(--yoguese-cinza)]";
-const buttonClass =
-  "rounded bg-[var(--yoguese-salvia)] px-3 py-1 text-xs text-white disabled:opacity-60";
 
 function formatDate(value: Date): string {
   return value.toLocaleDateString("pt-BR", { timeZone: STUDIO_TIMEZONE });
@@ -18,7 +14,8 @@ function formatDate(value: Date): string {
  * Tela de creditos do aluno (CRD-39, CRD-40): o admin escolhe o aluno,
  * ve os creditos com geracao, vencimento, status, origem e as transacoes de
  * cada um, e concede, devolve ou cancela credito com motivo. Sem auth nesta
- * slice: o responsavel fica por rotulo (AD-016).
+ * slice: o responsavel fica por rotulo (AD-016). A pele e a do admin do
+ * guia: pena para os formularios, a lista em divisores e o status em chip.
  */
 export default async function AdminCreditsPage({
   searchParams,
@@ -36,21 +33,20 @@ export default async function AdminCreditsPage({
   const credits = student ? await listStudentCreditsAction(student.id) : [];
 
   return (
-    <main className="min-h-screen bg-[var(--yoguese-off-white)] p-6 text-[var(--yoguese-cinza)]">
+    <main>
       <header className="mb-6">
-        <h1 className="text-2xl font-light">Créditos do aluno</h1>
-        <p className="text-xs">
-          Conceder, devolver e cancelar crédito com motivo e acompanhar as
-          transações
+        <h1 className="text-[34px]">Créditos de reposição</h1>
+        <p className="mt-1.5 max-w-[48em] text-[15px] text-[color:var(--cinza)]">
+          Conceda, devolva ou cancele um crédito de reposição com motivo e
+          acompanhe as transações.
         </p>
       </header>
 
-      <form method="get" className="mb-6 max-w-sm space-y-2">
-        <label className="block text-xs font-medium">
-          Aluno
+      <form method="get" className="max-w-[430px]">
+        <Field label="Aluno" id="credito-aluno">
           <select
+            id="credito-aluno"
             name="aluno"
-            className={inputClass}
             defaultValue={student?.id ?? ""}
           >
             {students.map((item) => (
@@ -59,55 +55,68 @@ export default async function AdminCreditsPage({
               </option>
             ))}
           </select>
-        </label>
-        <button type="submit" className={buttonClass}>
+        </Field>
+        <Button type="submit" variant="sec" small>
           Abrir créditos
-        </button>
+        </Button>
       </form>
 
       {students.length === 0 ? (
-        <p className="text-sm">Nenhum aluno ativo cadastrado.</p>
+        <p className="mt-6 text-[15px] text-[color:var(--cinza)]">
+          Nenhum aluno ativo cadastrado.
+        </p>
       ) : null}
 
       {student ? (
-        <section>
-          <h2 className="text-lg font-medium">{student.name}</h2>
+        <section className="mt-8">
+          <h2 className="text-[24px]">{student.name}</h2>
 
-          <div className="mt-3 max-w-sm rounded-lg border border-[var(--yoguese-bege)] bg-white p-3">
-            <h3 className="text-sm font-medium">Conceder crédito</h3>
+          <div className="mt-3 max-w-[430px] rounded-[var(--r-lg)] border-2 border-[var(--preto)] bg-[var(--pena)] p-5">
+            <h3 className="text-[20px]">Conceder crédito</h3>
             <GrantCreditForm studentId={student.id} />
           </div>
 
-          <h3 className="mt-6 text-sm font-medium">Créditos</h3>
+          <h3 className="mt-8 text-[20px]">Créditos</h3>
           {credits.length === 0 ? (
-            <p className="mt-2 text-xs opacity-70">
+            <p className="mt-2 text-[15px] text-[color:var(--cinza)]">
               Nenhum crédito para este aluno.
             </p>
           ) : (
-            <ul className="mt-2 space-y-3">
+            <ul className="mt-2 list-none p-0">
               {credits.map((credit) => (
                 <li
                   key={credit.id}
-                  className="rounded-lg border border-[var(--yoguese-bege)] bg-white p-3 text-xs"
+                  className="border-t border-t-[var(--linha)] py-4"
                 >
-                  <dl className="grid grid-cols-2 gap-1">
-                    <dt className="opacity-70">Origem</dt>
-                    <dd>{credit.source}</dd>
-                    <dt className="opacity-70">Geração</dt>
-                    <dd>{formatDate(credit.generatedAt)}</dd>
-                    <dt className="opacity-70">Vencimento</dt>
-                    <dd>{formatDate(credit.expiresAt)}</dd>
-                    <dt className="opacity-70">Status</dt>
-                    <dd>{credit.status}</dd>
-                  </dl>
+                  <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+                    <p className="text-[15px] font-semibold">
+                      Origem {credit.source}
+                    </p>
+                    <Chip
+                      variant={credit.status === "DISPONIVEL" ? undefined : "cl"}
+                    >
+                      {credit.status}
+                    </Chip>
+                  </div>
+                  <p className="mt-1 text-[13.5px] text-[color:var(--cinza)]">
+                    Gerado em {formatDate(credit.generatedAt)} · Vence em{" "}
+                    {formatDate(credit.expiresAt)}
+                  </p>
 
-                  <p className="mt-2 font-medium">Transações</p>
+                  <p className="mt-3 text-[13.5px] font-semibold">
+                    Transações
+                  </p>
                   {credit.transactions.length === 0 ? (
-                    <p className="opacity-70">Sem transações.</p>
+                    <p className="text-[13.5px] text-[color:var(--cinza)]">
+                      Sem transações.
+                    </p>
                   ) : (
-                    <ul>
+                    <ul className="m-0 list-none p-0 text-[13.5px]">
                       {credit.transactions.map((transaction) => (
-                        <li key={transaction.id}>
+                        <li
+                          key={transaction.id}
+                          className="border-t border-t-[var(--linha)] py-1.5"
+                        >
                           {transaction.action} (
                           {transaction.previousStatus ?? "-"} {"->"}{" "}
                           {transaction.newStatus}) - {transaction.reason} -{" "}

@@ -329,10 +329,10 @@ Phase 3:  T1 -> T8
 
 **Done when**:
 
-- [ ] The three screens follow the guide components and voice; approve/refuse/convert/cancel actions behave exactly as before
+- [x] The three screens follow the guide components and voice; approve/refuse/convert/cancel actions behave exactly as before
 - [ ] Walk evidence recorded at the feature walk (step 9 - captures `captures/creditos.running.png`, `captures/feriados.running.png`, `captures/experimentais.running.png`)
-- [ ] Build gate passes: `npm run build; npm run lint; npm test`
-- [ ] Test count: existing suite green (no deletions)
+- [x] Build gate passes: `npm run build; npm run lint; npm test`
+- [x] Test count: existing suite green (no deletions)
 
 **Tests**: none (route layer - walk + browser captures per the matrix)
 **Gate**: build

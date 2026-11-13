@@ -7,6 +7,7 @@ import {
   grantCreditAction,
   returnCreditAction,
 } from "../../../modules/credits/actions";
+import { Button, Field, Toast } from "../../../modules/ui/components/kit";
 
 type ActionState = {
   ok: boolean;
@@ -15,20 +16,31 @@ type ActionState = {
 
 const INITIAL_STATE: ActionState = { ok: false, message: "" };
 
-const inputClass =
-  "mt-1 w-full rounded border border-[var(--yoguese-bege)] bg-white px-2 py-1 text-xs text-[var(--yoguese-cinza)]";
-const buttonClass =
-  "rounded bg-[var(--yoguese-salvia)] px-3 py-1 text-xs text-white disabled:opacity-60";
-
-function formatDate(value: string | Date): string {
-  return new Date(value).toLocaleDateString("pt-BR");
+/** Sucesso na pilula preta do guia; falha em texto puro no token de erro. */
+function Feedback({ state }: { state: ActionState }) {
+  if (!state.message) return null;
+  if (state.ok) {
+    return (
+      <div className="mt-3">
+        <Toast>{state.message}</Toast>
+      </div>
+    );
+  }
+  return (
+    <p
+      role="alert"
+      className="mt-2 text-[14px] font-medium text-[color:var(--erro)]"
+    >
+      {state.message}
+    </p>
+  );
 }
 
 /**
  * Formularios de credito do aluno (CRD-40): conceder, devolver e cancelar.
  * O motivo e obrigatorio no formulario e o servico recusa a alteracao sem
- * motivo (CRD-16). Depois da acao o formulario mostra o novo status e a
- * transacao registrada.
+ * motivo (CRD-16). Depois da acao a pilula preta nomeia o novo status e a
+ * lista de transacoes mostra o registro.
  */
 export function GrantCreditForm({ studentId }: { studentId: string }) {
   const router = useRouter();
@@ -40,14 +52,9 @@ export function GrantCreditForm({ studentId }: { studentId: string }) {
         reason: String(formData.get("reason") ?? ""),
       });
       if (!result.ok) return { ok: false, message: result.error };
-      const { credit, transaction } = result.value;
       return {
         ok: true,
-        message: `Novo status: ${credit.status}. Transação: ${transaction.action} (${
-          transaction.previousStatus ?? "-"
-        } -> ${transaction.newStatus}) - ${transaction.reason} - ${
-          transaction.adminLabel
-        } em ${formatDate(transaction.createdAt)}.`,
+        message: `Crédito concedido. Novo status: ${result.value.credit.status}.`,
       };
     },
     INITIAL_STATE,
@@ -58,30 +65,22 @@ export function GrantCreditForm({ studentId }: { studentId: string }) {
   }, [state.ok, router]);
 
   return (
-    <form action={formAction} className="space-y-2">
-      <label className="block text-xs font-medium">
-        Motivo da concessão
-        <input
-          name="reason"
-          required
-          className={inputClass}
-          placeholder="Ex.: bonificacao do estudio"
-        />
-      </label>
-      <button type="submit" disabled={pending} className={buttonClass}>
-        {pending ? "Concedendo..." : "Conceder crédito"}
-      </button>
-      {state.message ? (
-        <p
-          className={
-            state.ok
-              ? "text-xs text-[var(--yoguese-cinza)]"
-              : "text-xs text-red-700"
-          }
-        >
-          {state.message}
-        </p>
-      ) : null}
+    <form action={formAction}>
+      <div className="mt-4">
+        <Field label="Motivo da concessão" id="credito-motivo">
+          <input
+            id="credito-motivo"
+            name="reason"
+            type="text"
+            required
+            placeholder="Ex.: bonificação do estúdio"
+          />
+        </Field>
+      </div>
+      <Button type="submit" variant="prim" disabled={pending}>
+        {pending ? "Concedendo…" : "Conceder crédito"}
+      </Button>
+      <Feedback state={state} />
     </form>
   );
 }
@@ -99,14 +98,9 @@ export function CreditChangeForms({ creditId }: { creditId: string }) {
       reason: String(formData.get("reason") ?? ""),
     });
     if (!result.ok) return { ok: false, message: result.error };
-    const { credit, transaction } = result.value;
     return {
       ok: true,
-      message: `Novo status: ${credit.status}. Transação: ${transaction.action} (${
-        transaction.previousStatus ?? "-"
-      } -> ${transaction.newStatus}) - ${transaction.reason} - ${
-        transaction.adminLabel
-      } em ${formatDate(transaction.createdAt)}.`,
+      message: `Crédito devolvido. Novo status: ${result.value.credit.status}.`,
     };
   }, INITIAL_STATE);
 
@@ -119,14 +113,9 @@ export function CreditChangeForms({ creditId }: { creditId: string }) {
       reason: String(formData.get("reason") ?? ""),
     });
     if (!result.ok) return { ok: false, message: result.error };
-    const { credit, transaction } = result.value;
     return {
       ok: true,
-      message: `Novo status: ${credit.status}. Transação: ${transaction.action} (${
-        transaction.previousStatus ?? "-"
-      } -> ${transaction.newStatus}) - ${transaction.reason} - ${
-        transaction.adminLabel
-      } em ${formatDate(transaction.createdAt)}.`,
+      message: `Crédito cancelado. Novo status: ${result.value.credit.status}.`,
     };
   }, INITIAL_STATE);
 
@@ -135,61 +124,40 @@ export function CreditChangeForms({ creditId }: { creditId: string }) {
   }, [returned.ok, cancelled.ok, router]);
 
   return (
-    <div className="mt-2 space-y-2">
-      <form action={returnAction} className="space-y-2">
-        <label className="block text-xs font-medium">
-          Motivo da devolução
+    <div className="mt-4 space-y-4">
+      <form action={returnAction}>
+        <Field label="Motivo da devolução" id={`credito-devolucao-${creditId}`}>
           <input
+            id={`credito-devolucao-${creditId}`}
             name="reason"
+            type="text"
             required
-            className={inputClass}
-            placeholder="Ex.: ajuste do estudio"
+            placeholder="Ex.: ajuste do estúdio"
           />
-        </label>
-        <button
-          type="submit"
-          disabled={returnPending}
-          className={buttonClass}
-        >
-          {returnPending ? "Devolvendo..." : "Devolver crédito"}
-        </button>
-        {returned.message ? (
-          <p
-            className={
-              returned.ok
-                ? "text-xs text-[var(--yoguese-cinza)]"
-                : "text-xs text-red-700"
-            }
-          >
-            {returned.message}
-          </p>
-        ) : null}
+        </Field>
+        <Button type="submit" variant="sec" small disabled={returnPending}>
+          {returnPending ? "Devolvendo…" : "Devolver crédito"}
+        </Button>
+        <Feedback state={returned} />
       </form>
 
-      <form action={cancelAction} className="space-y-2">
-        <label className="block text-xs font-medium">
-          Motivo do cancelamento
+      <form action={cancelAction}>
+        <Field
+          label="Motivo do cancelamento"
+          id={`credito-cancelamento-${creditId}`}
+        >
           <input
+            id={`credito-cancelamento-${creditId}`}
             name="reason"
+            type="text"
             required
-            className={inputClass}
-            placeholder="Ex.: credito indevido"
+            placeholder="Ex.: crédito indevido"
           />
-        </label>
-        <button type="submit" disabled={cancelPending} className={buttonClass}>
-          {cancelPending ? "Cancelando..." : "Cancelar crédito"}
-        </button>
-        {cancelled.message ? (
-          <p
-            className={
-              cancelled.ok
-                ? "text-xs text-[var(--yoguese-cinza)]"
-                : "text-xs text-red-700"
-            }
-          >
-            {cancelled.message}
-          </p>
-        ) : null}
+        </Field>
+        <Button type="submit" variant="sec" small disabled={cancelPending}>
+          {cancelPending ? "Cancelando…" : "Cancelar crédito"}
+        </Button>
+        <Feedback state={cancelled} />
       </form>
     </div>
   );

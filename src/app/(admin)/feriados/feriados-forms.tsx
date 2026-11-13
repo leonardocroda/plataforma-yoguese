@@ -10,6 +10,7 @@ import {
   updateHolidayAction,
   updateStudioClosureAction,
 } from "../../../modules/classes/actions";
+import { Button, Field, Toast } from "../../../modules/ui/components/kit";
 
 type ActionState = {
   ok: boolean;
@@ -18,17 +19,11 @@ type ActionState = {
 
 const INITIAL_STATE: ActionState = { ok: false, message: "" };
 
-const inputClass =
-  "mt-1 w-full rounded border border-[var(--yoguese-bege)] bg-white px-2 py-1 text-xs text-[var(--yoguese-cinza)]";
-const buttonClass =
-  "rounded bg-[var(--yoguese-salvia)] px-3 py-1 text-xs text-white disabled:opacity-60";
-const dangerButtonClass =
-  "rounded border border-red-300 px-3 py-1 text-xs text-red-700 disabled:opacity-60";
-
 /**
  * O resultado de toda operacao da tela aparece em um unico lugar, fora das
  * listas: ao remover um registro a linha sai da lista no refresh, e o
  * feedback dentro dela desapareceria junto (FER-17, FER-21, FER-24, FER-25).
+ * Sucesso na pilula preta do guia, falha em texto puro no token de erro.
  */
 const FEEDBACK_EVENT = "feriados:feedback";
 
@@ -50,14 +45,17 @@ export function FeedbackHost() {
   }, []);
 
   if (!state.message) return null;
+  if (state.ok) {
+    return (
+      <div className="mt-3">
+        <Toast>{state.message}</Toast>
+      </div>
+    );
+  }
   return (
     <p
-      role="status"
-      className={
-        state.ok
-          ? "text-xs text-[var(--yoguese-cinza)]"
-          : "text-xs text-red-700"
-      }
+      role="alert"
+      className="mt-2 text-[14px] font-medium text-[color:var(--erro)]"
     >
       {state.message}
     </p>
@@ -94,7 +92,7 @@ export function CreateHolidayForm() {
       }
       const message = `Feriado cadastrado para ${new Date(
         `${result.value.date}T12:00:00Z`,
-      ).toLocaleDateString("pt-BR", { timeZone: "UTC" })}. As ocorrencias
+      ).toLocaleDateString("pt-BR", { timeZone: "UTC" })}. As ocorrências
       da data ficam bloqueadas e as reservas ativas foram canceladas.`;
       showFeedback(true, message);
       return { ok: true, message };
@@ -107,23 +105,24 @@ export function CreateHolidayForm() {
   }, [state.ok, router]);
 
   return (
-    <form action={formAction} className="space-y-2">
-      <label className="block text-xs font-medium">
-        Data
-        <input type="date" name="date" required className={inputClass} />
-      </label>
-      <label className="block text-xs font-medium">
-        Nome
-        <input
-          name="name"
-          required
-          className={inputClass}
-          placeholder="Ex.: Natal"
-        />
-      </label>
-      <button type="submit" disabled={pending} className={buttonClass}>
-        {pending ? "Cadastrando..." : "Cadastrar feriado"}
-      </button>
+    <form action={formAction}>
+      <div className="mt-4">
+        <Field label="Data" id="feriado-data">
+          <input id="feriado-data" type="date" name="date" required />
+        </Field>
+        <Field label="Nome" id="feriado-nome">
+          <input
+            id="feriado-nome"
+            name="name"
+            type="text"
+            required
+            placeholder="Ex.: Natal"
+          />
+        </Field>
+      </div>
+      <Button type="submit" variant="prim" small disabled={pending}>
+        {pending ? "Cadastrando…" : "Cadastrar feriado"}
+      </Button>
     </form>
   );
 }
@@ -158,7 +157,7 @@ export function HolidayRowForms({ holiday }: { holiday: Holiday }) {
       showFeedback(false, result.error);
       return INITIAL_STATE;
     }
-    const message = "Feriado removido e ocorrencias desbloqueadas.";
+    const message = "Feriado removido e ocorrências desbloqueadas.";
     showFeedback(true, message);
     return { ok: true, message };
   }, INITIAL_STATE);
@@ -168,37 +167,36 @@ export function HolidayRowForms({ holiday }: { holiday: Holiday }) {
   }, [updated.ok, removed.ok, router]);
 
   return (
-    <div className="mt-2 space-y-2">
-      <form action={updateAction} className="grid gap-2 md:grid-cols-3">
-        <label className="block text-xs font-medium">
-          Data
-          <input
-            type="date"
-            name="date"
-            defaultValue={holiday.date}
-            required
-            className={inputClass}
-          />
-        </label>
-        <label className="block text-xs font-medium">
-          Nome
-          <input
-            name="name"
-            defaultValue={holiday.name}
-            required
-            className={inputClass}
-          />
-        </label>
-        <div className="flex items-end">
-          <button type="submit" disabled={updatePending} className={buttonClass}>
-            {updatePending ? "Salvando..." : "Salvar"}
-          </button>
+    <div className="mt-3 space-y-4">
+      <form action={updateAction}>
+        <div className="grid gap-x-4 sm:grid-cols-3">
+          <Field label="Data" id={`feriado-data-${holiday.id}`}>
+            <input
+              id={`feriado-data-${holiday.id}`}
+              type="date"
+              name="date"
+              defaultValue={holiday.date}
+              required
+            />
+          </Field>
+          <Field label="Nome" id={`feriado-nome-${holiday.id}`}>
+            <input
+              id={`feriado-nome-${holiday.id}`}
+              name="name"
+              type="text"
+              defaultValue={holiday.name}
+              required
+            />
+          </Field>
         </div>
+        <Button type="submit" variant="sec" small disabled={updatePending}>
+          {updatePending ? "Salvando…" : "Salvar"}
+        </Button>
       </form>
       <form action={removeAction}>
-        <button type="submit" disabled={removePending} className={dangerButtonClass}>
-          {removePending ? "Removendo..." : "Remover feriado"}
-        </button>
+        <Button type="submit" variant="sec" small disabled={removePending}>
+          {removePending ? "Removendo…" : "Remover feriado"}
+        </Button>
       </form>
     </div>
   );
@@ -222,8 +220,8 @@ export function CreateClosureForm() {
         `${result.value.startDate}T12:00:00Z`,
       ).toLocaleDateString("pt-BR", { timeZone: "UTC" })} a ${new Date(
         `${result.value.endDate}T12:00:00Z`,
-      ).toLocaleDateString("pt-BR", { timeZone: "UTC" })}. As ocorrencias
-      do periodo ficam bloqueadas e as reservas ativas foram canceladas.`;
+      ).toLocaleDateString("pt-BR", { timeZone: "UTC" })}. As ocorrências
+      do período ficam bloqueadas e as reservas ativas foram canceladas.`;
       showFeedback(true, message);
       return { ok: true, message };
     },
@@ -235,27 +233,32 @@ export function CreateClosureForm() {
   }, [state.ok, router]);
 
   return (
-    <form action={formAction} className="space-y-2">
-      <label className="block text-xs font-medium">
-        Início
-        <input type="date" name="startDate" required className={inputClass} />
-      </label>
-      <label className="block text-xs font-medium">
-        Fim
-        <input type="date" name="endDate" required className={inputClass} />
-      </label>
-      <label className="block text-xs font-medium">
-        Motivo
-        <input
-          name="reason"
-          required
-          className={inputClass}
-          placeholder="Ex.: Recesso de fim de ano"
-        />
-      </label>
-      <button type="submit" disabled={pending} className={buttonClass}>
-        {pending ? "Cadastrando..." : "Cadastrar recesso"}
-      </button>
+    <form action={formAction}>
+      <div className="mt-4">
+        <Field label="Início" id="recesso-inicio">
+          <input
+            id="recesso-inicio"
+            type="date"
+            name="startDate"
+            required
+          />
+        </Field>
+        <Field label="Fim" id="recesso-fim">
+          <input id="recesso-fim" type="date" name="endDate" required />
+        </Field>
+        <Field label="Motivo" id="recesso-motivo">
+          <input
+            id="recesso-motivo"
+            name="reason"
+            type="text"
+            required
+            placeholder="Ex.: recesso de fim de ano"
+          />
+        </Field>
+      </div>
+      <Button type="submit" variant="prim" small disabled={pending}>
+        {pending ? "Cadastrando…" : "Cadastrar recesso"}
+      </Button>
     </form>
   );
 }
@@ -291,7 +294,7 @@ export function ClosureRowForms({ closure }: { closure: Closure }) {
       showFeedback(false, result.error);
       return INITIAL_STATE;
     }
-    const message = "Recesso removido e ocorrencias desbloqueadas.";
+    const message = "Recesso removido e ocorrências desbloqueadas.";
     showFeedback(true, message);
     return { ok: true, message };
   }, INITIAL_STATE);
@@ -301,47 +304,45 @@ export function ClosureRowForms({ closure }: { closure: Closure }) {
   }, [updated.ok, removed.ok, router]);
 
   return (
-    <div className="mt-2 space-y-2">
-      <form action={updateAction} className="grid gap-2 md:grid-cols-4">
-        <label className="block text-xs font-medium">
-          Início
-          <input
-            type="date"
-            name="startDate"
-            defaultValue={closure.startDate}
-            required
-            className={inputClass}
-          />
-        </label>
-        <label className="block text-xs font-medium">
-          Fim
-          <input
-            type="date"
-            name="endDate"
-            defaultValue={closure.endDate}
-            required
-            className={inputClass}
-          />
-        </label>
-        <label className="block text-xs font-medium">
-          Motivo
-          <input
-            name="reason"
-            defaultValue={closure.reason}
-            required
-            className={inputClass}
-          />
-        </label>
-        <div className="flex items-end">
-          <button type="submit" disabled={updatePending} className={buttonClass}>
-            {updatePending ? "Salvando..." : "Salvar"}
-          </button>
+    <div className="mt-3 space-y-4">
+      <form action={updateAction}>
+        <div className="grid gap-x-4 sm:grid-cols-3">
+          <Field label="Início" id={`recesso-inicio-${closure.id}`}>
+            <input
+              id={`recesso-inicio-${closure.id}`}
+              type="date"
+              name="startDate"
+              defaultValue={closure.startDate}
+              required
+            />
+          </Field>
+          <Field label="Fim" id={`recesso-fim-${closure.id}`}>
+            <input
+              id={`recesso-fim-${closure.id}`}
+              type="date"
+              name="endDate"
+              defaultValue={closure.endDate}
+              required
+            />
+          </Field>
+          <Field label="Motivo" id={`recesso-motivo-${closure.id}`}>
+            <input
+              id={`recesso-motivo-${closure.id}`}
+              name="reason"
+              type="text"
+              defaultValue={closure.reason}
+              required
+            />
+          </Field>
         </div>
+        <Button type="submit" variant="sec" small disabled={updatePending}>
+          {updatePending ? "Salvando…" : "Salvar"}
+        </Button>
       </form>
       <form action={removeAction}>
-        <button type="submit" disabled={removePending} className={dangerButtonClass}>
-          {removePending ? "Removendo..." : "Remover recesso"}
-        </button>
+        <Button type="submit" variant="sec" small disabled={removePending}>
+          {removePending ? "Removendo…" : "Remover recesso"}
+        </Button>
       </form>
     </div>
   );
