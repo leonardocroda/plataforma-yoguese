@@ -490,6 +490,7 @@ The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** Fix de fuso autorizado pelo usuario antes da T1 ("Eu corrijo agora"): commit 2ed8cd1 `fix(db): stamp enrollment_date in America/Sao_Paulo` + migracao 0004 - o gate do repo estava vermelho depois das 21h (default do Banco em UTC vs. data local) e bloquearia as 13 tasks.
 **Dispatched:** batch worker 1 (Phase 2: T5-T7) at HEAD 56a2552 - dispatched 2026-11-13 - returned: T5 @ ccd92cb, T6 @ b9a1fd0, T7 @ f4f0ce6, suite 355 passed. Desvios reportados: CTAs como `<Link>` com classes `.btn` (kit nao tem variante link), classes de tela (.opt/.valor/.confirma/.msg-erro/.lista-aulas) compostas com utilitarios Tailwind dentro das rotas em vez de globals.css, declaracao de saude com o texto do servidor, erro de telefone ao vivo no campo.
+**Dispatched:** batch worker 2 (Phase 3: T8-T13) at HEAD f4f0ce6 - dispatched 2026-11-13 - caiu por erro de infra (stream) apos comitar T8 @ d69400a; arvore limpa. Re-dispatch worker 2b (T9-T13) a seguir.
 **Walked:** none
 
 ---
