@@ -229,10 +229,10 @@ Phase 3:  T1 -> T8
 
 **Done when**:
 
-- [ ] Card composition per guide style; invalid or ALUNO credentials keep the generic error message (AUTH-09) in the error field style; success redirects to `/grade` (unchanged)
+- [x] Card composition per guide style; invalid or ALUNO credentials keep the generic error message (AUTH-09) in the error field style; success redirects to `/grade` (unchanged)
 - [ ] Walk evidence recorded at the feature walk (step 9 - captures `captures/login.running.png`, `captures/login-error.running.png`)
-- [ ] Build gate passes: `npm run build; npm run lint; npm test`
-- [ ] Test count: existing suite green (no deletions)
+- [x] Build gate passes: `npm run build; npm run lint; npm test`
+- [x] Test count: existing suite green (no deletions)
 
 **Tests**: none (route layer - walk + browser captures per the matrix)
 **Gate**: build
