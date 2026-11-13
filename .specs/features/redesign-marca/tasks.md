@@ -190,7 +190,7 @@ Phase 3:  T1 -> T8
 
 - [x] Composition matches `captures/yogue-se-brand.html` (screen "Home pública"): staggered title, mascot + bolha, próxima aulas list with one duck row each and guide dividers; empty state shows the guide's sentence; loading shows "Respirando fundo…" (the screen keeps the existing occurrences query untouched)
 - [x] Primary CTA navigates to `/experimental`; 390px stacks with no horizontal overflow
-- [ ] Walk evidence recorded at the feature walk (step 9 - script `.specs/features/redesign-marca/walk.mjs`, captures `captures/home.running.png`, `captures/home-390.running.png`)
+- [x] Walk evidence recorded at the feature walk (step 9 - script `.specs/features/redesign-marca/walk.mjs`, captures `captures/home.running.png`, `captures/home-390.running.png`)
 - [x] Build gate passes: `npm run build; npm run lint; npm test`
 - [x] Test count: existing suite green (no deletions)
 
@@ -210,7 +210,7 @@ Phase 3:  T1 -> T8
 **Done when**:
 
 - [x] Screen matches the guide reference; selected occurrence paints its own duck peach; duplicate phone shows "Já existe uma aula experimental para este telefone."; incomplete phone shows the guide's help in error state; confirmation card shows "Pedido enviado" + mascot + the guide sentence; price R$ 45,00 (AD-040); no double submit
-- [ ] Walk evidence recorded at the feature walk (step 9 - captures `captures/experimental.running.png`, `captures/experimental-390.running.png`, `captures/experimental-confirm.running.png`)
+- [x] Walk evidence recorded at the feature walk (step 9 - captures `captures/experimental.running.png`, `captures/experimental-390.running.png`, `captures/experimental-confirm.running.png`)
 - [x] Build gate passes: `npm run build; npm run lint; npm test`
 - [x] Test count: existing suite green (no deletions)
 
@@ -230,7 +230,7 @@ Phase 3:  T1 -> T8
 **Done when**:
 
 - [x] Card composition per guide style; invalid or ALUNO credentials keep the generic error message (AUTH-09) in the error field style; success redirects to `/grade` (unchanged)
-- [ ] Walk evidence recorded at the feature walk (step 9 - captures `captures/login.running.png`, `captures/login-error.running.png`)
+- [x] Walk evidence recorded at the feature walk (step 9 - captures `captures/login.running.png`, `captures/login-error.running.png`)
 - [x] Build gate passes: `npm run build; npm run lint; npm test`
 - [x] Test count: existing suite green (no deletions)
 
@@ -250,7 +250,7 @@ Phase 3:  T1 -> T8
 **Done when**:
 
 - [x] Shell follows the guide's admin tone on brand tokens; every admin route keeps its current guard and behavior
-- [ ] Walk evidence recorded at the feature walk (step 9 - capture `captures/admin-shell.running.png`)
+- [x] Walk evidence recorded at the feature walk (step 9 - capture `captures/admin-shell.running.png`)
 - [x] Build gate passes: `npm run build; npm run lint; npm test`
 - [x] Test count: existing suite green (no deletions)
 
@@ -270,7 +270,7 @@ Phase 3:  T1 -> T8
 **Done when**:
 
 - [x] Composition matches the guide's admin screen; each slot shows its 8 mini ducks; success confirms with the black pill toast naming the result; failures show plain error text; 1280px renders without overflow
-- [ ] Walk evidence recorded at the feature walk (step 9 - captures `captures/grade.running.png`, `captures/grade-panel.running.png`)
+- [x] Walk evidence recorded at the feature walk (step 9 - captures `captures/grade.running.png`, `captures/grade-panel.running.png`)
 - [x] Build gate passes: `npm run build; npm run lint; npm test`
 - [x] Test count: existing suite green (no deletions)
 
@@ -290,7 +290,7 @@ Phase 3:  T1 -> T8
 **Done when**:
 
 - [x] List + forms follow the guide components; no zebra table, no colored alert box; create/edit flows unchanged in behavior
-- [ ] Walk evidence recorded at the feature walk (step 9 - capture `captures/alunos.running.png`)
+- [x] Walk evidence recorded at the feature walk (step 9 - capture `captures/alunos.running.png`)
 - [x] Build gate passes: `npm run build; npm run lint; npm test`
 - [x] Test count: existing suite green (no deletions)
 
@@ -310,7 +310,7 @@ Phase 3:  T1 -> T8
 **Done when**:
 
 - [x] List + forms follow the guide components; plan create/edit behavior unchanged
-- [ ] Walk evidence recorded at the feature walk (step 9 - capture `captures/planos.running.png`)
+- [x] Walk evidence recorded at the feature walk (step 9 - capture `captures/planos.running.png`)
 - [x] Build gate passes: `npm run build; npm run lint; npm test`
 - [x] Test count: existing suite green (no deletions)
 
@@ -330,7 +330,7 @@ Phase 3:  T1 -> T8
 **Done when**:
 
 - [x] The three screens follow the guide components and voice; approve/refuse/convert/cancel actions behave exactly as before
-- [ ] Walk evidence recorded at the feature walk (step 9 - captures `captures/creditos.running.png`, `captures/feriados.running.png`, `captures/experimentais.running.png`)
+- [x] Walk evidence recorded at the feature walk (step 9 - captures `captures/creditos.running.png`, `captures/feriados.running.png`, `captures/experimentais.running.png`)
 - [x] Build gate passes: `npm run build; npm run lint; npm test`
 - [x] Test count: existing suite green (no deletions)
 
@@ -491,7 +491,7 @@ The feature's live state, written as it happens - a compaction gives no warning.
 **Settled mid-build:** Fix de fuso autorizado pelo usuario antes da T1 ("Eu corrijo agora"): commit 2ed8cd1 `fix(db): stamp enrollment_date in America/Sao_Paulo` + migracao 0004 - o gate do repo estava vermelho depois das 21h (default do Banco em UTC vs. data local) e bloquearia as 13 tasks.
 **Dispatched:** batch worker 1 (Phase 2: T5-T7) at HEAD 56a2552 - dispatched 2026-11-13 - returned: T5 @ ccd92cb, T6 @ b9a1fd0, T7 @ f4f0ce6, suite 355 passed. Desvios reportados: CTAs como `<Link>` com classes `.btn` (kit nao tem variante link), classes de tela (.opt/.valor/.confirma/.msg-erro/.lista-aulas) compostas com utilitarios Tailwind dentro das rotas em vez de globals.css, declaracao de saude com o texto do servidor, erro de telefone ao vivo no campo.
 **Dispatched:** batch worker 2 (Phase 3: T8-T13) at HEAD f4f0ce6 - dispatched 2026-11-13 - caiu por erro de infra (stream) apos comitar T8 @ d69400a; arvore limpa. Re-dispatch worker 2b (T9-T13) a seguir.
-**Walked:** none
+**Walked:** 2026-11-13 - `walk.mjs` (playwright-core/Edge headless) em `http://localhost:3005` sobre o Postgres de dev: 30/30 asserts, capturas `captures/*.running.png`, julgamento por tela em `screens.md`. Defeitos achados e corrigidos no walk: login sem cartao (classe `caixa` inexistente), turmas indistinguiveis sem a data curta (home + experimental), favicon 404 (`src/app/icon.png` com o pato do guia).
 
 ---
 
