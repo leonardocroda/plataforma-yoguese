@@ -63,7 +63,19 @@ describe("VacancyDucks", () => {
       expect(render({ fixed: 3, size })).toContain(`vagas ${size}`);
     }
     expect(css).toMatch(/\.vagas\.xs \.pato\s*\{[^}]*width:\s*12px/);
+    expect(css).toMatch(/\.vagas\.md \.pato\s*\{[^}]*width:\s*28px/);
+    expect(css).toMatch(/\.vagas\.md \.pato\s*\{[^}]*height:\s*36px/);
     expect(css).toMatch(/\.vagas\.lg \.pato\s*\{[^}]*width:\s*40px/);
+  });
+
+  it("keeps every kind visible when the class holds more than eight", () => {
+    // BRAND-41: uma turma lotada demais nao esconde o pato de ninguem.
+    const html = render({ fixed: 8, makeup: 1 });
+    const total = [...html.matchAll(/class="pato /g)].length;
+    expect(total).toBe(8);
+    expect(ducks(html, "rep")).toBe(1);
+    expect(ducks(html, "livre")).toBe(0);
+    expect(html).toContain('aria-label="0 vagas livres de 8"');
   });
 
   it("renders the 4x2 mini grid for the admin calendar", () => {

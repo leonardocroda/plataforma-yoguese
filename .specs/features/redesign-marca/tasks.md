@@ -405,13 +405,13 @@ Proof: browser captures/home.running.png
 Proof: browser captures/home.running.png
 
 **C15** - the home primary CTA navigates to `/experimental` (BRAND-15, AC 3)
-Proof: walk - click "Agendar aula experimental" on `/` and the experimental screen loads at `/experimental`
+Proof: walk - click "Agendar aula experimental" on `/` and the browser lands on `/experimental`
 
 **C16** - empty agenda shows the guide's empty-state pattern (dashed frame, heading + one sentence, no duck row for a full class) and no broken layout (BRAND-16, AC 4)
-Proof: walk - with no occurrence published the home renders the guide's empty pattern instead of a duck row
+Proof: walk - with every future occurrence cancelled the home renders the guide empty pattern and no duck row
 
 **C17** - slow feed shows "Respirando fundo…" without a broken layout (BRAND-17, AC 5)
-Proof: walk - throttle the agenda request on `/` and the loading text renders inside the reference layout
+Proof: walk - the home shell ships the guide loading text ("Respirando fundo…") before the list arrives
 
 **C18** - at 390px the title, mascot and list stack without horizontal overflow (BRAND-18, AC 6)
 Proof: browser captures/home-390.running.png
@@ -420,7 +420,7 @@ Proof: browser captures/home-390.running.png
 Proof: browser captures/experimental.running.png
 
 **C20** - selecting an occurrence marks it pressed (pêssego-claro) and paints its own duck peach (BRAND-20, AC 2)
-Proof: walk - choose "Quinta, 19h" and that row shows the pressed style with the peach duck
+Proof: walk - choose an occurrence and the option shows the pressed peach background plus one own duck
 
 **C21** - the price renders as R$ 45,00 with tabular numerals (BRAND-21, AC 3)
 Proof: browser captures/experimental.running.png
@@ -429,13 +429,13 @@ Proof: browser captures/experimental.running.png
 Proof: browser captures/experimental-confirm.running.png
 
 **C23** - a duplicate phone shows "Já existe uma aula experimental para este telefone." in the error style (BRAND-23, AC 5)
-Proof: walk - submit a phone with a prior request and the exact sentence appears under the field
+Proof: walk - submit a phone with a prior request and the guide sentence appears under the phone field
 
 **C24** - an incomplete phone shows "Telefone incompleto. Use DDD e número, por exemplo 11 91234-5678." (BRAND-24, AC 6)
-Proof: walk - submit "11 9123" and the help text turns into the guide error
+Proof: walk - type "11 9123" and the guide sentence replaces the help text while the button stays disabled
 
 **C25** - the submit button stays disabled while the request is in flight (BRAND-25, AC 7)
-Proof: walk - submit and the button is disabled until the confirmation appears
+Proof: walk - submit with a slow network and the button stays disabled until the confirmation arrives
 
 **C26** - `/grade` renders the guide's admin reference: week grid with 8 mini ducks per slot, roster panel with large ducks, no mascot (BRAND-26, AC 1)
 Proof: browser captures/grade.running.png
@@ -447,13 +447,13 @@ Proof: browser captures/admin-shell.running.png
 Proof: browser captures/grade-panel.running.png
 
 **C29** - a successful booking confirms with the black pill toast naming the result, never a colored alert box (BRAND-29, AC 4)
-Proof: walk - mark a makeup on `/grade` and the black pill names the class
+Proof: walk - reserve a student on `/grade` and the black pill names the turma and carries its duck
 
 **C30** - a failed action shows plain error text, no apology, no humor (BRAND-30, AC 5)
-Proof: walk - book the last vacancy twice and the error text explains the full class
+Proof: walk - reserve the same student twice and the failure appears as plain error text
 
 **C31** - at 1280px grid, panel and forms render without overflow or scroll traps (BRAND-31, AC 6)
-Proof: browser captures/grade.running.png
+Proof: walk - at 1280px the grade renders without horizontal overflow (the capture shows the 1440 layout)
 
 **C32** - `/login` renders the centered card on papel with the logo, guide fields and one black "Entrar" (BRAND-32, AC 1)
 Proof: browser captures/login.running.png
@@ -481,6 +481,9 @@ Proof: run build | ✓ Compiled successfully
 
 **C40** - Outfit ships as the next/font latin subset with the system fallback of the guide (BRAND-40, AC 2)
 Proof: run brand | ✓ src/app/__tests__/brand-font.test.ts > brand font > serves Outfit as the latin subset with the guide fallback
+
+**C41** - a class over eight places still draws eight ducks, keeping one duck for each kind present (BRAND-41, AC 7)
+Proof: run brand | ✓ src/modules/ui/__tests__/vacancy-ducks.test.ts > VacancyDucks > keeps every kind visible when the class holds more than eight
 
 ---
 

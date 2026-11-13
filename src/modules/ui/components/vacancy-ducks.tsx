@@ -60,11 +60,31 @@ export function VacancyDucks({
       states.push(state);
     }
   };
-  push("fixo", fixed);
-  push("rep", makeup);
-  push("exp", experimental);
-  if (own && states.length < CAPACITY) push("eu", 1);
-  while (states.length < CAPACITY) push("livre", 1);
+  if (occupied <= CAPACITY) {
+    // Ordem canonica do guia: fixo, reposicao, experimental, a sua, livre.
+    push("fixo", fixed);
+    push("rep", makeup);
+    push("exp", experimental);
+    if (own) push("eu", 1);
+  } else {
+    // Turma lotada demais nao pode sumir com o pato de alguem: cada tipo
+    // presente ganha um pato antes do preenchimento (BRAND-41).
+    const kinds: Array<[DuckState, number]> = [
+      ["fixo", fixed],
+      ["rep", makeup],
+      ["exp", experimental],
+      ["eu", own ? 1 : 0],
+    ];
+    for (const [kind, count] of kinds) {
+      if (count > 0 && states.length < CAPACITY) states.push(kind);
+    }
+    for (const [kind, count] of kinds) {
+      for (let i = 1; i < count && states.length < CAPACITY; i++) {
+        states.push(kind);
+      }
+    }
+  }
+  while (states.length < CAPACITY) states.push("livre");
   const spoken =
     label ??
     (free === 1 ? "1 vaga livre de 8" : `${free} vagas livres de 8`);
