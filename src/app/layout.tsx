@@ -40,7 +40,7 @@ export default function RootLayout({
               height="3.2"
               patternUnits="userSpaceOnUse"
             >
-              <circle cx="1.6" cy="1.6" r=".75" fill="#F29A55" />
+              <circle cx="1.6" cy="1.6" r=".75" fill="var(--pessego-forte)" />
             </pattern>
           </defs>
         </svg>

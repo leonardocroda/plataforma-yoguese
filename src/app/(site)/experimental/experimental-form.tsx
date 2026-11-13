@@ -182,7 +182,7 @@ export function ExperimentalRequestForm({
             Pedido enviado
           </h2>
           <p className="text-[15px]">
-            A professora confirma e te avisa pelo telefone. Enquanto isso,
+            A professora confirma e avisa você pelo telefone. Enquanto isso,
             respire fundo.
           </p>
         </div>
@@ -262,7 +262,7 @@ export function ExperimentalRequestForm({
         <Field
           label="Telefone"
           id="exp-tel"
-          help="A professora vai te avisar por aqui."
+          help="A professora vai avisar você por aqui."
           error={phoneError}
         >
           <input

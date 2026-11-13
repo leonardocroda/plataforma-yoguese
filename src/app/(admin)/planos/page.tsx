@@ -34,7 +34,7 @@ export default async function AdminPlansPage() {
       <header className="mb-6">
         <h1 className="text-[34px]">Planos</h1>
         <p className="mt-1.5 max-w-[48em] text-[15px] text-[color:var(--cinza)]">
-          A tabela de preços é sua: crie, edite e inative planos com valor e
+          A tabela de preços é para você: crie, edite e inative planos com valor e
           frequência.
         </p>
       </header>

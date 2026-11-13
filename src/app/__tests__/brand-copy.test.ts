@@ -91,17 +91,20 @@ function walk(directory: string): string[] {
 
 describe("voice", () => {
   it("uses the fixed vocabulary of the guide", () => {
-    // O vocabulario fixo aparece nas telas, sempre no genero certo.
-    for (const term of [
-      /turma/i,
-      /vaga/i,
-      /aula fixa/i,
-      /reposição/i,
-      /crédito de reposição/i,
-      /aula experimental/i,
-      /Avisar que não vou/,
-    ]) {
-      expect(find(term), `vocabulário ausente: ${term}`).not.toHaveLength(0);
+    // O vocabulario fixo aparece na tela certa, nao em qualquer tela.
+    for (const [term, where] of [
+      [/turma/i, ["src/app/(site)/page.tsx", "src/app/(site)/experimental/page.tsx"]],
+      [/vaga/i, ["src/app/(site)/page.tsx", "src/app/(site)/experimental/experimental-form.tsx"]],
+      [/aula fixa/i, ["src/app/(admin)/grade/booking-forms.tsx"]],
+      [/reposição/i, ["src/app/(admin)/grade/booking-forms.tsx", "src/app/(admin)/creditos/page.tsx"]],
+      [/crédito de reposição/i, ["src/app/(admin)/creditos/page.tsx"]],
+      [/aula experimental/i, ["src/app/(site)/experimental/experimental-form.tsx", "src/app/(admin)/experimentais/page.tsx"]],
+      [/Avisar que não vou/, ["src/app/(admin)/grade/booking-forms.tsx"]],
+    ] as Array<[RegExp, string[]]>) {
+      const found = where.some((path) =>
+        term.test(files.find((file) => file.path === path)?.copy ?? ""),
+      );
+      expect(found, `vocabulário ausente: ${term} em ${where.join(", ")}`).toBe(true);
     }
   });
 
@@ -123,11 +126,26 @@ describe("voice", () => {
 
   it("bans the vacancy shortcuts", () => {
     // Vaga e sempre "N vagas livres de 8", nunca "N/8" nem barra de progresso.
-    for (const term of [
-      /\b\d+\s*\/\s*8\b/,
+    // A varredura le o codigo cru (sem comentarios): `{n}/8` ou <progress>
+    // ficariam invisiveis para quem so olha textos de JSX.
+    const paths = walk("src").filter((path) => !path.includes("__tests__"));
+    const shortcuts = [
+      /\d+\s*\/\s*8\b/,
       /role="progressbar"/,
       /<progress/i,
-    ]) {
+    ];
+    const offenses: string[] = [];
+    for (const path of paths) {
+      const source = readFileSync(path, "utf8")
+        .replace(/\/\*[\s\S]*?\*\//g, " ")
+        .replace(/^\s*\/\/.*$/gm, " ");
+      if (shortcuts.some((shortcut) => shortcut.test(source))) {
+        offenses.push(relative(".", path));
+      }
+    }
+    expect(offenses).toEqual([]);
+    // E a copia entregue continua sem os atalhos.
+    for (const term of shortcuts) {
       expect(find(term), `atalho de vaga: ${term}`).toHaveLength(0);
     }
   });
@@ -154,6 +172,31 @@ describe("voice", () => {
       copy.match(/[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}]/gu) ?? [],
     ).toEqual([]);
   });
+
+  it("addresses the reader as voce and keeps sentence case", () => {
+    // BRAND-38: a copy fala com "voce" (nunca "te"), em minuscula de frase.
+    const informal = /(^|[^\p{L}\p{N}_])(te|teu|tua)([^\p{L}\p{N}_]|$)/iu;
+    // Frase de titulo: duas palavras iniciadas por maiuscula nao sao titulo.
+    const titleCase = /\b[A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-zà-ú]{2,}[ \t]+[A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-zà-ú]{2,}\b/;
+    const informalFiles: string[] = [];
+    const shoutedFiles: string[] = [];
+    for (const file of files) {
+      for (const line of file.copy.split("\n")) {
+        const text = line.trim();
+        if (!text) continue;
+        if (informal.test(text)) informalFiles.push(`${file.path}: ${text}`);
+        if (titleCase.test(text)) shoutedFiles.push(`${file.path}: ${text}`);
+      }
+    }
+    expect(informalFiles).toEqual([]);
+    expect(shoutedFiles).toEqual([]);
+
+    const publicCopy = files
+      .filter((file) => file.path.includes("/(site)/") || file.path.includes("/login/"))
+      .map((file) => file.copy)
+      .join("\n");
+    expect(publicCopy).toMatch(/você/i);
+  });
 });
 
 describe("sweep", () => {
@@ -165,11 +208,19 @@ describe("sweep", () => {
     const palette = /-{2}yoguese-/;
     const hexUtility =
       /\b(?:bg|text|border|fill|stroke|from|via|to|ring|divide|outline|decoration|accent|caret|shadow)-\[#[0-9a-fA-F]{3,8}\]/;
+    // Cor solta em qualquer forma (style={{color:"#E8DED0"}}, fill="#a8b8a0"):
+    // fora do arquivo de tokens, nenhuma cor literal sobrevive.
+    const rawHex = /#[0-9a-fA-F]{3,8}\b/;
+    const tokenFile = "src\\app\\globals.css";
 
     const offenses = paths
       .filter((path) => {
-        const source = readFileSync(path, "utf8");
-        return palette.test(source) || hexUtility.test(source);
+        const source = readFileSync(path, "utf8")
+          .replace(/\/\*[\s\S]*?\*\//g, " ")
+          .replace(/^\s*\/\/.*$/gm, " ");
+        if (palette.test(source) || hexUtility.test(source)) return true;
+        if (path.includes("__tests__") || path.endsWith(tokenFile)) return false;
+        return rawHex.test(source);
       })
       .map((path) => relative(".", path));
 
