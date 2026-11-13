@@ -94,6 +94,7 @@ identidade; hoje a composição existe como número/ texto.
 4. The system SHALL offer the guide's duck sizes (xs, sm mini 4x2 for the admin calendar, md, lg) from one component, with identical shapes.  <!-- ubiquitous -->
 5. WHEN the admin calendar shows a time slot THEN the system SHALL show its 8 vacancies as the mini duck grid (`vagas.sm`) distinguishing fixed, makeup and experimental.  <!-- event-driven -->
 6. WHILE a student's own vacancy is marked (booking or pending experimental of that person) the system SHALL paint exactly that duck solid peach and no other.  <!-- state-driven -->
+7. IF a class holds more people than its eight places THEN the system SHALL still draw exactly eight ducks, keeping one duck for each kind present (fixed, makeup, experimental, own), and SHALL announce zero free places.  <!-- unwanted-behavior -->
 
 **Independent Test**: Render the experimental list and the admin grade: each turma
 shows 8 ducks with the right fill per composition; the accessible label reads the
@@ -245,6 +246,7 @@ quebre o build.
 | BRAND-10 | P1: Vagas em patinhos | Tasks | Pending |
 | BRAND-11 | P1: Vagas em patinhos | Tasks | Pending |
 | BRAND-12 | P1: Vagas em patinhos | Tasks | Pending |
+| BRAND-41 | P1: Vagas em patinhos | Tasks | Pending |
 | BRAND-13 | P1: Home pública | Tasks | Pending |
 | BRAND-14 | P1: Home pública | Tasks | Pending |
 | BRAND-15 | P1: Home pública | Tasks | Pending |
@@ -293,6 +295,7 @@ quebre o build.
 | Student area screen ("Oi, Marina", credits, fixed classes) | Not built - route does not exist; deferred with the student-area feature | y - AD-042 |
 | Admin week grid mock with example times and names | Same composition, real data from `/grade` | y - AD-042 |
 | Copy in the voice table uses example dates (12 dez, 18 dez) | Dates computed from the product's credit rules | y - AD-042 |
+| Small buttons `.btn.peq` (38px) and `.btn-txt` (36px) in the guide's CSS | Same look, 44px tall: BRAND-05 asks every control for a 44px touch target | y - BRAND-05 |
 
 ## Sources
 

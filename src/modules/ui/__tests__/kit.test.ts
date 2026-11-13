@@ -35,6 +35,12 @@ describe("Button", () => {
     expect(rule(".btn")).toMatch(/min-height:\s*48px/);
     // Anel de foco do guia
     expect(css).toMatch(/box-shadow:\s*var\(--foco\)/);
+    // BRAND-05: nenhuma variante de botao fica abaixo de 44px de alvo.
+    for (const selector of [".btn.peq", ".btn-txt"]) {
+      const altura = rule(selector).match(/min-height:\s*(\d+)px/);
+      expect(altura, `${selector} sem min-height`).not.toBeNull();
+      expect(Number(altura?.[1]), `${selector} abaixo de 44px`).toBeGreaterThanOrEqual(44);
+    }
   });
 
   it("renders the secondary and peach variants plus the small and disabled states", () => {
@@ -46,7 +52,7 @@ describe("Button", () => {
     expect(rule(".btn-pes")).toMatch(/background:\s*var\(--pessego\)/);
     const small = renderButton({ variant: "prim", small: true }, "Entrar");
     expect(small).toContain("peq");
-    expect(rule(".btn.peq")).toMatch(/min-height:\s*38px/);
+    expect(rule(".btn.peq")).toMatch(/min-height:\s*44px/);
     const disabled = renderButton(
       { variant: "prim", disabled: true },
       "Pedir aula experimental",
