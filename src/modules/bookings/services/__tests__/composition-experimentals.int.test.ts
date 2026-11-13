@@ -109,11 +109,16 @@ describe("composition with experimentals", () => {
     expect(approved.experimentalCount).toBe(1);
     expect(approved.availableSpots).toBe(1);
 
-    // Cancelada com direito, falta e convertida nao ocupam a vaga
+    // Nenhum outro status ocupa a vaga (EXP-42): cancelada com ou sem
+    // direito, falta, convertida, recusada e a tentativa duplicada deixam
+    // a composicao zerada. A pendente esta no outro titulo.
     for (const status of [
       "CANCELADA_COM_DIREITO",
+      "CANCELADA_SEM_DIREITO",
       "FALTA",
       "CONVERTIDA",
+      "RECUSADA",
+      "DUPLICADA",
     ] as const) {
       await pg.db
         .update(experimentals)
