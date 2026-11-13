@@ -1,0 +1,1 @@
+ALTER TABLE "students" ALTER COLUMN "enrollment_date" SET DEFAULT (now() AT TIME ZONE 'America/Sao_Paulo')::date;

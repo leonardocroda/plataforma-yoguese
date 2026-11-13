@@ -33,9 +33,12 @@ export const students = pgTable("students", {
   phone: text("phone").notNull(),
   email: text("email").notNull().unique(),
   birthDate: date("birth_date").notNull(),
+  // A data de matricula nasce com o dia de hoje NO FUSO DO ESTUDIO
+  // (America/Sao_Paulo): CURRENT_DATE usava o fuso da sessao do Postgres
+  // (UTC) e, depois das 21h em Sao Paulo, gravava o dia seguinte.
   enrollmentDate: date("enrollment_date")
     .notNull()
-    .default(sql`CURRENT_DATE`),
+    .default(sql`(now() AT TIME ZONE 'America/Sao_Paulo')::date`),
   planId: uuid("plan_id").references(() => plans.id),
   status: studentStatusEnum("status").notNull().default("ATIVO"),
   notes: text("notes"),
