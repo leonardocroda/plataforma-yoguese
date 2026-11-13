@@ -188,11 +188,11 @@ Phase 3:  T1 -> T8
 
 **Done when**:
 
-- [ ] Composition matches `captures/yogue-se-brand.html` (screen "Home pública"): staggered title, mascot + bolha, próxima aulas list with one duck row each and guide dividers; empty state shows the guide's sentence; loading shows "Respirando fundo…" (the screen keeps the existing occurrences query untouched)
-- [ ] Primary CTA navigates to `/experimental`; 390px stacks with no horizontal overflow
+- [x] Composition matches `captures/yogue-se-brand.html` (screen "Home pública"): staggered title, mascot + bolha, próxima aulas list with one duck row each and guide dividers; empty state shows the guide's sentence; loading shows "Respirando fundo…" (the screen keeps the existing occurrences query untouched)
+- [x] Primary CTA navigates to `/experimental`; 390px stacks with no horizontal overflow
 - [ ] Walk evidence recorded at the feature walk (step 9 - script `.specs/features/redesign-marca/walk.mjs`, captures `captures/home.running.png`, `captures/home-390.running.png`)
-- [ ] Build gate passes: `npm run build; npm run lint; npm test`
-- [ ] Test count: existing suite green (no deletions)
+- [x] Build gate passes: `npm run build; npm run lint; npm test`
+- [x] Test count: existing suite green (no deletions)
 
 **Tests**: none (route layer - walk + browser captures per the matrix)
 **Gate**: build
