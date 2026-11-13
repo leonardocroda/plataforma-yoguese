@@ -107,6 +107,12 @@ async function unthrottle(session) {
 }
 
 // ---------- Home publica (BRAND-13..BRAND-18) ----------
+// O primeiro acesso a uma rota compila no dev server e pode falhar uma vez
+// (cache do .next). O aquecimento tira essa corrida de dentro do walk.
+for (const url of [`${BASE}/`, `${BASE}/experimental`, `${BASE}/login`]) {
+  await page.goto(url, { waitUntil: "load" }).catch(() => {});
+}
+
 await page.goto(`${BASE}/`, { waitUntil: "load" });
 await shot("home");
 
@@ -334,6 +340,18 @@ await page.fill('input[name="password"]', ADMIN.password);
 await page.locator('button[type="submit"]').click();
 await page.waitForURL("**/grade", { timeout: 20000 });
 await page.waitForLoadState("load");
+await page.waitForSelector("text=Grade", { timeout: 30000 });
+// Aquecimento das rotas do admin: cada uma compila no primeiro acesso.
+for (const route of [
+  "/alunos",
+  "/planos",
+  "/creditos",
+  "/feriados",
+  "/experimentais",
+]) {
+  await page.goto(`${BASE}${route}`, { waitUntil: "load" }).catch(() => {});
+}
+await page.goto(`${BASE}/grade`, { waitUntil: "load" });
 await page.waitForSelector("text=Grade", { timeout: 30000 });
 await shot("admin-shell");
 const adminText = await body();
