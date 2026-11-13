@@ -105,11 +105,11 @@ Phase 3:  T1 -> T8
 
 **Done when**:
 
-- [ ] Every token of the guide exists with the exact value; the `--yoguese-*` variables are gone from the whole `src/` tree
-- [ ] Outfit is the only family and `--manchinhas` is only referenced by page/panel background rules, never by field, button, chip or toast rules
-- [ ] `prefers-reduced-motion` block present
-- [ ] Quick gate passes: `npx vitest run src/app/__tests__/brand-tokens.test.ts --reporter=verbose`
-- [ ] Test count: 4 tests pass (no silent deletions)
+- [x] Every token of the guide exists with the exact value; the `--yoguese-*` variables are gone from `globals.css` (the src-wide sweep is proven in T13)
+- [x] Outfit is the only family and `--manchinhas` is only referenced by page/panel background rules, never by field, button, chip or toast rules
+- [x] `prefers-reduced-motion` block present
+- [x] Quick gate passes: `npx vitest run src/app/__tests__/brand-tokens.test.ts --reporter=verbose`
+- [x] Test count: 4 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
@@ -341,17 +341,17 @@ Phase 3:  T1 -> T8
 
 ### T13: Voice pass and copy verification
 
-**What**: Sweep the touched screens to the guide voice - fixed vocabulary, no forbidden terms, sentence case, no emojis, humor only in success/empty/loading - and add `src/app/__tests__/brand-copy.test.ts` asserting it across the touched route files; also fix any copy drift found.
+**What**: Sweep the touched screens to the guide voice - fixed vocabulary, no forbidden terms, sentence case, no emojis, humor only in success/empty/loading - and add `src/app/__tests__/brand-copy.test.ts` asserting it across the touched route files (vocabulary, forbidden terms, vacancy shortcuts, humor placement, pt-BR without emojis, and the zero `--yoguese-*`/hex-literal sweep over `src/`); fix any copy drift found.
 **Where**: `src/app/__tests__/brand-copy.test.ts`
 **Depends on**: T5, T6, T7, T8, T9, T10, T11, T12
 **Reuses**: voice table of the guide; the touched route file list of this feature
-**Requirement**: BRAND-35, BRAND-36, BRAND-37, BRAND-38, BRAND-40
+**Requirement**: BRAND-04, BRAND-08, BRAND-35, BRAND-36, BRAND-37, BRAND-38
 
 **Done when**:
 
-- [ ] The copy test passes on every touched file: fixed vocabulary present, forbidden vocabulary absent, no emoji, no apology/humor in error strings
+- [ ] The copy test passes on every touched file: fixed vocabulary present, forbidden vocabulary absent, no "N/8" vacancy shortcut, no emoji, no apology/humor in error strings, and zero PRD palette variables or `#[hex]` literals under `src/`
 - [ ] Quick gate passes: `npx vitest run src/app/__tests__/brand-copy.test.ts --reporter=verbose`
-- [ ] Test count: 4 tests pass (no silent deletions)
+- [ ] Test count: 6 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
@@ -372,7 +372,7 @@ Proof: run brand | ✓ src/app/__tests__/brand-tokens.test.ts > brand tokens > s
 Proof: run brand | ✓ src/app/__tests__/brand-tokens.test.ts > brand tokens > applies the paper texture only to page and panel backgrounds
 
 **C4** - zero occurrences of `--yoguese-off-white`, `--yoguese-bege`, `--yoguese-salvia`, `--yoguese-cinza` and `bg-[#` literals under `src/` (BRAND-04, AC 4)
-Proof: run brand | ✓ src/app/__tests__/brand-tokens.test.ts > brand tokens > keeps zero PRD palette variables or hex literals in src
+Proof: run brand | ✓ src/app/__tests__/brand-copy.test.ts > sweep > keeps zero PRD palette variables or hex literals in src
 
 **C5** - every interactive control shows the guide focus ring (3px papel + 5px preto) and a >=44px touch target (BRAND-05, AC 5)
 Proof: run brand | ✓ src/modules/ui/__tests__/kit.test.ts > Button > renders the pill with the guide focus ring and the 48px minimum height
@@ -387,7 +387,7 @@ Proof: run brand | ✓ src/modules/ui/__tests__/vacancy-ducks.test.ts > VacancyD
 Proof: run brand | ✓ src/modules/ui/__tests__/vacancy-ducks.test.ts > VacancyDucks > paints the five guide states
 
 **C9** - no screen renders vacancies as "N/8" text or a progress bar (BRAND-08, AC 2)
-Proof: run brand | ✓ src/app/__tests__/brand-copy.test.ts > voice > bans the vacancy shortcuts and the forbidden vocabulary
+Proof: run brand | ✓ src/app/__tests__/brand-copy.test.ts > voice > bans the vacancy shortcuts
 
 **C10** - each duck group announces "N vagas livres de 8" to assistive tech with no visible duplicate (BRAND-09, AC 3)
 Proof: run brand | ✓ src/modules/ui/__tests__/vacancy-ducks.test.ts > VacancyDucks > announces the free-count label without visible text
@@ -468,7 +468,7 @@ Proof: walk - sign in with the seeded admin and `/grade` renders
 Proof: run brand | ✓ src/app/__tests__/brand-copy.test.ts > voice > uses the fixed vocabulary of the guide
 
 **C36** - zero forbidden vocabulary - slot, booking, sessão, agendamento recorrente, "Submit", "Enviar", "OK" as label, "Ocorreu um erro inesperado" (BRAND-36, AC 2)
-Proof: run brand | ✓ src/app/__tests__/brand-copy.test.ts > voice > bans the vacancy shortcuts and the forbidden vocabulary
+Proof: run brand | ✓ src/app/__tests__/brand-copy.test.ts > voice > bans the forbidden vocabulary
 
 **C37** - humor appears only in success/empty/loading copy - never in errors, deadlines, charges or the 24h rule (BRAND-37, AC 3)
 Proof: run brand | ✓ src/app/__tests__/brand-copy.test.ts > voice > keeps humor out of error and deadline copy

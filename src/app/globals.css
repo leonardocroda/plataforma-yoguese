@@ -1,8 +1,126 @@
 @import "tailwindcss";
 
+/* ============ TOKENS DA MARCA (guia: captures/yogue-se-brand.html) ============
+   A paleta do PRD (off-white, bege, verde salvia) foi substituida por esta
+   (AD-041). Nenhuma cor ou fonte nova e inventada: os valores vem do guia. */
 :root {
-  --yoguese-off-white: #faf8f4;
-  --yoguese-bege: #e8ded0;
-  --yoguese-salvia: #a8b8a0;
-  --yoguese-cinza: #6b6b6b;
+  --papel: #f3f2f1; /* fundo, com textura de manchinhas */
+  --papel-2: #eae9e7; /* faixa/painel mais escuro */
+  --pena: #fffbf9; /* campos, itens de lista, corpo do pato */
+  --preto: #000; /* titulos gigantes, acao principal */
+  --grafite: #373737; /* logo e texto de apoio forte */
+  --cinza: #6b6a68; /* texto secundario */
+  --linha: #d9d7d4;
+  --pessego: #ffc798; /* bico e pes do pato, circulos pontilhados */
+  --pessego-claro: #f3e2d4;
+  --pessego-forte: #f29a55; /* so em pontilhado e detalhes */
+  --erro: #b3261e;
+  --erro-claro: #f6dad6;
+
+  --f: "Outfit", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --r-pill: 999px; /* botoes e chips */
+  --r-lg: 28px; /* telas e paineis */
+  --r-md: 16px; /* campos e itens de lista */
+  --r-sm: 10px;
+  --foco: 0 0 0 3px var(--papel), 0 0 0 5px var(--preto);
+
+  --manchinhas: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><filter id='n' x='0' y='0' width='100%25' height='100%25'><feTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='1' seed='7'/><feColorMatrix values='0 0 0 0 .52  0 0 0 0 .52  0 0 0 0 .5  0 0 0 18 -13.6'/></filter><rect width='320' height='320' filter='url(%23n)'/></svg>");
+}
+
+/* ============ BASE ============ */
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+}
+body {
+  margin: 0;
+  font-family: var(--f);
+  font-weight: 400;
+  font-size: 16.5px;
+  line-height: 1.6;
+  color: var(--preto);
+  background-color: var(--papel);
+  -webkit-font-smoothing: antialiased;
+}
+/* A textura de papel vive no fundo da pagina (e de paineis inteiros),
+   nunca dentro de campos, botoes ou chips (BRAND-03). */
+.papel,
+.moldura,
+.celular {
+  background-color: var(--papel);
+  background-image: var(--manchinhas);
+}
+.papel-2 {
+  background-color: var(--papel-2);
+}
+h1,
+h2,
+h3,
+h4,
+h5 {
+  font-family: var(--f);
+  font-weight: 800;
+  line-height: 1;
+  margin: 0;
+  letter-spacing: -0.03em;
+}
+p {
+  margin: 0;
+}
+a {
+  color: inherit;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+:focus-visible {
+  outline: none;
+  box-shadow: var(--foco);
+  border-radius: var(--r-sm);
+}
+.mut {
+  color: var(--cinza);
+}
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============ BOLHA (circulo pontilhado pessego) ============
+   Fica atras do mascote ou do titulo, cortado pela borda. No maximo dois
+   por tela, nunca atras de texto pequeno nem de formulario. */
+.bolha {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    radial-gradient(circle, var(--pessego) 0 1px, transparent 1.5px) 0 0/5px 5px,
+    radial-gradient(circle, rgba(255, 199, 152, 0.2), rgba(255, 199, 152, 0.2));
+  -webkit-mask-image: radial-gradient(
+    circle at 70% 25%,
+    rgba(0, 0, 0, 0.25) 0,
+    #000 78%
+  );
+  mask-image: radial-gradient(
+    circle at 70% 25%,
+    rgba(0, 0, 0, 0.25) 0,
+    #000 78%
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
 }
