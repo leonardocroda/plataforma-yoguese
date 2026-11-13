@@ -209,10 +209,10 @@ Phase 3:  T1 -> T8
 
 **Done when**:
 
-- [ ] Screen matches the guide reference; selected occurrence paints its own duck peach; duplicate phone shows "Já existe uma aula experimental para este telefone."; incomplete phone shows the guide's help in error state; confirmation card shows "Pedido enviado" + mascot + the guide sentence; price R$ 45,00 (AD-040); no double submit
+- [x] Screen matches the guide reference; selected occurrence paints its own duck peach; duplicate phone shows "Já existe uma aula experimental para este telefone."; incomplete phone shows the guide's help in error state; confirmation card shows "Pedido enviado" + mascot + the guide sentence; price R$ 45,00 (AD-040); no double submit
 - [ ] Walk evidence recorded at the feature walk (step 9 - captures `captures/experimental.running.png`, `captures/experimental-390.running.png`, `captures/experimental-confirm.running.png`)
-- [ ] Build gate passes: `npm run build; npm run lint; npm test`
-- [ ] Test count: existing suite green (no deletions)
+- [x] Build gate passes: `npm run build; npm run lint; npm test`
+- [x] Test count: existing suite green (no deletions)
 
 **Tests**: none (route layer - walk + browser captures per the matrix)
 **Gate**: build
