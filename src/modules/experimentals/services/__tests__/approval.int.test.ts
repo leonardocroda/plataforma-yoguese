@@ -3,6 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   classSessions,
   classSlots,
+  classTypes,
   experimentalReschedules,
   experimentals,
 } from "../../../../db/schema";
@@ -189,12 +190,32 @@ describe("experimental approval", () => {
       expect(inativaResult.error).toContain("inativa");
     }
 
+    // Modalidade inativa: a recusa e o branch de classType.status, com a
+    // turma ainda ativa (EXP-21)
+    const modalidadeInativa = await occurrence(6, 2);
+    await pg.db
+      .update(classTypes)
+      .set({ status: "INATIVA" })
+      .where(eq(classTypes.id, modalidadeInativa.classTypeId));
+    const emModalidadeInativa = await createExperimental(pg.db, {
+      classSessionId: modalidadeInativa.sessionId,
+      status: "PENDENTE",
+      phone: "(11) 93333-2222",
+    });
+    const modalidadeInativaResult = await approveExperimental(pg.db, {
+      experimentalId: emModalidadeInativa.id,
+    });
+    expect(modalidadeInativaResult.ok).toBe(false);
+    if (!modalidadeInativaResult.ok) {
+      expect(modalidadeInativaResult.error).toContain("modalidade inativa");
+    }
+
     // Todas as solicitacoes continuam pendentes (EXP-21)
     const rows = await pg.db
       .select()
       .from(experimentals)
       .where(eq(experimentals.status, "PENDENTE"));
-    expect(rows).toHaveLength(4);
+    expect(rows).toHaveLength(5);
     expect(rows.every((row) => row.approvedAt === null)).toBe(true);
   });
 
