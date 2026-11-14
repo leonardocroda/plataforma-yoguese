@@ -148,9 +148,9 @@ apagar linhas; reativar e ver as próximas ocorrências voltarem.
 | --- | --- | --- | --- |
 | TURM-01 | P1: Entrada no shell e listagem | Tasks | Implementing |
 | TURM-02 | P1: Entrada no shell e listagem | Tasks | Implementing |
-| TURM-03 | P1: Gestão de modalidades | Design | Pending |
+| TURM-03 | P1: Gestão de modalidades | Tasks | Implementing |
 | TURM-04 | P1: Gestão de modalidades | Tasks | Implementing |
-| TURM-05 | P1: Gestão de modalidades | Design | Pending |
+| TURM-05 | P1: Gestão de modalidades | Tasks | Implementing |
 | TURM-06 | P1: Gestão de modalidades | Design | Pending |
 | TURM-07 | P1: Gestão de modalidades | Tasks | Implementing |
 | TURM-08 | P1: Cadastro de turma | Tasks | Implementing |

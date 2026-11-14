@@ -180,9 +180,9 @@ T4 -> T7
 
 **Done when**:
 
-- [ ] Criar modalidade pela tela funciona e ela aparece na listagem
-- [ ] Editar nome/status persiste e reflete
-- [ ] Gate: `npm run build; npm run lint`
+- [x] Criar modalidade pela tela funciona e ela aparece na listagem
+- [x] Editar nome/status persiste e reflete
+- [x] Gate: `npm run build; npm run lint`
 
 **Tests**: none (regras provadas em T1; tela provada por walk)
 **Gate**: build

@@ -3,6 +3,7 @@ import {
   listAllSlots,
 } from "../../../modules/classes/services/classes";
 import { Chip } from "../../../modules/ui/components/kit";
+import { CreateModalityForm, ModalityCardForms } from "./modality-forms";
 
 export const dynamic = "force-dynamic";
 
@@ -48,7 +49,12 @@ export default async function AdminClassesPage() {
         </p>
       </header>
 
-      <section>
+      <section className="max-w-[520px] rounded-[var(--r-lg)] border-2 border-[var(--preto)] bg-[var(--pena)] p-5">
+        <h2 className="text-[22px]">Criar modalidade</h2>
+        <CreateModalityForm />
+      </section>
+
+      <section className="mt-8">
         <h2 className="text-[22px]">Modalidades</h2>
         {classTypes.length === 0 ? (
           <p className="mt-2 text-[15px] text-[color:var(--cinza)]">
@@ -59,14 +65,21 @@ export default async function AdminClassesPage() {
             {classTypes.map((classType) => (
               <li
                 key={classType.id}
-                className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t border-t-[var(--linha)] py-4"
+                className="border-t border-t-[var(--linha)] py-4"
               >
-                <p className="text-[19px] font-extrabold tracking-[-0.02em]">
-                  {classType.name}
-                </p>
-                <Chip variant={classType.status === "ATIVA" ? undefined : "cl"}>
-                  {classType.status === "ATIVA" ? "Ativa" : "Inativa"}
-                </Chip>
+                <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+                  <p className="text-[19px] font-extrabold tracking-[-0.02em]">
+                    {classType.name}
+                  </p>
+                  <Chip variant={classType.status === "ATIVA" ? undefined : "cl"}>
+                    {classType.status === "ATIVA" ? "Ativa" : "Inativa"}
+                  </Chip>
+                </div>
+                <ModalityCardForms
+                  classTypeId={classType.id}
+                  name={classType.name}
+                  status={classType.status}
+                />
               </li>
             ))}
           </ul>
