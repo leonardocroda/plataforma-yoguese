@@ -323,16 +323,17 @@ T12 -> T13
 
 **Done when**:
 
-- [ ] `/grade` sem parâmetros renderiza a semana corrente como hoje (comportamento preservado)
-- [ ] Abas, setas e seletor constroem URLs corretas; navegar a D+14 renderiza a semana que o contém
-- [ ] Clicar em ocorrência seleciona via `?ocorrencia=` e sobrevive à navegação
-- [ ] `npm run build; npm run lint` limpos
-- [ ] Test count: n/a (tela — prova de walk nos checks)
+- [x] `/grade` sem parâmetros renderiza a semana corrente como hoje (comportamento preservado)
+- [x] Abas, setas e seletor constroem URLs corretas; navegar a D+14 renderiza a semana que o contém
+- [x] Clicar em ocorrência seleciona via `?ocorrencia=` e sobrevive à navegação
+- [x] `npm run build; npm run lint` limpos
+- [x] Test count: n/a (tela — prova de walk nos checks)
 
 **Tests**: none
 **Gate**: build
 
 **Commit**: `feat(grade): URL-driven calendar navigation with tabs, arrows and date picker`
+**Status**: ✅ Complete
 
 ---
 

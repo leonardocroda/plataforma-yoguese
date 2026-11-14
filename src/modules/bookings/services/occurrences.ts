@@ -64,6 +64,10 @@ export type OccurrenceRow = {
   classBlocked: boolean;
   /** Qual bloqueio cobre a ocorrencia, quando houver. */
   blockSource: OccurrenceBlockSource | null;
+  /** Reservas canceladas pelo estudio nesta ocorrencia. */
+  studioCancelled: number;
+  /** Creditos de cancelamento gerados pelo estudio nesta ocorrencia. */
+  studioCredits: number;
   credits: Credit[];
 };
 
@@ -183,6 +187,7 @@ export async function listOccurrences(
               classSessionId: bookings.classSessionId,
               bookingType: bookings.bookingType,
               status: bookings.status,
+              cancelledBy: bookings.cancelledBy,
               studentStatus: students.status,
             })
             .from(bookings)
@@ -305,6 +310,13 @@ export async function listOccurrences(
       notices: participants.notices,
       classBlocked: source === "classSlot",
       blockSource: source,
+      studioCancelled: sessionBookings.filter(
+        (booking) =>
+          booking.status === "CANCELADA" && booking.cancelledBy === "ESTUDIO",
+      ).length,
+      studioCredits: sessionCredits.filter(
+        (credit) => credit.source === "CANCELAMENTO_ESTUDIO",
+      ).length,
       credits: sessionCredits,
     });
   }

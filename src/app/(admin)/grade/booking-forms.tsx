@@ -19,6 +19,7 @@ import {
   registerNonAttendanceAction,
 } from "../../../modules/credits/actions";
 import { weekdayOf } from "../../../modules/classes/domain/occurrences";
+import type { CalendarView } from "../../../modules/bookings/domain/calendar";
 import { Button, Chip, Field, Toast } from "../../../modules/ui/components/kit";
 import { VacancyDucks } from "../../../modules/ui/components/vacancy-ducks";
 
@@ -139,16 +140,22 @@ export function GradeBoard({
   students,
   creditsByStudent,
   period,
+  selectedKey,
+  view,
+  date,
 }: {
   days: GradeDay[];
   students: StudentOption[];
   creditsByStudent: Record<string, CreditOption[]>;
   period: string;
+  selectedKey?: string;
+  view: CalendarView;
+  date: string;
 }) {
+  const router = useRouter();
   const occurrences = days.flatMap((day) => day.occurrences);
-  const [chosenKey, setChosenKey] = useState(occurrences[0]?.key ?? "");
   const current =
-    occurrences.find((occurrence) => occurrence.key === chosenKey) ??
+    occurrences.find((occurrence) => occurrence.key === selectedKey) ??
     occurrences[0];
   const times = Array.from(
     new Set(occurrences.map((occurrence) => occurrence.startTime)),
@@ -210,7 +217,14 @@ export function GradeBoard({
                             type="button"
                             aria-pressed={occurrence.key === current?.key}
                             aria-label={`${occurrenceTitle(occurrence)}, ${occurrence.classTypeName}, ${occurrence.availableSpots} vagas livres de ${occurrence.capacity}`}
-                            onClick={() => setChosenKey(occurrence.key)}
+                            onClick={() => {
+                              const params = new URLSearchParams({
+                                view,
+                                data: date,
+                                ocorrencia: occurrence.key,
+                              });
+                              router.push(`/grade?${params.toString()}`);
+                            }}
                             className={
                               occurrence.key === current?.key
                                 ? SLOT_PRESSED
