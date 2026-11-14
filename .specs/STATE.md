@@ -362,6 +362,34 @@ merge if the mainline agent took the number.
 
 Snapshot - updated when work pauses.
 
+### Handoff snapshot (2026-11-14) - `redesign-marca` FECHADA
+
+- Feature `redesign-marca` EXECUTADA e FECHADA: 13 tasks de redesign (T1-T13) mais uma commit
+  por achado do Verifier, 36 commits sobre a base 698374c na branch `redesign-marca`, mesclada
+  na `main` (4ebae5c) e enviada (main = 4c4fe32).
+- O que entrega: a arte do guia de marca em todas as telas existentes - home publica,
+  `/experimental`, `/login` e o admin (grade, alunos, experimentais, planos, creditos, feriados).
+  Tokens em `globals.css`, kit de UI em `src/modules/ui` (Button, Field, Chip, Toast,
+  VacancyDucks), lotacao em patinhos, voz do guia e a area da aluna adiada (a rota nao existe).
+- Decisoes: AD-041 (o guia substitui a paleta do PRD), AD-042 (as diferencas aprovadas com o
+  guia) e AD-043 (os botoes pequenos mantem a arte do guia e crescem para 44px, o piso de alvo
+  de toque do BRAND-05).
+- Verifier (author != verifier): o round 1 devolveu FAIL com 9 achados, fechados um a um
+  (6734b9d, 7e9ba82, 81b860c, 48f238c, 3a3b30b, 69a21bd, da8c7a8, 9581d26, 7bade6d, 1f98d07);
+  o round final devolveu PASS com 41/41 checks (C1-C41) e os 9 achados com `Closed` apontando
+  o commit que os fecha. `verification.md` versionado nesta `main`.
+- Provas: `check_proofs.py` 44 pass / 0 fail com arvore limpa, `validate_verification.py`
+  0 erro / 0 warning, build e lint limpos e a suite verde (58 arquivos, 363 testes). O walk de
+  telas foi de 30/30 para 47/47 asserts, e o proprio walk devolve o banco de dev ao estado
+  inicial.
+- Ressalva registrada: toda sessao de juiz de telas foi recusada pelo filtro de seguranca da
+  ferramenta, entao o refresh do `screens.md` depois do round 2 (a copy "voce" e o piso de 44px)
+  foi do autor e esta marcado como tal no proprio arquivo; os 16 vereditos continuam sendo os
+  do juiz independente do round 2.
+- Merge na `main`: 3 conflitos, todos na camada de banco - as duas branches criaram a migracao
+  0004 com SQL byte-identico; mantida a migracao da `main` e nada do dominio da `main` foi
+  sobrescrito (`git diff main -- src/modules src/db` vazio).
+
 ### Handoff snapshot (2026-11-12) - `core-experimentais` FECHADA
 
 - Feature `core-experimentais` EXECUTADA e FECHADA: 26 tasks (T1-T26) em 4 fases, uma commit
