@@ -1,11 +1,17 @@
-import { asc, eq } from "drizzle-orm";
-import { holidays, studioClosures } from "../../../db/schema";
+import { and, asc, eq, gte, lte } from "drizzle-orm";
+import {
+  classDateBlocks,
+  classSlots,
+  holidays,
+  studioClosures,
+} from "../../../db/schema";
 import { DbClient } from "../../bookings/services/sessions";
 import { reconcileBlockedOccurrences } from "../../bookings/services/blocks";
 import { todayInStudio } from "../domain/occurrences";
 
 export type Holiday = typeof holidays.$inferSelect;
 export type StudioClosure = typeof studioClosures.$inferSelect;
+export type ClassDateBlock = typeof classDateBlocks.$inferSelect;
 
 export type BlockResult<T> =
   | { ok: true; value: T }
@@ -232,6 +238,136 @@ export async function listHolidays(db: DbClient): Promise<Holiday[]> {
 /** Os recessos para a tela, por inicio crescente (FER-16). */
 export async function listStudioClosures(db: DbClient): Promise<StudioClosure[]> {
   return db.select().from(studioClosures).orderBy(asc(studioClosures.startDate));
+}
+
+/**
+ * Bloqueia uma turma em uma data especifica (CAL-18). A turma precisa
+ * existir e estar ATIVA. O registro e unico por turma e data. Uma data
+ * passada e aceita como registro historico, mas nao altera a grade passada
+ * (AD-029): o reconcilio trabalha apenas de hoje em diante.
+ */
+export async function blockClassSlotDate(
+  db: DbClient,
+  input: { classSlotId: string; date: string; reason?: string },
+  now: Date = new Date(),
+): Promise<BlockResult<ClassDateBlock>> {
+  const [slot] = await db
+    .select()
+    .from(classSlots)
+    .where(eq(classSlots.id, input.classSlotId));
+  if (!slot) {
+    return {
+      ok: false,
+      error: "turma nao encontrada",
+      field: "classSlotId",
+    };
+  }
+  if (slot.status !== "ATIVA") {
+    return {
+      ok: false,
+      error: "turma inativa nao pode ser bloqueada",
+      field: "classSlotId",
+    };
+  }
+
+  const [created] = await db
+    .insert(classDateBlocks)
+    .values({
+      classSlotId: input.classSlotId,
+      sessionDate: input.date,
+      reason: input.reason ?? null,
+      createdAt: now,
+      updatedAt: now,
+    })
+    .onConflictDoNothing({
+      target: [classDateBlocks.classSlotId, classDateBlocks.sessionDate],
+    })
+    .returning();
+  if (!created) {
+    return {
+      ok: false,
+      error: "ja existe bloqueio para esta turma nesta data",
+      field: "date",
+    };
+  }
+
+  await reconcileClassSlotDate(db, input.date, now);
+  return { ok: true, value: created };
+}
+
+/**
+ * Remove fisicamente o bloqueio de uma turma em uma data (AD-033). As
+ * ocorrencias de hoje em diante voltam a AGENDADA somente quando nenhum
+ * outro bloqueio cobre a data; as reservas canceladas nao sao restauradas
+ * (AD-027).
+ */
+export async function unblockClassSlotDate(
+  db: DbClient,
+  input: { classSlotId: string; date: string },
+  now: Date = new Date(),
+): Promise<BlockResult<{ id: string }>> {
+  const [existing] = await db
+    .select()
+    .from(classDateBlocks)
+    .where(
+      and(
+        eq(classDateBlocks.classSlotId, input.classSlotId),
+        eq(classDateBlocks.sessionDate, input.date),
+      ),
+    );
+  if (!existing) {
+    return {
+      ok: false,
+      error: "bloqueio da turma nesta data nao encontrado",
+      field: "date",
+    };
+  }
+
+  await db
+    .delete(classDateBlocks)
+    .where(eq(classDateBlocks.id, existing.id));
+  await reconcileClassSlotDate(db, input.date, now);
+
+  return { ok: true, value: { id: existing.id } };
+}
+
+/** Os bloqueios por turma/data na janela, com extremos inclusos. */
+export async function listClassDateBlocks(
+  db: DbClient,
+  input: { from: string; to: string },
+): Promise<ClassDateBlock[]> {
+  if (input.from > input.to) return [];
+
+  return db
+    .select()
+    .from(classDateBlocks)
+    .where(
+      and(
+        gte(classDateBlocks.sessionDate, input.from),
+        lte(classDateBlocks.sessionDate, input.to),
+      ),
+    )
+    .orderBy(
+      asc(classDateBlocks.sessionDate),
+      asc(classDateBlocks.classSlotId),
+    );
+}
+
+/** Reconcilia somente a data informada, clampada para hoje em diante. */
+async function reconcileClassSlotDate(
+  db: DbClient,
+  date: string,
+  now: Date,
+): Promise<void> {
+  const today = todayInStudio(now);
+  await reconcileBlockedOccurrences(
+    db,
+    {
+      fromDate: date > today ? date : today,
+      toDate: date,
+    },
+    now,
+  );
 }
 
 /** O menor entre duas datas "YYYY-MM-DD" clampado para "today" quando menor. */

@@ -1,5 +1,7 @@
 "use server";
 
+import { eq } from "drizzle-orm";
+import { users } from "../../db/schema";
 import type { BookingType } from "../bookings/services/bookings";
 import { createBooking as createBookingService } from "../bookings/services/bookings";
 import type { DbClient } from "../bookings/services/sessions";
@@ -17,10 +19,12 @@ import {
   updateSlot as updateSlotService,
 } from "./services/classes";
 import {
+  blockClassSlotDate as blockClassSlotDateService,
   createHoliday as createHolidayService,
   createStudioClosure as createStudioClosureService,
   deleteHoliday as deleteHolidayService,
   deleteStudioClosure as deleteStudioClosureService,
+  unblockClassSlotDate as unblockClassSlotDateService,
   updateHoliday as updateHolidayService,
   updateStudioClosure as updateStudioClosureService,
 } from "./services/blocks";
@@ -39,6 +43,20 @@ import {
 async function dbClient(): Promise<DbClient> {
   const { db } = await import("../../db");
   return db;
+}
+
+/**
+ * Sessao + rotulo da admin logada. O guard roda antes de qualquer leitura
+ * no banco; o rotulo fica disponivel para a auditoria das operacoes.
+ */
+async function adminContext(): Promise<{ db: DbClient; adminLabel: string }> {
+  const session = await requireAdminSession();
+  const db = await dbClient();
+  const [admin] = await db
+    .select({ name: users.name })
+    .from(users)
+    .where(eq(users.id, session.userId));
+  return { db, adminLabel: admin?.name ?? "admin" };
 }
 
 // ---- modalidades (RES-05) ----
@@ -163,4 +181,25 @@ export async function updateStudioClosureAction(input: {
 export async function deleteStudioClosureAction(id: string) {
   await requireAdminSession();
   return deleteStudioClosureService(await dbClient(), { id });
+}
+
+// ---- bloqueio por turma/data (CAL-18 a CAL-21) ----
+
+/** Bloqueia uma turma em uma data especifica. */
+export async function blockClassSlotDateAction(input: {
+  classSlotId: string;
+  date: string;
+  reason?: string;
+}) {
+  const { db } = await adminContext();
+  return blockClassSlotDateService(db, input);
+}
+
+/** Remove o bloqueio de uma turma em uma data especifica. */
+export async function unblockClassSlotDateAction(input: {
+  classSlotId: string;
+  date: string;
+}) {
+  const { db } = await adminContext();
+  return unblockClassSlotDateService(db, input);
 }

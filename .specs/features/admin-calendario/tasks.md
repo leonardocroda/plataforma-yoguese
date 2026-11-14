@@ -225,18 +225,19 @@ T12 -> T13
 
 **Done when**:
 
-- [ ] CAL-18: bloquear torna as ocorrências da turma na data BLOQUEADAS, cancela as reservas ativas, devolve o crédito RESERVADO da reposição com vencimento original e não gera crédito de estúdio
-- [ ] CAL-19: remover o bloqueio devolve as cobertas de hoje em diante a AGENDADA e não restaura as reservas canceladas
-- [ ] CAL-20: cancelamento pelo estúdio em ocorrência bloqueada por turma/data é recusado com mensagem clara
-- [ ] CAL-21: com feriado E bloqueio de slot cobrindo, a data segue bloqueada; liberada somente quando nenhum cobre
-- [ ] Guarda de data passada: bloqueio registrado em data passada não muda ocorrência alguma
-- [ ] Gate check passes: `npm test`
-- [ ] Test count: suíte completa verde
+- [x] CAL-18: bloquear torna as ocorrências da turma na data BLOQUEADAS, cancela as reservas ativas, devolve o crédito RESERVADO da reposição com vencimento original e não gera crédito de estúdio
+- [x] CAL-19: remover o bloqueio devolve as cobertas de hoje em diante a AGENDADA e não restaura as reservas canceladas
+- [x] CAL-20: cancelamento pelo estúdio em ocorrência bloqueada por turma/data é recusado com mensagem clara
+- [x] CAL-21: com feriado E bloqueio de slot cobrindo, a data segue bloqueada; liberada somente quando nenhum cobre
+- [x] Guarda de data passada: bloqueio registrado em data passada não muda ocorrência alguma
+- [x] Gate check passes: `npm test`
+- [x] Test count: suíte completa verde
 
 **Tests**: integration
 **Gate**: full
 
 **Commit**: `feat(classes): block and unblock a class slot on a specific date`
+**Status**: ✅ Complete
 
 ---
 

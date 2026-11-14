@@ -1,13 +1,39 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
-import { bookings, classSessions, credits, holidays, studioClosures } from "../../../../db/schema";
+import {
+  bookings,
+  classDateBlocks,
+  classSessions,
+  classSlots,
+  credits,
+  holidays,
+  studioClosures,
+} from "../../../../db/schema";
 import { createStudents, createTestClass, clearTables, grantTestCredit } from "../../../../test/fixtures";
 import { PostgresTestInstance, startPostgres } from "../../../../test/postgres";
 import { addDays, nextOccurrence, todayInStudio } from "../../domain/occurrences";
 import { materializeSession } from "../../../bookings/services/sessions";
 import { createBooking } from "../../../bookings/services/bookings";
+import { reconcileBlockedOccurrences } from "../../../bookings/services/blocks";
+import { cancelOccurrenceByStudio } from "../../../credits/services/cancellations";
+import { grantCredit } from "../../../credits/services/credits";
 import { createEnrollment } from "../../../students/services/enrollments";
-import { createHoliday, createStudioClosure, updateHoliday, deleteHoliday, updateStudioClosure, deleteStudioClosure, listHolidays, listStudioClosures } from "../blocks";
+import {
+  blockClassSlotDate,
+  createHoliday,
+  createStudioClosure,
+  deleteHoliday,
+  deleteStudioClosure,
+  listClassDateBlocks,
+  listHolidays,
+  listStudioClosures,
+  unblockClassSlotDate,
+  updateHoliday,
+  updateStudioClosure,
+} from "../blocks";
+
+const BLOCK_NOW = new Date("2026-11-14T15:00:00.000Z");
+const BLOCK_TODAY = todayInStudio(BLOCK_NOW);
 
 describe("blocks", () => {
   let pg: PostgresTestInstance;
@@ -559,5 +585,342 @@ describe("blocks", () => {
       "Recesso de inverno",
       "Recesso de julho",
     ]);
+  });
+
+  it("blocks a class slot on the date without granting studio credits (CAL-18)", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const date = nextOccurrence({ weekday: 3 }, BLOCK_TODAY);
+    const [fixedStudent, makeupStudent] = await createStudents(pg.db, 2);
+    const enrollment = await createEnrollment(pg.db, {
+      studentId: fixedStudent,
+      classSlotId: slotId,
+      startDate: date,
+    });
+    expect(enrollment.ok).toBe(true);
+    const materialized = await materializeSession(
+      pg.db,
+      { classSlotId: slotId, date },
+      BLOCK_NOW,
+    );
+    expect(materialized.ok).toBe(true);
+    const granted = await grantCredit(pg.db, {
+      studentId: makeupStudent,
+      source: "CONCESSAO_MANUAL",
+      reason: "Credito de teste",
+      adminLabel: "testes",
+      generatedAt: BLOCK_NOW,
+    });
+    expect(granted.ok).toBe(true);
+    if (!granted.ok) return;
+    const creditId = granted.value.credit.id;
+    const [creditBefore] = await pg.db
+      .select()
+      .from(credits)
+      .where(eq(credits.id, creditId));
+    const booked = await createBooking(
+      pg.db,
+      {
+        studentId: makeupStudent,
+        classSlotId: slotId,
+        date,
+        type: "MAKEUP",
+        creditId,
+      },
+      BLOCK_NOW,
+    );
+    expect(booked.ok).toBe(true);
+
+    const blocked = await blockClassSlotDate(
+      pg.db,
+      {
+        classSlotId: slotId,
+        date,
+        reason: "Professora ausente",
+      },
+      BLOCK_NOW,
+    );
+
+    expect(blocked.ok).toBe(true);
+    if (blocked.ok) {
+      expect(blocked.value.classSlotId).toBe(slotId);
+      expect(blocked.value.sessionDate).toBe(date);
+      expect(blocked.value.reason).toBe("Professora ausente");
+    }
+    const [session] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.classSlotId, slotId));
+    expect(session.status).toBe("BLOQUEADA");
+    const [booking] = await pg.db
+      .select()
+      .from(bookings)
+      .where(eq(bookings.id, booked.ok ? booked.value.id : ""));
+    expect(booking.status).toBe("CANCELADA");
+    expect(booking.cancelledBy).toBe("ESTUDIO");
+    const [creditAfter] = await pg.db
+      .select()
+      .from(credits)
+      .where(eq(credits.id, creditId));
+    expect(creditAfter.status).toBe("DISPONIVEL");
+    expect(creditAfter.expiresAt.getTime()).toBe(
+      creditBefore.expiresAt.getTime(),
+    );
+    expect(creditAfter.usedBookingId).toBeNull();
+
+    const storedCredits = await pg.db.select().from(credits);
+    expect(storedCredits).toHaveLength(1);
+    expect(
+      storedCredits.some(
+        (credit) => credit.source === "CANCELAMENTO_ESTUDIO",
+      ),
+    ).toBe(false);
+    const fixedCredits = await pg.db
+      .select()
+      .from(credits)
+      .where(eq(credits.studentId, fixedStudent));
+    expect(fixedCredits).toHaveLength(0);
+  });
+
+  it("unblocks the class slot without restoring cancelled bookings (CAL-19)", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const date = nextOccurrence({ weekday: 3 }, BLOCK_TODAY);
+    const [student] = await createStudents(pg.db, 1);
+    const granted = await grantCredit(pg.db, {
+      studentId: student,
+      source: "CONCESSAO_MANUAL",
+      reason: "Credito de teste",
+      adminLabel: "testes",
+      generatedAt: BLOCK_NOW,
+    });
+    expect(granted.ok).toBe(true);
+    if (!granted.ok) return;
+    const creditId = granted.value.credit.id;
+    await materializeSession(
+      pg.db,
+      { classSlotId: slotId, date },
+      BLOCK_NOW,
+    );
+    const booked = await createBooking(
+      pg.db,
+      {
+        studentId: student,
+        classSlotId: slotId,
+        date,
+        type: "MAKEUP",
+        creditId,
+      },
+      BLOCK_NOW,
+    );
+    expect(booked.ok).toBe(true);
+    await blockClassSlotDate(pg.db, { classSlotId: slotId, date }, BLOCK_NOW);
+
+    const unblocked = await unblockClassSlotDate(
+      pg.db,
+      { classSlotId: slotId, date },
+      BLOCK_NOW,
+    );
+
+    expect(unblocked.ok).toBe(true);
+    const blocks = await pg.db.select().from(classDateBlocks);
+    expect(blocks).toHaveLength(0);
+    const [session] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.classSlotId, slotId));
+    expect(session.status).toBe("AGENDADA");
+    const [booking] = await pg.db
+      .select()
+      .from(bookings)
+      .where(eq(bookings.id, booked.ok ? booked.value.id : ""));
+    expect(booking.status).toBe("CANCELADA");
+    const [credit] = await pg.db
+      .select()
+      .from(credits)
+      .where(eq(credits.id, creditId));
+    expect(credit.status).toBe("DISPONIVEL");
+  });
+
+  it("refuses studio cancellation while the class slot is blocked (CAL-20)", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const date = nextOccurrence({ weekday: 3 }, BLOCK_TODAY);
+    const materialized = await materializeSession(
+      pg.db,
+      { classSlotId: slotId, date },
+      BLOCK_NOW,
+    );
+    expect(materialized.ok).toBe(true);
+    await blockClassSlotDate(pg.db, { classSlotId: slotId, date }, BLOCK_NOW);
+
+    const cancelled = await cancelOccurrenceByStudio(
+      pg.db,
+      { classSessionId: materialized.ok ? materialized.value.id : "" },
+      BLOCK_NOW,
+    );
+
+    expect(cancelled.ok).toBe(false);
+    if (!cancelled.ok) expect(cancelled.error).toContain("bloqueada");
+    const [session] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.classSlotId, slotId));
+    expect(session.status).toBe("BLOQUEADA");
+    const storedCredits = await pg.db.select().from(credits);
+    expect(storedCredits).toHaveLength(0);
+  });
+
+  it("keeps the occurrence blocked while any block covers the date (CAL-21)", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const date = nextOccurrence({ weekday: 3 }, BLOCK_TODAY);
+    await pg.db.insert(holidays).values({ date, name: "Feriado Teste" });
+    const materialized = await materializeSession(
+      pg.db,
+      { classSlotId: slotId, date },
+      BLOCK_NOW,
+    );
+    expect(materialized.ok).toBe(true);
+    if (materialized.ok) expect(materialized.value.status).toBe("BLOQUEADA");
+    await blockClassSlotDate(pg.db, { classSlotId: slotId, date }, BLOCK_NOW);
+
+    await unblockClassSlotDate(
+      pg.db,
+      { classSlotId: slotId, date },
+      BLOCK_NOW,
+    );
+    let [session] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.classSlotId, slotId));
+    expect(session.status).toBe("BLOQUEADA");
+
+    await pg.db.delete(holidays);
+    await reconcileBlockedOccurrences(
+      pg.db,
+      { fromDate: date, toDate: date },
+      BLOCK_NOW,
+    );
+    [session] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.classSlotId, slotId));
+    expect(session.status).toBe("AGENDADA");
+  });
+
+  it("records a past class block without changing past occurrences", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const [student] = await createStudents(pg.db, 1);
+    const pastDate = "2026-01-07";
+    const [session] = await pg.db
+      .insert(classSessions)
+      .values({
+        classSlotId: slotId,
+        sessionDate: pastDate,
+        status: "AGENDADA",
+      })
+      .returning();
+    await pg.db.insert(bookings).values({
+      studentId: student,
+      classSessionId: session.id,
+      bookingType: "FIXED",
+      status: "ATIVA",
+    });
+
+    const blocked = await blockClassSlotDate(
+      pg.db,
+      { classSlotId: slotId, date: pastDate },
+      BLOCK_NOW,
+    );
+
+    expect(blocked.ok).toBe(true);
+    const blocks = await pg.db.select().from(classDateBlocks);
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0].sessionDate).toBe(pastDate);
+    const [storedSession] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.id, session.id));
+    expect(storedSession.status).toBe("AGENDADA");
+    const storedBookings = await pg.db
+      .select()
+      .from(bookings)
+      .where(eq(bookings.classSessionId, session.id));
+    expect(storedBookings[0].status).toBe("ATIVA");
+  });
+
+  it("validates the class slot and refuses a duplicate block", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const date = nextOccurrence({ weekday: 3 }, BLOCK_TODAY);
+    const missing = await blockClassSlotDate(
+      pg.db,
+      { classSlotId: "00000000-0000-0000-0000-000000000000", date },
+      BLOCK_NOW,
+    );
+    expect(missing.ok).toBe(false);
+    if (!missing.ok) {
+      expect(missing.error).toContain("turma");
+      expect(missing.field).toBe("classSlotId");
+    }
+
+    await pg.db
+      .update(classSlots)
+      .set({ status: "INATIVA" })
+      .where(eq(classSlots.id, slotId));
+    const inactive = await blockClassSlotDate(
+      pg.db,
+      { classSlotId: slotId, date },
+      BLOCK_NOW,
+    );
+    expect(inactive.ok).toBe(false);
+    if (!inactive.ok) {
+      expect(inactive.error).toContain("inativa");
+      expect(inactive.field).toBe("classSlotId");
+    }
+
+    await pg.db
+      .update(classSlots)
+      .set({ status: "ATIVA" })
+      .where(eq(classSlots.id, slotId));
+    const first = await blockClassSlotDate(
+      pg.db,
+      { classSlotId: slotId, date },
+      BLOCK_NOW,
+    );
+    expect(first.ok).toBe(true);
+    const duplicate = await blockClassSlotDate(
+      pg.db,
+      { classSlotId: slotId, date },
+      BLOCK_NOW,
+    );
+    expect(duplicate.ok).toBe(false);
+    if (!duplicate.ok) {
+      expect(duplicate.error).toContain("bloqueio");
+      expect(duplicate.field).toBe("date");
+    }
+    const blocks = await pg.db.select().from(classDateBlocks);
+    expect(blocks).toHaveLength(1);
+  });
+
+  it("lists class blocks in the requested date range", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const firstDate = nextOccurrence({ weekday: 3 }, BLOCK_TODAY);
+    const secondDate = addDays(firstDate, 7);
+    await blockClassSlotDate(
+      pg.db,
+      { classSlotId: slotId, date: firstDate },
+      BLOCK_NOW,
+    );
+    await blockClassSlotDate(
+      pg.db,
+      { classSlotId: slotId, date: secondDate },
+      BLOCK_NOW,
+    );
+
+    const listed = await listClassDateBlocks(pg.db, {
+      from: firstDate,
+      to: firstDate,
+    });
+
+    expect(listed).toHaveLength(1);
+    expect(listed[0].classSlotId).toBe(slotId);
+    expect(listed[0].sessionDate).toBe(firstDate);
   });
 });
