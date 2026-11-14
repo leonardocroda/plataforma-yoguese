@@ -322,6 +322,45 @@ describe("bookings", () => {
     expect(created).toHaveLength(0);
   });
 
+  it("refuses a booking on a cancelled occurrence", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const date = nextOccurrence({ weekday: 3 }, today);
+    const [student] = await createStudents(pg.db, 1);
+    const creditId = await grantTestCredit(pg.db, student);
+    const materialized = await materializeSession(pg.db, {
+      classSlotId: slotId,
+      date,
+    });
+    expect(materialized.ok).toBe(true);
+    if (!materialized.ok) return;
+
+    await pg.db
+      .update(classSessions)
+      .set({ status: "CANCELADA" })
+      .where(eq(classSessions.id, materialized.value.id));
+
+    const result = await createBooking(pg.db, {
+      studentId: student,
+      classSlotId: slotId,
+      date,
+      type: "MAKEUP",
+      creditId,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toContain("cancelada");
+    }
+    const createdBookings = await pg.db.select().from(bookings);
+    expect(createdBookings).toHaveLength(0);
+    const [storedCredit] = await pg.db
+      .select()
+      .from(credits)
+      .where(eq(credits.id, creditId));
+    expect(storedCredit.status).toBe("DISPONIVEL");
+    expect(storedCredit.usedBookingId).toBeNull();
+  });
+
   it("rejects a booking in an occurrence blocked by holiday or closure", async () => {
     const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
     const date = nextOccurrence({ weekday: 3 }, today);

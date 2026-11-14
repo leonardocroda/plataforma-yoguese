@@ -130,17 +130,18 @@ T12 -> T13
 
 **Done when**:
 
-- [ ] Teste prova o cancelamento no passado recusado: status, reservas e créditos intocados
-- [ ] Teste prova o caminho da edição de grade (`cancelOccurrenceByScheduleEdit` via `cancelFutureSessions`) continuando a cancelar — L-015, os dois caminhos
-- [ ] Teste prova a recusa de reserva em ocorrência CANCELADA
-- [ ] Testes existentes da suíte continuam verdes (nenhum enfraquecido)
-- [ ] Gate check passes: `npm test`
-- [ ] Test count: suíte completa verde (378 no início desta feature)
+- [x] Teste prova o cancelamento no passado recusado: status, reservas e créditos intocados
+- [x] Teste prova o caminho da edição de grade (`cancelOccurrenceByScheduleEdit` via `cancelFutureSessions`) continuando a cancelar — L-015, os dois caminhos
+- [x] Teste prova a recusa de reserva em ocorrência CANCELADA
+- [x] Testes existentes da suíte continuam verdes (nenhum enfraquecido)
+- [x] Gate check passes: `npm test`
+- [x] Test count: suíte completa verde (378 no início desta feature)
 
 **Tests**: integration
 **Gate**: full
 
 **Commit**: `feat(credits): refuse studio cancellation on past occurrences`
+**Status**: ✅ Complete
 
 ---
 

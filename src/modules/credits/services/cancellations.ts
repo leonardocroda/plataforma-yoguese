@@ -12,6 +12,10 @@ import {
   fixedEnrollments,
 } from "../../../db/schema";
 import type { DbClient } from "../../bookings/services/sessions";
+import {
+  isDatePast,
+  todayInStudio,
+} from "../../classes/domain/occurrences";
 import { cancelExperimentalsForOccurrence } from "../../experimentals/services/cancellations";
 import {
   hoursUntilOccurrence,
@@ -299,7 +303,8 @@ export type StudioCancellationResult =
  * (CRD-33). Ocorrencia BLOQUEADA por feriado/recesso e recusada (FER-09,
  * AD-031): o bloqueio ja comunica que a aula nao acontece e o PRD 7.1 veda
  * credito no feriado, entao o cancelamento - que geraria creditos - nao se
- * aplica.
+ * aplica. Ocorrencia de data passada tambem e recusada sem alterar nenhum
+ * estado (AD-045).
  */
 export async function cancelOccurrenceByStudio(
   db: DbClient,
@@ -309,7 +314,7 @@ export async function cancelOccurrenceByStudio(
   return cancelOccurrence(
     db,
     input,
-    { allowBlocked: false, grantStudioCredits: true },
+    { allowBlocked: false, allowPast: false, grantStudioCredits: true },
     now,
   );
 }
@@ -330,7 +335,7 @@ export async function cancelOccurrenceByScheduleEdit(
   return cancelOccurrence(
     db,
     input,
-    { allowBlocked: true, grantStudioCredits: false },
+    { allowBlocked: true, allowPast: true, grantStudioCredits: false },
     now,
   );
 }
@@ -338,6 +343,8 @@ export async function cancelOccurrenceByScheduleEdit(
 type CancelOccurrenceOptions = {
   /** Fecha tambem a ocorrencia bloqueada por feriado/recesso. */
   allowBlocked: boolean;
+  /** Permite alterar uma ocorrencia que ja passou. */
+  allowPast: boolean;
   /** Gera credito CANCELAMENTO_ESTUDIO para cada aluno fixo afetado. */
   grantStudioCredits: boolean;
 };
@@ -361,6 +368,16 @@ async function cancelOccurrence(
       return {
         ok: false,
         error: "ocorrencia nao encontrada",
+        field: "classSessionId",
+      };
+    }
+    if (
+      !options.allowPast &&
+      isDatePast(session.sessionDate, todayInStudio(now))
+    ) {
+      return {
+        ok: false,
+        error: "ocorrencia no passado nao pode ser cancelada pelo estudio",
         field: "classSessionId",
       };
     }

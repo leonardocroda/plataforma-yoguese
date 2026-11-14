@@ -14,7 +14,10 @@ import {
 } from "../../../classes/domain/occurrences";
 import { hoursUntilOccurrence } from "../../domain/credit-rules";
 import { createEnrollment } from "../../../students/services/enrollments";
-import { materializeSession } from "../../../bookings/services/sessions";
+import {
+  cancelFutureSessions,
+  materializeSession,
+} from "../../../bookings/services/sessions";
 import { reconcileBlockedOccurrences } from "../../../bookings/services/blocks";
 import { bookMakeupByStudent } from "../makeups";
 import {
@@ -352,5 +355,109 @@ describe("studio cancellation", () => {
     const creditsAfter = await pg.db.select().from(credits);
     expect(creditsAfter).toHaveLength(1);
     expect(creditsAfter[0].status).toBe("DISPONIVEL");
+  });
+
+  it("refuses the cancellation of a past occurrence (AD-045)", async () => {
+    const { slotId } = await createTestClass(pg.db, {
+      weekday: 3,
+      capacity: 8,
+      startTime: START_TIME,
+      endTime: "20:00:00",
+    });
+    const [student] = await createStudents(pg.db, 1);
+    const pastDate = "2026-11-03";
+    const [session] = await pg.db
+      .insert(classSessions)
+      .values({
+        classSlotId: slotId,
+        sessionDate: pastDate,
+        status: "AGENDADA",
+      })
+      .returning();
+    const [booking] = await pg.db
+      .insert(bookings)
+      .values({
+        studentId: student,
+        classSessionId: session.id,
+        bookingType: "MAKEUP",
+        status: "ATIVA",
+      })
+      .returning();
+    const expiresAt = new Date("2026-12-09T15:00:00.000Z");
+    const [credit] = await pg.db
+      .insert(credits)
+      .values({
+        studentId: student,
+        source: "CONCESSAO_MANUAL",
+        status: "RESERVADO",
+        usedBookingId: booking.id,
+        generatedAt: new Date("2026-11-01T15:00:00.000Z"),
+        expiresAt,
+      })
+      .returning();
+
+    const result = await cancelOccurrenceByStudio(
+      pg.db,
+      { classSessionId: session.id },
+      cancelNow,
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toContain("passado");
+    }
+
+    const [storedSession] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.id, session.id));
+    expect(storedSession.status).toBe("AGENDADA");
+    expect(storedSession.updatedAt).toEqual(session.updatedAt);
+
+    const [storedBooking] = await pg.db
+      .select()
+      .from(bookings)
+      .where(eq(bookings.id, booking.id));
+    expect(storedBooking.status).toBe("ATIVA");
+    expect(storedBooking.cancelledAt).toBeNull();
+    expect(storedBooking.cancelledBy).toBeNull();
+
+    const [storedCredit] = await pg.db
+      .select()
+      .from(credits)
+      .where(eq(credits.id, credit.id));
+    expect(storedCredit.status).toBe("RESERVADO");
+    expect(storedCredit.usedBookingId).toBe(booking.id);
+    expect(storedCredit.expiresAt).toEqual(expiresAt);
+  });
+
+  it("keeps schedule-edit cancellation working for future occurrences", async () => {
+    const { slotId, sessionId } = await setupClass();
+    const [student] = await createStudents(pg.db, 1);
+    const booked = await bookMakeupByStudent(pg.db, {
+      studentId: student,
+      classSlotId: slotId,
+      date,
+      creditId: await grantTestCredit(pg.db, student),
+    });
+    expect(booked.ok).toBe(true);
+
+    const summary = await cancelFutureSessions(
+      pg.db,
+      { classSlotId: slotId, fromDate: date },
+      cancelNow,
+    );
+
+    expect(summary.cancelledOccurrences).toBe(1);
+    const [session] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.id, sessionId));
+    expect(session.status).toBe("CANCELADA");
+    const [booking] = await pg.db
+      .select()
+      .from(bookings)
+      .where(eq(bookings.classSessionId, sessionId));
+    expect(booking.status).toBe("CANCELADA");
   });
 });
