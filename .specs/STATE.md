@@ -348,6 +348,16 @@ instead of the mock times and names; (5) the voice table's example dates are
 computed from the product's credit rules. Same numbering caveat as AD-041:
 renumber on merge if the mainline agent took the number.
 
+### AD-043 - ACTIVE - Small buttons keep the guide's look but grow to a 44px touch target (2026-11-13)
+
+The guide's CSS gives `.btn.peq` 38px and `.btn-txt` 36px, while BRAND-05 -
+approved in the spec of feature `redesign-marca` - asks every control for a
+touch target of at least 44px. The product keeps the guide's shape, label and
+underline and raises those two small variants to 44px; the primary `.btn` stays
+at the guide's 48px. The difference is listed in the feature's `spec.md`
+"Differences from the source". Same numbering caveat as AD-041: renumber on
+merge if the mainline agent took the number.
+
 ## Handoff
 
 Snapshot - updated when work pauses.

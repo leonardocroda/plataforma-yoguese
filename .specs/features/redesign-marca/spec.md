@@ -295,7 +295,7 @@ quebre o build.
 | Student area screen ("Oi, Marina", credits, fixed classes) | Not built - route does not exist; deferred with the student-area feature | y - AD-042 |
 | Admin week grid mock with example times and names | Same composition, real data from `/grade` | y - AD-042 |
 | Copy in the voice table uses example dates (12 dez, 18 dez) | Dates computed from the product's credit rules | y - AD-042 |
-| Small buttons `.btn.peq` (38px) and `.btn-txt` (36px) in the guide's CSS | Same look, 44px tall: BRAND-05 asks every control for a 44px touch target | y - BRAND-05 |
+| Small buttons `.btn.peq` (38px) and `.btn-txt` (36px) in the guide's CSS | Same look, 44px tall: BRAND-05 asks every control for a 44px touch target | y - AD-043 |
 
 ## Sources
 
