@@ -482,8 +482,8 @@ Proof: walk - navegar a qualquer data e usar "Hoje" volta para a janela corrente
 
 The feature's live state, written as it happens - a compaction gives no warning.
 
-**Settled mid-build:** (none)
-**Dispatched:** (none)
+**Settled mid-build:** 2026-11-14 - user: "Sim, pode executar" (aprova as tasks); user: "2 workers por lote (Recommended)" (aprova a delegacao em 2 lotes)
+**Dispatched:** Batch 1 (Fases 1-2, T1-T6) -> worker batch-1, HEAD 014ac9d, returned (6 tasks, 403 testes verdes, 6 commits: 07f294d, 5b633c2, 2358177, 7947050, abb0e6c, 3135644); Batch 2 (Fases 3-4, T7-T13) -> worker batch-2, HEAD 3135644, pending
 **Walked:** (none)
 
 ---
