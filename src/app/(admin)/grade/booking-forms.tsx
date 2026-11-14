@@ -66,6 +66,7 @@ export type GradeOccurrence = {
   startTime: string;
   endTime: string;
   classTypeName: string;
+  capacity: number;
   sessionStatus: "AGENDADA" | "BLOQUEADA" | "CANCELADA";
   fixedCount: number;
   makeupCount: number;
@@ -208,7 +209,7 @@ export function GradeBoard({
                             key={occurrence.key}
                             type="button"
                             aria-pressed={occurrence.key === current?.key}
-                            aria-label={`${occurrenceTitle(occurrence)}, ${occurrence.classTypeName}, ${occurrence.availableSpots} vagas livres de 8`}
+                            aria-label={`${occurrenceTitle(occurrence)}, ${occurrence.classTypeName}, ${occurrence.availableSpots} vagas livres de ${occurrence.capacity}`}
                             onClick={() => setChosenKey(occurrence.key)}
                             className={
                               occurrence.key === current?.key
@@ -223,6 +224,7 @@ export function GradeBoard({
                               fixed={occurrence.fixedCount}
                               makeup={occurrence.makeupCount}
                               experimental={occurrence.experimentalCount}
+                              capacity={occurrence.capacity}
                               size="sm"
                             />
                             {occurrence.sessionStatus !== "AGENDADA" ? (
@@ -318,6 +320,7 @@ function TurmaPanel({
             fixed={occurrence.fixedCount}
             makeup={occurrence.makeupCount}
             experimental={occurrence.experimentalCount}
+            capacity={occurrence.capacity}
             size="lg"
           />
         </div>

@@ -300,15 +300,16 @@ T12 -> T13
 
 **Done when**:
 
-- [ ] Teste unit prova capacidade diferente de 8 e o default 8
-- [ ] Nenhum consumidor existente quebra (default preserva o comportamento)
-- [ ] Gate check passes: quick gate
-- [ ] Test count: kit verde
+- [x] Teste unit prova capacidade diferente de 8 e o default 8
+- [x] Nenhum consumidor existente quebra (default preserva o comportamento)
+- [x] Gate check passes: quick gate
+- [x] Test count: kit verde
 
 **Tests**: unit
 **Gate**: quick
 
 **Commit**: `fix(ui): vacancy ducks respect the slot capacity`
+**Status**: ✅ Complete
 
 ---
 

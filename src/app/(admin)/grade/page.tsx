@@ -177,6 +177,7 @@ export default async function AdminGradePage() {
         startTime: formatTime(occurrence.slot.startTime),
         endTime: formatTime(occurrence.slot.endTime),
         classTypeName: occurrence.slot.classTypeName,
+        capacity: occurrence.slot.capacity,
         sessionStatus: occurrence.composition.sessionStatus,
         fixedCount: occurrence.composition.fixedCount,
         makeupCount: occurrence.composition.makeupCount,

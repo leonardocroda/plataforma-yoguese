@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 
-// Vagas sao patinhos (guia, secao "Vagas"): toda turma tem 8 vagas (PRD) e cada
-// vaga e um pato. Estado: fixo (preto solido), reposicao (pena, contorno
+// Vagas sao patinhos (guia, secao "Vagas"): cada vaga da turma e um pato. A
+// capacidade real chega pela prop; o default preserva as 8 vagas do guia.
+// Estado: fixo (preto solido), reposicao (pena, contorno
 // preto), experimental (pontilhado pessego), sua vaga (pessego solido) e livre
 // (tracejado cinza). A regra de negocio - fixo, reposicao e experimental
 // ocupam vaga do mesmo jeito - vive na composicao; aqui e so a leitura visual.
@@ -9,7 +10,7 @@ import type { ReactNode } from "react";
 // visivel duplicado (BRAND-09). O pato nunca e redesenhado: o desenho e o do
 // guia, em paths.
 
-const CAPACITY = 8;
+const DEFAULT_CAPACITY = 8;
 
 type DuckSize = "xs" | "sm" | "md" | "lg";
 
@@ -40,6 +41,7 @@ export function VacancyDucks({
   experimental = 0,
   own = false,
   size = "xs",
+  capacity = DEFAULT_CAPACITY,
   label,
   children,
 }: {
@@ -48,19 +50,21 @@ export function VacancyDucks({
   experimental?: number;
   own?: boolean;
   size?: DuckSize;
-  /** Rotulo acessivel; sem ele, o componente deriva "N vagas livres de 8" */
+  /** Capacidade real da turma. */
+  capacity?: number;
+  /** Rotulo acessivel; sem ele, o componente deriva "N vagas livres de <capacidade>". */
   label?: string;
   children?: ReactNode;
 }) {
   const occupied = fixed + makeup + experimental + (own ? 1 : 0);
-  const free = Math.max(0, CAPACITY - occupied);
+  const free = Math.max(0, capacity - occupied);
   const states: DuckState[] = [];
   const push = (state: DuckState, count: number) => {
-    for (let i = 0; i < count && states.length < CAPACITY; i++) {
+    for (let i = 0; i < count && states.length < capacity; i++) {
       states.push(state);
     }
   };
-  if (occupied <= CAPACITY) {
+  if (occupied <= capacity) {
     // Ordem canonica do guia: fixo, reposicao, experimental, a sua, livre.
     push("fixo", fixed);
     push("rep", makeup);
@@ -76,18 +80,20 @@ export function VacancyDucks({
       ["eu", own ? 1 : 0],
     ];
     for (const [kind, count] of kinds) {
-      if (count > 0 && states.length < CAPACITY) states.push(kind);
+      if (count > 0 && states.length < capacity) states.push(kind);
     }
     for (const [kind, count] of kinds) {
-      for (let i = 1; i < count && states.length < CAPACITY; i++) {
+      for (let i = 1; i < count && states.length < capacity; i++) {
         states.push(kind);
       }
     }
   }
-  while (states.length < CAPACITY) states.push("livre");
+  while (states.length < capacity) states.push("livre");
   const spoken =
     label ??
-    (free === 1 ? "1 vaga livre de 8" : `${free} vagas livres de 8`);
+    (free === 1
+      ? `1 vaga livre de ${capacity}`
+      : `${free} vagas livres de ${capacity}`);
 
   if (size === "sm") {
     // Versao miniatura (calendario do admin): bolinhas em grade 4x2

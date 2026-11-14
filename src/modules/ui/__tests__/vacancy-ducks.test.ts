@@ -30,6 +30,17 @@ describe("VacancyDucks", () => {
     expect(ducks(html, "livre")).toBe(1);
   });
 
+  it("renders the real capacity when it differs from eight", () => {
+    const html = render({ fixed: 3, makeup: 1, capacity: 12 });
+
+    const total = [...html.matchAll(/class="pato /g)].length;
+    expect(total).toBe(12);
+    expect(ducks(html, "fixo")).toBe(3);
+    expect(ducks(html, "rep")).toBe(1);
+    expect(ducks(html, "livre")).toBe(8);
+    expect(html).toContain('aria-label="8 vagas livres de 12"');
+  });
+
   it("paints the five guide states", () => {
     const html = render({ fixed: 1, makeup: 1, experimental: 1, own: true });
     expect(ducks(html, "fixo")).toBe(1);
