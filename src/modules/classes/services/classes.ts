@@ -264,6 +264,64 @@ export async function listActiveSlots(db: DbClient): Promise<SlotWithType[]> {
     .orderBy(asc(classSlots.startTime));
 }
 
+export type ClassTypeWithStatus = {
+  id: string;
+  name: string;
+  status: "ATIVA" | "INATIVA";
+};
+
+/**
+ * Todas as modalidades, ativas e inativas (TURM-02): a tela de gestao de
+ * turmas precisa ver a inativa para reativa-la.
+ */
+export async function listAllClassTypes(
+  db: DbClient,
+): Promise<ClassTypeWithStatus[]> {
+  return db
+    .select({
+      id: classTypes.id,
+      name: classTypes.name,
+      status: classTypes.status,
+    })
+    .from(classTypes)
+    .orderBy(asc(classTypes.name));
+}
+
+export type SlotWithStatus = {
+  id: string;
+  classTypeId: string;
+  classTypeName: string;
+  classTypeStatus: "ATIVA" | "INATIVA";
+  weekday: number;
+  startTime: string;
+  endTime: string;
+  capacity: number;
+  status: "ATIVA" | "INATIVA";
+};
+
+/**
+ * Todas as turmas, ativas e inativas, com a modalidade (TURM-02). A listagem
+ * da grade (`listActiveSlots`) continua separate: ali so entra o que gera
+ * ocorrencia.
+ */
+export async function listAllSlots(db: DbClient): Promise<SlotWithStatus[]> {
+  return db
+    .select({
+      id: classSlots.id,
+      classTypeId: classSlots.classTypeId,
+      classTypeName: classTypes.name,
+      classTypeStatus: classTypes.status,
+      weekday: classSlots.weekday,
+      startTime: classSlots.startTime,
+      endTime: classSlots.endTime,
+      capacity: classSlots.capacity,
+      status: classSlots.status,
+    })
+    .from(classSlots)
+    .innerJoin(classTypes, eq(classSlots.classTypeId, classTypes.id))
+    .orderBy(asc(classSlots.startTime), asc(classTypes.name));
+}
+
 // ---- internos ----
 
 function validationError(errors: SlotValidationError[]): string {

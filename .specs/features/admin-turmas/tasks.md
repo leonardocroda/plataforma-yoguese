@@ -119,9 +119,9 @@ T4 -> T7
 
 **Done when**:
 
-- [ ] Listagens retornam ativas e inativas com status
-- [ ] Teste: fixture com turma ativa + turma inativa e modalidade inativa — ambas aparecem com status
-- [ ] Gate: `npm test`
+- [x] Listagens retornam ativas e inativas com status
+- [x] Teste: fixture com turma ativa + turma inativa e modalidade inativa — ambas aparecem com status, e `listActiveSlots` segue só com as ativas
+- [x] Gate: `npm test` (369 testes, +1)
 
 **Tests**: integration
 **Gate**: full

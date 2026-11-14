@@ -147,7 +147,7 @@ apagar linhas; reativar e ver as próximas ocorrências voltarem.
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
 | TURM-01 | P1: Entrada no shell e listagem | Design | Pending |
-| TURM-02 | P1: Entrada no shell e listagem | Design | Pending |
+| TURM-02 | P1: Entrada no shell e listagem | Tasks | Implementing |
 | TURM-03 | P1: Gestão de modalidades | Design | Pending |
 | TURM-04 | P1: Gestão de modalidades | Tasks | Implementing |
 | TURM-05 | P1: Gestão de modalidades | Design | Pending |

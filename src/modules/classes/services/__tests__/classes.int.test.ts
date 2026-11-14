@@ -13,6 +13,8 @@ import {
   createSlot,
   deactivateSlot,
   listActiveSlots,
+  listAllClassTypes,
+  listAllSlots,
   updateClassType,
   updateSlot,
 } from "../classes";
@@ -229,6 +231,63 @@ describe("classes", () => {
       expect(slot.value.endTime).toBe("08:00:00");
       expect(slot.value.capacity).toBe(4);
     }
+  });
+
+  it("lists active and inactive class types and slots with status", async () => {
+    const { classTypeId, slotId } = await createTestClass(pg.db, {
+      weekday: 3,
+      capacity: 8,
+    });
+
+    const created = await createSlot(pg.db, {
+      classTypeId,
+      weekday: 5,
+      startTime: "07:00:00",
+      endTime: "08:00:00",
+      capacity: 6,
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+    const deactivated = await deactivateSlot(pg.db, created.value.id);
+    expect(deactivated.ok).toBe(true);
+
+    const inactiveType = await createClassType(pg.db, { name: "Superioga Leve" });
+    expect(inactiveType.ok).toBe(true);
+    if (!inactiveType.ok) return;
+    const deactivatedType = await updateClassType(pg.db, inactiveType.value.id, {
+      status: "INATIVA",
+    });
+    expect(deactivatedType.ok).toBe(true);
+
+    // As duas modalidades na listagem, com o status de cada uma
+    const types = await listAllClassTypes(pg.db);
+    expect(types).toHaveLength(2);
+    expect(types.find((type) => type.id === classTypeId)?.status).toBe("ATIVA");
+    expect(types.find((type) => type.id === inactiveType.value.id)?.status).toBe(
+      "INATIVA",
+    );
+
+    // As duas turmas na listagem, com status e dados completos
+    const slots = await listAllSlots(pg.db);
+    expect(slots).toHaveLength(2);
+    const active = slots.find((slot) => slot.id === slotId);
+    expect(active?.status).toBe("ATIVA");
+    expect(active?.classTypeStatus).toBe("ATIVA");
+    expect(active?.weekday).toBe(3);
+    expect(active?.startTime).toBe("19:00:00");
+    expect(active?.endTime).toBe("20:00:00");
+    expect(active?.capacity).toBe(8);
+    expect(active?.classTypeName).toContain("Superioga Teste");
+
+    const inactive = slots.find((slot) => slot.id === created.value.id);
+    expect(inactive?.status).toBe("INATIVA");
+    expect(inactive?.weekday).toBe(5);
+    expect(inactive?.capacity).toBe(6);
+
+    // A listagem da grade continua mostrando so as turmas ativas
+    const activeOnly = await listActiveSlots(pg.db);
+    expect(activeOnly).toHaveLength(1);
+    expect(activeOnly[0].id).toBe(slotId);
   });
 
   it("creates, edits and deactivates a class type", async () => {
