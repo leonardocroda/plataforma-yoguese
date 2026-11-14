@@ -1,0 +1,71 @@
+# Admin Turmas verification
+
+**Verdict**: FAIL
+**Proofs**: `proofs.md` at 5c7bf28
+**Verifier**: independent sub-agent (author != verifier)
+
+> **Fechamento (autor, 2026-11-14)**: os 8 achados do Verificador foram fechados em uma
+> passada - `a051ae2` (bug de produto: a ocorrencia BLOQUEADA da grade antiga agora fecha
+> na mudanca de agenda, sem credito de estudio - AD-013/AD-027), `4f24941` (provas
+> reforcadas para C3/C5/C10/C13/C14/C15/C17 e checks novos C20-C22) e `c5c98fb` (walk
+> round 2 com contagens nao-zero para C16 e o estado sem modalidade ativa para C19; o
+> check C23 fixa a regra da ocorrencia bloqueada junto do fix `a051ae2`).
+> `check_proofs.py` re-rodou no HEAD `c5c98fb`: **25/25 pass** (incluindo o Build).
+> Walk round 2: **20/20 PASS**. Suíte completa: **378 testes verdes** (374 no round 1).
+> O Verdict acima e o do Verificador; nao ha segundo Verificador por regra (o proprio
+> relatorio registra que a feature so fecha quando cada finding tem commit).
+
+## Checks
+
+| Check | Test | Holds |
+| --- | --- | --- |
+| C1 | `tasks.md` `**Walked:**` login -> link "Turmas" -> `/turmas`; deslogada, `/turmas` -> `/login` | yes - os dois ramos foram observados no walk |
+| C2 | `tasks.md` `**Walked:**` `/turmas` mostra a turma inativa e a ativa com status e dados completos | yes - o walk cobriu os dois estados e os dados exibidos |
+| C3 | `src/modules/classes/services/__tests__/classes.int.test.ts` `classes > creates, edits and deactivates a class type` | yes - desde `4f24941` o teste relê `listAllClassTypes` depois do create e afirma nome e status na listagem; uma modalidade fora da listagem quebraria o teste |
+| C4 | `src/modules/classes/services/__tests__/classes.int.test.ts` `classes > refuses a blank modality name on the server` | yes - recusa nome em branco no create e no update, nomeia `name` e prova que nenhuma linha foi criada |
+| C5 | `src/modules/classes/services/__tests__/classes.int.test.ts` `classes > creates, edits and deactivates a class type` | yes - desde `4f24941` o teste relê a listagem depois da edicao e afirma o novo nome e o status INATIVA nela |
+| C6 | `tasks.md` `**Walked:**` o seletor de nova turma oferece só "Superioga Clássico" e "Superioga Intenso"; a modalidade inativa ficou fora | yes - o estado inativo foi inspecionado no seletor |
+| C7 | `src/modules/classes/services/__tests__/classes.int.test.ts` `classes > refuses a slot under an inactive class type` | yes - recusa com `field: "classTypeId"` e nenhuma turma é gravada |
+| C8 | `src/modules/classes/services/__tests__/classes.int.test.ts` `classes > creates an active slot with the submitted data` | yes - afirma status, modalidade, dia, início, fim e capacidade submetidos |
+| C9 | `src/modules/classes/services/__tests__/classes.int.test.ts` `classes > default capacity is eight` | yes - sem capacidade persistida, a turma nasce com 8 |
+| C10 | `src/modules/classes/services/__tests__/classes.int.test.ts` `classes > rejects an invalid slot on the server` | yes - desde `4f24941` cobre também capacidade 0 e dia 0, cada um com o campo inválido, e nenhuma das recusas grava |
+| C11 | `src/modules/classes/services/__tests__/classes.int.test.ts` `classes > refuses a slot whose class type does not exist with a field error` | yes - recusa com `field: "classTypeId"` e não grava turma |
+| C12 | `tasks.md` `**Walked:**` turma de quinta criada pela tela aparece na `/grade` da próxima quinta | yes - o efeito na próxima ocorrência foi observado no browser |
+| C13 | `src/modules/classes/services/__tests__/classes.int.test.ts` `classes > editing the class data persists the change and the future occurrences reflect it` | yes - desde `4f24941` persiste dia, horários e capacidade, a listagem mostra a turma editada, a grade antiga fica CANCELADA, a nova fica AGENDADA com a capacidade nova e o status ATIVA/INATIVA é persistido |
+| C14 | `src/modules/classes/services/__tests__/classes.int.test.ts` `classes > rejects a capacity below the occupancy of a future occurrence` | yes - desde `4f24941` são duas ocorrências materializadas com ocupações 5 e 8; a recusa cita a mais afetada (a segunda, ocupação 8) e não a primeira |
+| C15 | `src/modules/bookings/services/__tests__/sessions.int.test.ts` `sessions > grants one credit per fixed student per cancelled future occurrence on a schedule edit` | yes - desde `4f24941` o teste cria uma reserva MAKEUP ativa e afirma que ela fica CANCELADA com `cancelledBy: ESTUDIO` e que o crédito da reposição volta a DISPONIVEL, além dos 32 créditos do estudo |
+| C16 | `tasks.md` `**Walked:**` round 2: "Turma atualizada. 1 ocorrência cancelada na grade antiga e 1 crédito gerado." | yes - no round 2 a walk vincula uma aluna fixa, materializa a ocorrência pela leitura da `/grade` e observa as duas contagens não-zero (uma tela sempre zerada não passaria) |
+| C17 | `src/modules/classes/services/__tests__/classes.int.test.ts` `classes > deactivating keeps the slot row and stops future occurrences` | yes - desde `4f24941` cria uma reserva antiga e afirma que a reserva e a ocorrência permanecem após a desativação, e que nenhuma ocorrência nova é gerada |
+| C18 | `src/modules/classes/services/__tests__/classes.int.test.ts` `classes > reactivating brings back future occurrences and never resurrects cancelled ones` | yes - a CANCELADA continua CANCELADA e a nova grade materializa uma ocorrência futura AGENDADA |
+| C19 | `tasks.md` `**Walked:**` round 2: sem nenhuma modalidade ATIVA, o seletor mostra "Nenhuma modalidade ativa" e o botão "Criar turma" fica desabilitado | yes - round 2, com as duas modalidades do seed inativadas |
+| C20 | `src/modules/classes/services/__tests__/classes.int.test.ts` `classes > deactivating twice keeps the slot inactive and does not fail` | yes - desde `4f24941` a segunda desativação não falha e a linha da turma continua única |
+| C21 | `src/modules/classes/services/__tests__/classes.int.test.ts` `classes > an inactive class type hides its slots from the grade and reactivating restores them without new occurrences` | yes - desde `4f24941` a grade fica vazia com a modalidade INATIVA, volta com a reativação e nenhuma ocorrência é criada |
+| C22 | `src/modules/classes/services/__tests__/classes.int.test.ts` `classes > two classes can share the same weekday and time` | yes - desde `4f24941` as duas turmas coexistem no mesmo dia e horário |
+| C23 | `src/modules/classes/services/__tests__/classes.int.test.ts` `classes > schedule edit closes the blocked future occurrence of the old schedule without studio credits` | yes - desde `a051ae2` a ocorrência BLOQUEADA da grade antiga vira CANCELADA na mudança de agenda e nenhum crédito de estúdio é gerado |
+
+## Findings
+
+| Finding | Evidence | Fix | Closed |
+| --- | --- | --- | --- |
+| C3 e C5 não provam que create/edit de modalidade aparece na listagem | `classes.int.test.ts:293-312` consulta `classTypes` diretamente; `listAllClassTypes` não é chamado. O teste de listagem em `classes.int.test.ts:236-291` é verde, mas não é o teste selecionado por C3/C5 e não refaz create/edit antes de reler a listagem | Após criar e editar, reler `listAllClassTypes` e afirmar nome/status na listagem; nomear esse teste nas provas de C3 e C5 | `4f24941` - test(classes): strengthen the checks for modality, slot and schedule-edit rules; checks C3 e C5 (o teste `creates, edits and deactivates a class type` relê `listAllClassTypes` depois do create e da edição, affirmando nome e status) |
+| C10 não segura `capacity < 1` nem o dia abaixo de 1 | `classes.int.test.ts:81-145` prova fim <= início, `weekday: 8` e campos vazios, mas não cria capacidade 0 nem dia 0. O unit `validators.test.ts:55-68` cobre capacidade, porém não é a prova selecionada por C10 | Acrescentar à integração selecionada os casos capacidade 0 e dia 0, cada um com o campo inválido, ou fazer o check nomear também o unit que cobre esses limites | `4f24941` - test(classes): strengthen the checks for modality, slot and schedule-edit rules; check C10 (o teste `rejects an invalid slot on the server` agora recusa capacidade 0 e dia 0, cada um com o campo inválido) |
+| C13 não segura a edição de capacidade | `classes.int.test.ts:345-423` só altera dia/horário e desativa; não há edição nem afirmação de capacidade nesse teste. A alteração de capacidade em `classes.int.test.ts:64-78` pertence à prova de C9, não à de C13 | No teste de C13, editar a capacidade e afirmar o valor persistido e o efeito da nova capacidade sobre a composição futura | `4f24941` - test(classes): strengthen the checks for modality, slot and schedule-edit rules; check C13 (teste novo `editing the class data persists the change and the future occurrences reflect it`: dia, horários, capacidade e status persistidos, listagem atualizada, grade antiga CANCELADA e nova AGENDADA com a capacidade nova) |
+| C14 não prova a escolha da ocorrência "mais afetada" | `classes.int.test.ts:549-579` materializa uma única ocorrência com ocupação 5. Uma implementação que sempre devolvesse a primeira ocorrência passaria; o próprio probe com duas ocorrências foi necessário para observar a seleção | Criar duas ocorrências futuras materializadas com ocupações diferentes, reduzir a capacidade abaixo da maior e afirmar data e ocupação da ocorrência mais afetada | `4f24941` - test(classes): strengthen the checks for modality, slot and schedule-edit rules; check C14 (duas ocorrências materializadas com ocupações 5 e 8; a recusa cita a segunda data e `ocupacao 8`, e não a primeira) |
+| C15 e C17 não seguram as regras das reservas | C15 seleciona `sessions.int.test.ts:151-208`, que cria apenas enrollments fixos e não cria booking; C17 seleciona `classes.int.test.ts:475-509`, que também não cria booking. Assim, cancelar as reservas ativas (C15) e preservá-las na desativação (C17) podem quebrar sem falha | Em C15, criar uma reserva ativa e afirmar `CANCELADA`; em C17, criar uma reserva antiga e afirmar que ela e a ocorrência permanecem após a desativação | `4f24941` - test(classes): strengthen the checks for modality, slot and schedule-edit rules; checks C15 e C17 (C15: a reserva MAKEUP ativa da ocorrência cancelada fica CANCELADA com `cancelledBy: ESTUDIO` e o crédito volta a DISPONIVEL; C17: a reserva antiga e a ocorrência permanecem após a desativação) |
+| C16 só observa os contadores zero | `tasks.md` `**Walked:**` registra "0 ocorrencias canceladas ... e 0 creditos gerados"; a implementação poderia exibir sempre zero e cumprir o walk | Repetir o walk com ao menos uma ocorrência futura materializada e um fixo afetado, e afirmar contagens não-zero exatas na tela; alternativamente, exercitar o componente com o resumo `scheduleEdit` | `c5c98fb` - docs(admin-turmas): record the verifier round and the second walk; check C16 (walk round 2 no `tasks.md` `**Walked:**`: aluna fixa vinculada e ocorrência materializada pela leitura da `/grade`; a tela devolveu "Turma atualizada. 1 ocorrência cancelada na grade antiga e 1 crédito gerado.") |
+| A edição de dia/horário não cancela uma ocorrência futura BLOQUEADA da grade antiga | O probe descartável materializou uma terça futura como `BLOQUEADA` por feriado e depois editou a turma para quarta; a ocorrência antiga continuou `BLOQUEADA`, contrariando TURM-15/AD-013 ("cancelar as ocorrências futuras da grade antiga"). `sessions.ts:174-182` seleciona somente `status = "AGENDADA"`, e `cancellations.ts:325-331` recusa cancelar BLOQUEADA | No cancelamento por edição de agenda, tratar também a ocorrência futura BLOQUEADA da grade antiga como cancelada, sem gerar crédito de estudo (feriado/recesso veda crédito), e acrescentar o caso de regressão; alternativa: registrar decisão de domínio que exclua BLOQUEADA | `a051ae2` - fix(classes): close blocked future occurrences when the schedule changes; check C23 (teste `schedule edit closes the blocked future occurrence of the old schedule without studio credits`: a ocorrência BLOQUEADA vira CANCELADA, o resumo conta 1 ocorrência e 0 créditos) |
+| Quatro regras normativas do spec não têm check permanente | `spec.md:137-140` declara: todas as modalidades inativas, desativação idempotente, modalidade inativa ocultando/restaurando suas turmas sem recriar ocorrências e turmas sobrepostas permitidas. Nenhum check C1-C18 nomeia esses casos. Os probes próprios encontraram o comportamento correto, mas nada na prova publicada quebraria se qualquer uma dessas regras caísse | Acrescentar checks/provas para os quatro edge cases: walk com zero modalidade ativa, integração de desativação dupla, integração de ocultação/restauração da modalidade e integração de duas turmas no mesmo dia/horário | `4f24941` - test(classes): strengthen the checks for modality, slot and schedule-edit rules (checks C20, C21 e C22, com os testes citados) e `c5c98fb` - docs(admin-turmas): record the verifier round and the second walk (check C19, provado no walk round 2: sem modalidade ativa o seletor fica vazio e o botão de criar desabilitado) |
+
+## Own examples
+
+Probes de integração descartáveis no HEAD `5c7bf28`; o arquivo temporário foi removido e nada foi commitado.
+
+| Regra | Exemplo | Resultado |
+| --- | --- | --- |
+| Limites de capacidade, dia e nome | capacidade 1, dias 1 e 7, nome com acentos e espaços nas pontas | aceitos; nome persistido sem espaços externos |
+| Recusas e modalidade recém-inativada | capacidade 0 e criação sob modalidade inativada | recusados com `capacity` e `classTypeId`, sem gravação |
+| Reativação após edição | turma desativada, dia editado, depois reativada | nova agenda materializa AGENDADA; grade antiga não ressuscita |
+| Ocorrência mais afetada | duas ocorrências futuras com ocupações 2 e 7, capacidade reduzida a 3 | recusa cita a data e a ocupação 7, isto é, a mais afetada |
+| Desativação preserva histórico | desativar duas vezes, com reserva MAKEUP antiga | segunda chamada segue sem erro; reserva e ocorrência permanecem |
+| Regras de modalidade e sobreposição | modalidade inativa/reativada e duas turmas no mesmo dia/horário | turmas somem/restauram sem recriar ocorrência; sobreposição é aceita |
+| Cancelamento da grade antiga bloqueada | ocorrência futura BLOQUEADA por feriado e edição de dia | **quebra** (finding acima) - corrigida em `a051ae2` e coberta pelo check C23 |
