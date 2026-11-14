@@ -638,6 +638,25 @@ check(
   consoleErrors.slice(0, 3).join(" | "),
 );
 
+// ---------- Cenario devolvecido ao estado que as capturas mostram ----------
+// O cancelamento da historia consumiu a ocorrencia de terca da semana de D+14:
+// o estado final (CANCELADA, com a composicao consumida) fica provado no log
+// e no banco, mas a tela volta a ter a composicao para o juiz de telas e para
+// a pessoa que quiser abrir o mesmo estado.
+sql(`
+  DELETE FROM credit_transactions WHERE credit_id IN (
+    SELECT id FROM credits WHERE source_session_id = '${tuesdaySession}'
+  );
+  DELETE FROM credits WHERE source_session_id = '${tuesdaySession}';
+  DELETE FROM bookings
+    WHERE class_session_id = '${tuesdaySession}'
+      AND student_id IN (SELECT id FROM students WHERE name LIKE 'Walk Calendario%');
+  UPDATE class_sessions SET status = 'AGENDADA' WHERE id = '${tuesdaySession}';
+  UPDATE experimentals SET status = 'APROVADA'
+    WHERE class_session_id = '${tuesdaySession}' AND name LIKE 'Walk Calendario%';
+`);
+seedMakeup(tuesdaySlot, tueOfD14, "Walk Calendario 1");
+
 await browser.close();
 
 const failed = results.filter((r) => !r.ok);
