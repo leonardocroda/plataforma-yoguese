@@ -306,6 +306,48 @@ export async function cancelOccurrenceByStudio(
   input: StudioCancellationInput,
   now: Date = new Date(),
 ): Promise<StudioCancellationResult> {
+  return cancelOccurrence(
+    db,
+    input,
+    { allowBlocked: false, grantStudioCredits: true },
+    now,
+  );
+}
+
+/**
+ * Cancela uma ocorrencia pela mudanca de agenda da turma (AD-013): a grade
+ * antiga fecha e a ocorrencia futura dela vira CANCELADA. Diferente do
+ * cancelamento pelo studio, a ocorrencia BLOQUEADA tambem e fechada - sem
+ * isso ela ressuscitaria quando o bloqueio fosse removido (AD-027) - e nenhum
+ * credito de estudio e gerado: a data esta de feriado/recesso, que veda
+ * credito (PRD 7.1, AD-031).
+ */
+export async function cancelOccurrenceByScheduleEdit(
+  db: DbClient,
+  input: StudioCancellationInput,
+  now: Date = new Date(),
+): Promise<StudioCancellationResult> {
+  return cancelOccurrence(
+    db,
+    input,
+    { allowBlocked: true, grantStudioCredits: false },
+    now,
+  );
+}
+
+type CancelOccurrenceOptions = {
+  /** Fecha tambem a ocorrencia bloqueada por feriado/recesso. */
+  allowBlocked: boolean;
+  /** Gera credito CANCELAMENTO_ESTUDIO para cada aluno fixo afetado. */
+  grantStudioCredits: boolean;
+};
+
+async function cancelOccurrence(
+  db: DbClient,
+  input: StudioCancellationInput,
+  options: CancelOccurrenceOptions,
+  now: Date,
+): Promise<StudioCancellationResult> {
   const adminLabel = input.adminLabel ?? "admin";
 
   return db.transaction(async (tx): Promise<StudioCancellationResult> => {
@@ -322,7 +364,7 @@ export async function cancelOccurrenceByStudio(
         field: "classSessionId",
       };
     }
-    if (session.status === "BLOQUEADA") {
+    if (session.status === "BLOQUEADA" && !options.allowBlocked) {
       return {
         ok: false,
         error: "ocorrencia bloqueada por feriado/recesso",
@@ -395,35 +437,39 @@ export async function cancelOccurrenceByStudio(
     await cancelExperimentalsForOccurrence(tx, session.id, now);
 
     // Alunos fixos afetados: os do vinculo fixo e os da reserva fixa da
-    // ocorrencia (inclusive quem ja avisou falta)
-    const fixedStudents = await tx
-      .select({ studentId: fixedEnrollments.studentId })
-      .from(fixedEnrollments)
-      .where(
-        and(
-          eq(fixedEnrollments.classSlotId, slot.id),
-          eq(fixedEnrollments.status, "ATIVA"),
-          lte(fixedEnrollments.startDate, session.sessionDate),
-          or(
-            isNull(fixedEnrollments.endDate),
-            gt(fixedEnrollments.endDate, session.sessionDate),
-          ),
-        ),
-      );
-
-    const fixedBookings = await tx
-      .select({ studentId: bookings.studentId })
-      .from(bookings)
-      .where(
-        and(
-          eq(bookings.classSessionId, session.id),
-          eq(bookings.bookingType, "FIXED"),
-        ),
-      );
-
+    // ocorrencia (inclusive quem ja avisou falta). Sem credito de estudio
+    // (mudanca de agenda em data de feriado/recesso, PRD 7.1) nao ha quem
+    // receba.
     const affected = new Set<string>();
-    for (const row of fixedStudents) affected.add(row.studentId);
-    for (const row of fixedBookings) affected.add(row.studentId);
+    if (options.grantStudioCredits) {
+      const fixedStudents = await tx
+        .select({ studentId: fixedEnrollments.studentId })
+        .from(fixedEnrollments)
+        .where(
+          and(
+            eq(fixedEnrollments.classSlotId, slot.id),
+            eq(fixedEnrollments.status, "ATIVA"),
+            lte(fixedEnrollments.startDate, session.sessionDate),
+            or(
+              isNull(fixedEnrollments.endDate),
+              gt(fixedEnrollments.endDate, session.sessionDate),
+            ),
+          ),
+        );
+
+      const fixedBookings = await tx
+        .select({ studentId: bookings.studentId })
+        .from(bookings)
+        .where(
+          and(
+            eq(bookings.classSessionId, session.id),
+            eq(bookings.bookingType, "FIXED"),
+          ),
+        );
+
+      for (const row of fixedStudents) affected.add(row.studentId);
+      for (const row of fixedBookings) affected.add(row.studentId);
+    }
 
     let grantedCredits = 0;
     for (const studentId of affected) {

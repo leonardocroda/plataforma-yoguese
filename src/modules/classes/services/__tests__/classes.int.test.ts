@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { bookings, classSessions, classSlots, classTypes, credits } from "../../../../db/schema";
+import { bookings, classSessions, classSlots, classTypes, credits, holidays } from "../../../../db/schema";
 import { createStudents, createTestClass, clearTables, grantTestCredit } from "../../../../test/fixtures";
 import { PostgresTestInstance, startPostgres } from "../../../../test/postgres";
 import { todayInStudio, nextOccurrence } from "../../domain/occurrences";
@@ -460,6 +460,37 @@ describe("classes", () => {
     expect(
       studioCredits.every((credit) => credit.source === "CANCELAMENTO_ESTUDIO"),
     ).toBe(true);
+  });
+
+  it("schedule edit closes the blocked future occurrence of the old schedule without studio credits", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+
+    // A proxima terca e feriado: a ocorrencia da grade antiga nasce BLOQUEADA
+    await pg.db.insert(holidays).values({ date: day, name: "Feriado Teste" });
+    const blocked = await getComposition(pg.db, {
+      classSlotId: slotId,
+      date: day,
+    });
+    expect(blocked.ok).toBe(true);
+    if (blocked.ok) expect(blocked.value.sessionStatus).toBe("BLOQUEADA");
+
+    const edited = await updateSlot(pg.db, slotId, { weekday: 4 });
+    expect(edited.ok).toBe(true);
+    if (!edited.ok) return;
+
+    // A ocorrencia bloqueada da grade antiga fecha junto com a grade: sem
+    // isso ela voltaria sozinha quando o bloqueio fosse removido (AD-027)
+    const [session] = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.classSlotId, slotId));
+    expect(session.status).toBe("CANCELADA");
+    expect(edited.value.scheduleEdit?.cancelledOccurrences).toBe(1);
+
+    // E nao gera credito de estudio: a data esta de feriado (PRD 7.1)
+    expect(edited.value.scheduleEdit?.grantedCredits).toBe(0);
+    const studioCredits = await pg.db.select().from(credits);
+    expect(studioCredits).toHaveLength(0);
   });
 
   it("keeps the schedule edit summary absent when the schedule does not change", async () => {

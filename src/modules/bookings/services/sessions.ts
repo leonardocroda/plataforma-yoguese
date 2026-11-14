@@ -1,4 +1,4 @@
-import { and, eq, gte } from "drizzle-orm";
+import { and, eq, gte, inArray } from "drizzle-orm";
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "../../../db/schema";
 import {
@@ -15,7 +15,10 @@ import {
   isDatePast,
   weekdayOf,
 } from "../../classes/domain/occurrences";
-import { cancelOccurrenceByStudio } from "../../credits/services/cancellations";
+import {
+  cancelOccurrenceByScheduleEdit,
+  cancelOccurrenceByStudio,
+} from "../../credits/services/cancellations";
 import { isDateCoveredByBlocks } from "../domain/blocks";
 
 export type DbClient = NodePgDatabase<typeof schema>;
@@ -157,11 +160,15 @@ export type ScheduleEditSummary = {
 };
 
 /**
- * Cancela as ocorrencias futuras agendadas de uma turma e libera as vagas das
- * reservas ativas delas (AD-013). O historico e preservado: as reservas ficam
- * CANCELADA, nao sao apagadas. Cada ocorrencia cancelada gera 1 credito
- * CANCELAMENTO_ESTUDIO por aluno fixo afetado (AD-017, CRD-32), pelo mesmo
- * caminho do cancelamento de aula pelo estudio.
+ * Cancela as ocorrencias futuras de uma turma e libera as vagas das reservas
+ * ativas delas (AD-013). O historico e preservado: as reservas ficam
+ * CANCELADA, nao sao apagadas. Cada ocorrencia AGENDADA cancelada gera 1
+ * credito CANCELAMENTO_ESTUDIO por aluno fixo afetado (AD-017, CRD-32), pelo
+ * mesmo caminho do cancelamento de aula pelo estudio.
+ *
+ * A ocorrencia BLOQUEADA da grade antiga tambem fecha: sem isso ela
+ * ressuscitaria quando o bloqueio fosse removido (AD-027). Nao gera credito -
+ * a data esta de feriado/recesso, que veda credito (PRD 7.1, AD-031).
  *
  * Devolve o resumo da operacao: quantas ocorrencias da grade antiga foram
  * canceladas e quantos creditos de estudio foram gerados (TURM-16).
@@ -172,13 +179,13 @@ export async function cancelFutureSessions(
   now: Date = new Date(),
 ): Promise<ScheduleEditSummary> {
   const sessions = await db
-    .select({ id: classSessions.id })
+    .select({ id: classSessions.id, status: classSessions.status })
     .from(classSessions)
     .where(
       and(
         eq(classSessions.classSlotId, input.classSlotId),
         gte(classSessions.sessionDate, input.fromDate),
-        eq(classSessions.status, "AGENDADA"),
+        inArray(classSessions.status, ["AGENDADA", "BLOQUEADA"]),
       ),
     );
 
@@ -188,11 +195,18 @@ export async function cancelFutureSessions(
   // O cancelamento pelo estudio cancela a ocorrencia, as reservas e devolve
   // o credito das reposicoes, e da o credito do estudio aos fixos afetados
   for (const session of sessions) {
-    const cancelled = await cancelOccurrenceByStudio(
-      db,
-      { classSessionId: session.id },
-      now,
-    );
+    const cancelled =
+      session.status === "BLOQUEADA"
+        ? await cancelOccurrenceByScheduleEdit(
+            db,
+            { classSessionId: session.id },
+            now,
+          )
+        : await cancelOccurrenceByStudio(
+            db,
+            { classSessionId: session.id },
+            now,
+          );
     if (!cancelled.ok) continue;
     cancelledOccurrences += 1;
     grantedCredits += cancelled.value.grantedCredits;
