@@ -358,9 +358,52 @@ at the guide's 48px. The difference is listed in the feature's `spec.md`
 "Differences from the source". Same numbering caveat as AD-041: renumber on
 merge if the mainline agent took the number.
 
+### AD-044 - ACTIVE - Admin split: turmas and calendario are two features (2026-11-14)
+
+User decision during the Specify of the candidate `admin-turmas-calendario`: the scope
+splits into `admin-turmas` (medium: UI over the existing services of
+`classes/actions.ts` + `classes/services/classes.ts`) implemented FIRST, and
+`admin-calendario` (large: PRD 4.2 three views + free-time navigation + participants
++ studio cancellation) second. The calendar EVOLVES `/grade` (it already holds the
+composition, participants, booking forms and the brand skin - AD-041/AD-042); class
+management gets a new `/turmas` route in the admin shell. Navigation: tabs
+diaria/semanal/mensal (weekly default, calendar week Mon-Sun America/Sao_Paulo),
+prev/next arrows and a date picker (D+14 reachable). A CANCELADA occurrence stays
+visible with a badge in all three views. Per-slot/date blocking (AD-032, PRD 4.3)
+lands as P2 of `admin-calendario`.
+
+### AD-045 - ACTIVE - Studio cancellation is refused on a past occurrence (2026-11-14)
+
+User decision: with free-time navigation, `cancelOccurrenceByStudio` gains a guard
+refusing occurrences dated before today (America/Sao_Paulo) with a clear error and
+no state change - cancellation applies from today onward. Rationale: coherent with
+the AD-029 spirit (never rewriting the past of the grade) and it avoids rewriting
+past credits; today the guard is missing only because the 7-day window never
+surfaced it. Bookings/history of the past stay read-only.
+
 ## Handoff
 
 Snapshot - updated when work pauses.
+
+### Handoff snapshot (2026-11-14) - specs `admin-turmas` + `admin-calendario` APROVADAS
+
+- Fase Specify das duas features fechada com `validate_spec.py` limpo (0 erro/0 warning
+  nas duas). User aprovou as duas specs no mesmo turno: "aprovado, vamos fazer primeiro
+  a spec de turmas ate o fim, deixe registrado em algum lugar que a proxima sera o
+  calendario" - linhas `**Approved**` escritas nos dois spec.md.
+- APROVADAS, 18 criterios (TURM-01..18): rota nova `/turmas` no shell com CRUD de
+  modalidades e turmas sobre os services existentes, feedback da edicao de
+  dia/horario (AD-013/AD-017), guarda de modalidade inativa, desativar/reativar sem
+  apagar registro.
+- APROVADA, 22 criterios (CAL-01..22): calendario do PRD 4.2 evoluindo a `/grade`
+  (abas diaria/semanal/mensal, setas, seletor de data, D+14), participantes com
+  vinculo, cancelamento pelo estudio em qualquer data futura, guarda de ocorrencia
+  passada (AD-045), bloqueio de turma/data como P2 (AD-032).
+- DECISAO DE ORDEM - `admin-turmas` primeiro, implementada ate o fim; a PROXIMA
+  feature depois dela e `admin-calendario` (spec aprovada, aguardando Design/Tasks).
+  User: "deixe registrado em algum lugar que a proxima sera o calendario".
+- Decisoes novas: AD-044 (split, interface, ordem) e AD-045 (cancelamento recusado
+  no passado). Nenhum codigo escrito ainda.
 
 ### Handoff snapshot (2026-11-14) - `redesign-marca` FECHADA
 
