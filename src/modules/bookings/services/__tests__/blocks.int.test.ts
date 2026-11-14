@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   bookings,
+  classDateBlocks,
   classSessions,
   classSlots,
   creditTransactions,
@@ -20,7 +21,7 @@ import { nextOccurrence, todayInStudio, addDays } from "../../../classes/domain/
 import { cancelOccurrenceByStudio } from "../../../credits/services/cancellations";
 import { createEnrollment } from "../../../students/services/enrollments";
 import { createBooking } from "../bookings";
-import { materializeSession } from "../sessions";
+import { materializeSession, materializeSessionWithBlocks } from "../sessions";
 import { reconcileBlockedOccurrences } from "../blocks";
 
 describe("block reconcile", () => {
@@ -430,5 +431,91 @@ describe("block reconcile", () => {
       .from(credits)
       .where(eq(credits.id, creditId));
     expect(credit.status).toBe("DISPONIVEL");
+  });
+
+  it("materializes only the blocked class slot as BLOQUEADA", async () => {
+    const { slotId, date } = await setupClass();
+    const other = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    await pg.db.insert(classDateBlocks).values({
+      classSlotId: slotId,
+      sessionDate: date,
+      reason: "Professora ausente",
+    });
+
+    const blocked = await materializeSession(pg.db, {
+      classSlotId: slotId,
+      date,
+    });
+    const scheduled = await materializeSession(pg.db, {
+      classSlotId: other.slotId,
+      date,
+    });
+
+    expect(blocked.ok).toBe(true);
+    if (blocked.ok) expect(blocked.value.status).toBe("BLOQUEADA");
+    expect(scheduled.ok).toBe(true);
+    if (scheduled.ok) expect(scheduled.value.status).toBe("AGENDADA");
+  });
+
+  it("materializes from preloaded blocks without affecting another slot", async () => {
+    const { slotId, date } = await setupClass();
+    const other = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const blocks = [
+      { kind: "classSlot" as const, classSlotId: slotId, date },
+    ];
+
+    const blocked = await materializeSessionWithBlocks(
+      pg.db,
+      { classSlotId: slotId, date },
+      blocks,
+    );
+    const scheduled = await materializeSessionWithBlocks(
+      pg.db,
+      { classSlotId: other.slotId, date },
+      blocks,
+    );
+
+    expect(blocked.ok).toBe(true);
+    if (blocked.ok) expect(blocked.value.status).toBe("BLOQUEADA");
+    expect(scheduled.ok).toBe(true);
+    if (scheduled.ok) expect(scheduled.value.status).toBe("AGENDADA");
+  });
+
+  it("reconciles only occurrences of the target class slot", async () => {
+    const { slotId, date } = await setupClass();
+    const other = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const target = await materializeSession(pg.db, {
+      classSlotId: slotId,
+      date,
+    });
+    const untouched = await materializeSession(pg.db, {
+      classSlotId: other.slotId,
+      date,
+    });
+    expect(target.ok).toBe(true);
+    expect(untouched.ok).toBe(true);
+    await pg.db.insert(classDateBlocks).values({
+      classSlotId: slotId,
+      sessionDate: date,
+    });
+
+    const blocked = await reconcileBlockedOccurrences(pg.db, {
+      fromDate: date,
+      toDate: date,
+    });
+
+    expect(blocked.blockedCount).toBe(1);
+    expect((await sessionStatus(date, slotId))?.status).toBe("BLOQUEADA");
+    expect((await sessionStatus(date, other.slotId))?.status).toBe("AGENDADA");
+
+    await pg.db.delete(classDateBlocks);
+    const reopened = await reconcileBlockedOccurrences(pg.db, {
+      fromDate: date,
+      toDate: date,
+    });
+
+    expect(reopened.reopenedCount).toBe(1);
+    expect((await sessionStatus(date, slotId))?.status).toBe("AGENDADA");
+    expect((await sessionStatus(date, other.slotId))?.status).toBe("AGENDADA");
   });
 });

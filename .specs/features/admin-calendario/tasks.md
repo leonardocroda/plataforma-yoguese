@@ -201,16 +201,17 @@ T12 -> T13
 
 **Done when**:
 
-- [ ] Teste: bloqueio de slot na data → materialização da ocorrência nasce BLOQUEADA; outra turma no mesmo dia nasce AGENDADA
-- [ ] Teste: reconcílio bloqueia e desbloqueia somente as ocorrências do slot alvo
-- [ ] Testes existentes de feriado/recesso continuam verdes (nenhum enfraquecido)
-- [ ] Gate check passes: `npm test`
-- [ ] Test count: suíte completa verde
+- [x] Teste: bloqueio de slot na data → materialização da ocorrência nasce BLOQUEADA; outra turma no mesmo dia nasce AGENDADA
+- [x] Teste: reconcílio bloqueia e desbloqueia somente as ocorrências do slot alvo
+- [x] Testes existentes de feriado/recesso continuam verdes (nenhum enfraquecido)
+- [x] Gate check passes: `npm test`
+- [x] Test count: suíte completa verde
 
 **Tests**: integration
 **Gate**: full
 
 **Commit**: `feat(bookings): class-date blocks in session materialization and reconcile`
+**Status**: ✅ Complete
 
 ---
 

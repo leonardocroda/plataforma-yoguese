@@ -2,11 +2,10 @@ import { and, eq, gte, inArray } from "drizzle-orm";
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "../../../db/schema";
 import {
+  classDateBlocks,
   classSessions,
   classSlots,
   classTypes,
-} from "../../../db/schema";
-import {
   holidays,
   studioClosures,
 } from "../../../db/schema";
@@ -19,7 +18,10 @@ import {
   cancelOccurrenceByScheduleEdit,
   cancelOccurrenceByStudio,
 } from "../../credits/services/cancellations";
-import { isDateCoveredByBlocks } from "../domain/blocks";
+import {
+  BlockDate,
+  isOccurrenceCoveredByBlocks,
+} from "../domain/blocks";
 
 export type DbClient = NodePgDatabase<typeof schema>;
 
@@ -41,6 +43,20 @@ export type SessionResult =
 export async function materializeSession(
   db: DbClient,
   input: { classSlotId: string; date: string },
+  now: Date = new Date(),
+): Promise<SessionResult> {
+  const blocks = await loadBlockDates(db);
+  return materializeSessionWithBlocks(db, input, blocks, now);
+}
+
+/**
+ * Materializa a ocorrencia com os bloqueios ja carregados pelo chamador. O
+ * leitor em lote usa esta variante para consultar os bloqueios uma vez so.
+ */
+export async function materializeSessionWithBlocks(
+  db: DbClient,
+  input: { classSlotId: string; date: string },
+  blocks: BlockDate[],
   now: Date = new Date(),
 ): Promise<SessionResult> {
   const today = todayInStudio(now);
@@ -95,7 +111,12 @@ export async function materializeSession(
       ),
     );
 
-  const blocked = await hasBlock(db, input.date);
+  const blocked = await hasBlock(
+    db,
+    input.date,
+    input.classSlotId,
+    blocks,
+  );
 
   if (existing) {
     // Bloqueio registrado depois da materializacao reflete na ocorrencia
@@ -215,10 +236,8 @@ export async function cancelFutureSessions(
   return { cancelledOccurrences, grantedCredits };
 }
 
-/** A data cai em feriado cadastrado ou dentro de um recesso (extremos inclusos). */
-async function hasBlock(db: DbClient, date: string): Promise<boolean> {
-  // A regra de cobertura vive na funcao pura do dominio (fonte unica, L-005):
-  // aqui so carregamos as linhas dos bloqueios
+/** Carrega todos os bloqueios globais e por turma/data. */
+export async function loadBlockDates(db: DbClient): Promise<BlockDate[]> {
   const holidayRows = await db.select({ date: holidays.date }).from(holidays);
   const closureRows = await db
     .select({
@@ -226,13 +245,39 @@ async function hasBlock(db: DbClient, date: string): Promise<boolean> {
       endDate: studioClosures.endDate,
     })
     .from(studioClosures);
+  const classBlockRows = await db
+    .select({
+      classSlotId: classDateBlocks.classSlotId,
+      date: classDateBlocks.sessionDate,
+    })
+    .from(classDateBlocks);
 
-  return isDateCoveredByBlocks(date, [
+  return [
     ...holidayRows.map((row) => ({ kind: "holiday" as const, date: row.date })),
     ...closureRows.map((row) => ({
       kind: "closure" as const,
       startDate: row.startDate,
       endDate: row.endDate,
     })),
-  ]);
+    ...classBlockRows.map((row) => ({
+      kind: "classSlot" as const,
+      classSlotId: row.classSlotId,
+      date: row.date,
+    })),
+  ];
+}
+
+/**
+ * A ocorrencia da turma esta bloqueada por um bloqueio global ou pelo
+ * bloqueio da propria turma na data. Os bloqueios pre-carregados evitam uma
+ * nova consulta quando o chamador ja os carregou em lote.
+ */
+export async function hasBlock(
+  db: DbClient,
+  date: string,
+  classSlotId: string,
+  preloadedBlocks?: BlockDate[],
+): Promise<boolean> {
+  const blocks = preloadedBlocks ?? (await loadBlockDates(db));
+  return isOccurrenceCoveredByBlocks(date, classSlotId, blocks);
 }

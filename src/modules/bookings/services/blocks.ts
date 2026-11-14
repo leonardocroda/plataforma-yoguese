@@ -10,6 +10,7 @@
 import { and, eq, gte, inArray, lte } from "drizzle-orm";
 import {
   bookings,
+  classDateBlocks,
   classSessions,
   classSlots,
   credits,
@@ -19,7 +20,7 @@ import {
 import { todayInStudio } from "../../classes/domain/occurrences";
 import {
   BlockDate,
-  isDateCoveredByBlocks,
+  isOccurrenceCoveredByBlocks,
   resolveBlockTransition,
 } from "../domain/blocks";
 import { returnCredit } from "../../credits/services/credits";
@@ -65,6 +66,12 @@ export async function reconcileBlockedOccurrences(
         endDate: studioClosures.endDate,
       })
       .from(studioClosures);
+    const classBlockRows = await tx
+      .select({
+        classSlotId: classDateBlocks.classSlotId,
+        date: classDateBlocks.sessionDate,
+      })
+      .from(classDateBlocks);
     const blocks: BlockDate[] = [
       ...holidayRows.map((row) => ({ kind: "holiday" as const, date: row.date })),
       ...closureRows.map((row) => ({
@@ -72,11 +79,17 @@ export async function reconcileBlockedOccurrences(
         startDate: row.startDate,
         endDate: row.endDate,
       })),
+      ...classBlockRows.map((row) => ({
+        kind: "classSlot" as const,
+        classSlotId: row.classSlotId,
+        date: row.date,
+      })),
     ];
 
     const occurrences = await tx
       .select({
         id: classSessions.id,
+        classSlotId: classSessions.classSlotId,
         sessionDate: classSessions.sessionDate,
         status: classSessions.status,
         slotWeekday: classSlots.weekday,
@@ -98,7 +111,11 @@ export async function reconcileBlockedOccurrences(
         date: occurrence.sessionDate,
         currentStatus: occurrence.status,
         slotWeekday: occurrence.slotWeekday,
-        isCovered: isDateCoveredByBlocks(occurrence.sessionDate, blocks),
+        isCovered: isOccurrenceCoveredByBlocks(
+          occurrence.sessionDate,
+          occurrence.classSlotId,
+          blocks,
+        ),
         today,
       });
       if (!transition || transition === occurrence.status) continue;
@@ -151,7 +168,7 @@ export async function reconcileBlockedOccurrences(
               tx,
               {
                 creditId: credit.id,
-                reason: "Ocorrencia bloqueada por feriado/recesso",
+                reason: "Ocorrencia bloqueada",
                 adminLabel: "admin",
               },
               now,
