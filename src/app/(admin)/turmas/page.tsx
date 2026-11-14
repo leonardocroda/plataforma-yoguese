@@ -4,6 +4,7 @@ import {
 } from "../../../modules/classes/services/classes";
 import { Chip } from "../../../modules/ui/components/kit";
 import { CreateModalityForm, ModalityCardForms } from "./modality-forms";
+import { CreateClassForm } from "./turma-create-form";
 
 export const dynamic = "force-dynamic";
 
@@ -84,6 +85,15 @@ export default async function AdminClassesPage() {
             ))}
           </ul>
         )}
+      </section>
+
+      <section className="mt-8 max-w-[640px] rounded-[var(--r-lg)] border-2 border-[var(--preto)] bg-[var(--pena)] p-5">
+        <h2 className="text-[22px]">Criar turma</h2>
+        <CreateClassForm
+          classTypes={classTypes
+            .filter((classType) => classType.status === "ATIVA")
+            .map((classType) => ({ id: classType.id, name: classType.name }))}
+        />
       </section>
 
       <section className="mt-8">

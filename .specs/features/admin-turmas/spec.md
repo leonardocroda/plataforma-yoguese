@@ -151,12 +151,14 @@ apagar linhas; reativar e ver as próximas ocorrências voltarem.
 | TURM-03 | P1: Gestão de modalidades | Tasks | Implementing |
 | TURM-04 | P1: Gestão de modalidades | Tasks | Implementing |
 | TURM-05 | P1: Gestão de modalidades | Tasks | Implementing |
-| TURM-06 | P1: Gestão de modalidades | Design | Pending |
+| TURM-06 | P1: Gestão de modalidades | Tasks | Implementing |
 | TURM-07 | P1: Gestão de modalidades | Tasks | Implementing |
 | TURM-08 | P1: Cadastro de turma | Tasks | Implementing |
-| TURM-09 | P1: Cadastro de turma | Design | Pending |
+| TURM-08 | P1: Cadastro de turma | Tasks | Implementing |
+| TURM-09 | P1: Cadastro de turma | Tasks | Implementing |
 | TURM-10 | P1: Cadastro de turma | Tasks | Implementing |
 | TURM-11 | P1: Cadastro de turma | Tasks | Implementing |
+| TURM-12 | P1: Cadastro de turma | Tasks | Implementing |
 | TURM-12 | P1: Cadastro de turma | Design | Pending |
 | TURM-13 | P1: Edição, desativação e reativação | Design | Pending |
 | TURM-14 | P1: Edição, desativação e reativação | Design | Pending |

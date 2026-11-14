@@ -200,11 +200,11 @@ T4 -> T7
 
 **Done when**:
 
-- [ ] Criar turma com capacidade em branco grava 8 (RES-02)
-- [ ] Select não oferece modalidade inativa
-- [ ] Erros de servidor (fim ≤ início, dia inválido, capacidade < 1, modalidade) aparecem por campo
-- [ ] Turma criada aparece na listagem e a ocorrência na `/grade` da próxima data
-- [ ] Gate: `npm run build; npm run lint`
+- [x] Criar turma com capacidade em branco grava 8 (RES-02)
+- [x] Select não oferece modalidade inativa
+- [x] Erros de servidor (fim ≤ início, dia inválido, capacidade < 1, modalidade) aparecem por campo
+- [x] Turma criada aparece na listagem e a ocorrência na `/grade` da próxima data
+- [x] Gate: `npm run build; npm run lint`
 
 **Tests**: none (regras provadas em T1/T2; tela provada por walk)
 **Gate**: build
