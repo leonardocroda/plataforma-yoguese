@@ -144,6 +144,9 @@ describe("voice", () => {
     const paths = walk("src").filter((path) => !path.includes("__tests__"));
     const shortcuts = [
       /\d+\s*\/\s*8\b/,
+      // A renderizacao natural do React: `{n}/8` ou `{vagas}/8` nao tem
+      // digito literal antes da barra, mas e o mesmo atalho de vaga.
+      /\{[^}\n]{1,40}\}\s*\/\s*\d/,
       /role="progressbar"/,
       /<progress/i,
     ];
