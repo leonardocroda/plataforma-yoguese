@@ -34,7 +34,7 @@ type ApprovedExperimentalParticipant = {
 };
 
 /** O vinculo fixo cobre a data da ocorrencia (RES-23). */
-function coversDate(enrollment: Enrollment, date: string): boolean {
+export function coversDate(enrollment: Enrollment, date: string): boolean {
   if (enrollment.startDate > date) return false;
   if (enrollment.endDate && enrollment.endDate <= date) return false;
   return true;

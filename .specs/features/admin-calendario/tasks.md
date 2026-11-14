@@ -274,18 +274,19 @@ T12 -> T13
 
 **Done when**:
 
-- [ ] Teste: janela de N dias materializa exatamente as ocorrências dos dias úteis de cada slot, idempotente em segunda chamada
-- [ ] CAL-05: contagens (fixos, reposições, experimentais, vagas) idênticas às de `getComposition` para a mesma ocorrência — fonte única
-- [ ] CAL-06: data passada sem sessão materializada é omitida; com sessão, aparece com status real (CANCELADA/BLOQUEADA inclusos)
-- [ ] CAL-07: ocorrência coberta por bloqueio vem BLOQUEADA com `classBlocked`/fonte do bloqueio
-- [ ] Participantes e notices presentes nas rows (CRD-09)
-- [ ] Gate check passes: `npm test`
-- [ ] Test count: suíte completa verde
+- [x] Teste: janela de N dias materializa exatamente as ocorrências dos dias úteis de cada slot, idempotente em segunda chamada
+- [x] CAL-05: contagens (fixos, reposições, experimentais, vagas) idênticas às de `getComposition` para a mesma ocorrência — fonte única
+- [x] CAL-06: data passada sem sessão materializada é omitida; com sessão, aparece com status real (CANCELADA/BLOQUEADA inclusos)
+- [x] CAL-07: ocorrência coberta por bloqueio vem BLOQUEADA com `classBlocked`/fonte do bloqueio
+- [x] Participantes e notices presentes nas rows (CRD-09)
+- [x] Gate check passes: `npm test`
+- [x] Test count: suíte completa verde
 
 **Tests**: integration
 **Gate**: full
 
 **Commit**: `feat(bookings): batch occurrence reader for calendar windows`
+**Status**: ✅ Complete
 
 ---
 

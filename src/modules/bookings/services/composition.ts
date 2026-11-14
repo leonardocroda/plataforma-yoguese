@@ -26,6 +26,61 @@ export type OccurrenceCompositionInput = {
   capacity: number;
 };
 
+export type OccurrenceCompositionData = {
+  fixedStudents: Array<{
+    studentId: string;
+    studentStatus: string;
+  }>;
+  activeBookings: Array<{
+    studentId: string;
+    type: "FIXED" | "MAKEUP" | "EXPERIMENTAL";
+    studentStatus: string;
+  }>;
+  absentStudentIds: Set<string>;
+  approvedExperimentalCount: number;
+};
+
+/**
+ * Conta a ocupacao de uma ocorrencia a partir dos dados ja carregados. O
+ * leitor individual e o leitor em lote usam esta mesma funcao, mantendo a
+ * composicao como fonte unica (RES-27, CAL-05).
+ */
+export function calculateOccurrenceComposition(
+  input: { capacity: number },
+  data: OccurrenceCompositionData,
+): Composition {
+  const counted = new Set<string>();
+  let fixedCount = 0;
+  let makeupCount = 0;
+  let experimentalCount = 0;
+
+  for (const student of data.fixedStudents) {
+    if (counted.has(student.studentId)) continue;
+    if (student.studentStatus !== "ATIVO") continue;
+    if (data.absentStudentIds.has(student.studentId)) continue;
+    counted.add(student.studentId);
+    fixedCount += 1;
+  }
+
+  for (const booking of data.activeBookings) {
+    if (counted.has(booking.studentId)) continue;
+    if (booking.type === "FIXED" && booking.studentStatus !== "ATIVO") continue;
+    counted.add(booking.studentId);
+    if (booking.type === "FIXED") fixedCount += 1;
+    else if (booking.type === "MAKEUP") makeupCount += 1;
+    else experimentalCount += 1;
+  }
+
+  experimentalCount += data.approvedExperimentalCount;
+
+  return calculateComposition({
+    capacity: input.capacity,
+    fixedCount,
+    makeupCount,
+    experimentalCount,
+  });
+}
+
 /**
  * Composicao de uma ocorrencia (RES-08, RES-09): quantos fixos, reposicoes
  * e experimentais ocupam a vaga e quantas vagas sobram. Fonte unica do
@@ -43,17 +98,16 @@ export async function getOccurrenceComposition(
   input: OccurrenceCompositionInput,
 ): Promise<Composition> {
   const fixedStudents = await db
-    .select({ studentId: fixedEnrollments.studentId })
+    .select({
+      studentId: fixedEnrollments.studentId,
+      studentStatus: students.status,
+    })
     .from(fixedEnrollments)
     .innerJoin(students, eq(students.id, fixedEnrollments.studentId))
     .where(
       and(
         eq(fixedEnrollments.classSlotId, input.classSlotId),
         eq(fixedEnrollments.status, "ATIVA"),
-        // Aluna INATIVA deixa de ocupar vaga fixa (STUD-06): a contagem e
-        // derivada do status, e reativar volta a contar sem reescrever a
-        // matricula (STUD-07)
-        eq(students.status, "ATIVO"),
         // Cobre a data: startDate <= data < endDate encerrado (RES-23 AC4)
         lte(fixedEnrollments.startDate, input.date),
         or(
@@ -69,69 +123,47 @@ export async function getOccurrenceComposition(
     ? await absentStudents(db, input.sessionId)
     : new Set<string>();
 
-  // Cada aluno conta uma vez: o fixo manda no tipo da ocorrencia
-  const counted = new Set<string>();
-  let fixedCount = 0;
-  for (const row of fixedStudents) {
-    if (counted.has(row.studentId)) continue;
-    if (absent.has(row.studentId)) continue;
-    counted.add(row.studentId);
-    fixedCount += 1;
-  }
-  let makeupCount = 0;
-  let experimentalCount = 0;
+  const activeBookings = input.sessionId
+    ? await db
+        .select({
+          studentId: bookings.studentId,
+          type: bookings.bookingType,
+          studentStatus: students.status,
+        })
+        .from(bookings)
+        .innerJoin(students, eq(students.id, bookings.studentId))
+        .where(
+          and(
+            eq(bookings.classSessionId, input.sessionId),
+            eq(bookings.status, "ATIVA"),
+          ),
+        )
+    : [];
 
-  if (input.sessionId) {
-    const activeBookings = await db
-      .select({
-        studentId: bookings.studentId,
-        type: bookings.bookingType,
-        studentStatus: students.status,
-      })
-      .from(bookings)
-      .innerJoin(students, eq(students.id, bookings.studentId))
-      .where(
-        and(
-          eq(bookings.classSessionId, input.sessionId),
-          eq(bookings.status, "ATIVA"),
-        ),
-      );
+  // A experimental aprovada ocupa a vaga da ocorrencia (EXP-41): ela soma
+  // ao lado dos fixos, reposicoes e reservas EXPERIMENTAL. Os demais
+  // status nao contam (EXP-42).
+  const approved = input.sessionId
+    ? await db
+        .select({ id: experimentals.id })
+        .from(experimentals)
+        .where(
+          and(
+            eq(experimentals.classSessionId, input.sessionId),
+            eq(experimentals.status, "APROVADA"),
+          ),
+        )
+    : [];
 
-    for (const booking of activeBookings) {
-      if (counted.has(booking.studentId)) continue;
-      // Reserva fixa de aluna inativa deixa de ocupar a vaga (STUD-06):
-      // a ocupacao fixa e derivada do status, e reativar volta a contar
-      // sem reescrever a reserva (STUD-07)
-      if (booking.type === "FIXED" && booking.studentStatus !== "ATIVO") {
-        continue;
-      }
-      counted.add(booking.studentId);
-      if (booking.type === "FIXED") fixedCount += 1;
-      else if (booking.type === "MAKEUP") makeupCount += 1;
-      else experimentalCount += 1;
-    }
-
-    // A experimental aprovada ocupa a vaga da ocorrencia (EXP-41): ela soma
-    // ao lado dos fixos, reposicoes e reservas EXPERIMENTAL. Os demais
-    // status nao contam (EXP-42).
-    const approved = await db
-      .select({ id: experimentals.id })
-      .from(experimentals)
-      .where(
-        and(
-          eq(experimentals.classSessionId, input.sessionId),
-          eq(experimentals.status, "APROVADA"),
-        ),
-      );
-    experimentalCount += approved.length;
-  }
-
-  return calculateComposition({
-    capacity: input.capacity,
-    fixedCount,
-    makeupCount,
-    experimentalCount,
-  });
+  return calculateOccurrenceComposition(
+    { capacity: input.capacity },
+    {
+      fixedStudents,
+      activeBookings,
+      absentStudentIds: absent,
+      approvedExperimentalCount: approved.length,
+    },
+  );
 }
 
 export type OccurrenceComposition = Composition & {
