@@ -155,15 +155,16 @@ T12 -> T13
 
 **Done when**:
 
-- [ ] Schema exportado por `src/db/schema/index.ts`
-- [ ] Migração gerada (`npm run db:generate`) e aplicada no banco local (`npm run db:migrate`, docker compose de pé — AD-015)
-- [ ] `npm run build` limpo
-- [ ] Test count: n/a (schema — build gate)
+- [x] Schema exportado por `src/db/schema/index.ts`
+- [x] Migração gerada (`npm run db:generate`) e aplicada no banco local (`npm run db:migrate`, docker compose de pé — AD-015)
+- [x] `npm run build` limpo
+- [x] Test count: n/a (schema — build gate)
 
 **Tests**: none
 **Gate**: build
 
 **Commit**: `feat(db): class_date_blocks table for per-class date blocking`
+**Status**: ✅ Complete
 
 ---
 
