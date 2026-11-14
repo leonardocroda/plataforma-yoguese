@@ -371,16 +371,17 @@ T12 -> T13
 
 **Done when**:
 
-- [ ] Data passada: painel mostra vínculos e avisos, sem botão de agendar/cancelar
-- [ ] Cancelamento concluído exibe os quatro contadores do resultado
-- [ ] Recusas (passada, bloqueada) aparecem como mensagem de erro no formulário
-- [ ] `npm run build; npm run lint` limpos
-- [ ] Test count: n/a (tela — walk)
+- [x] Data passada: painel mostra vínculos e avisos, sem botão de agendar/cancelar
+- [x] Cancelamento concluído exibe os quatro contadores do resultado
+- [x] Recusas (passada, bloqueada) aparecem como mensagem de erro no formulário
+- [x] `npm run build; npm run lint` limpos
+- [x] Test count: n/a (tela — walk)
 
 **Tests**: none
 **Gate**: build
 
 **Commit**: `feat(grade): occurrence panel with past read-only mode and cancellation result`
+**Status**: ✅ Complete
 
 ---
 

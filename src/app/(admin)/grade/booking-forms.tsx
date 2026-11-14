@@ -143,6 +143,7 @@ export function GradeBoard({
   selectedKey,
   view,
   date,
+  today,
 }: {
   days: GradeDay[];
   students: StudentOption[];
@@ -151,6 +152,7 @@ export function GradeBoard({
   selectedKey?: string;
   view: CalendarView;
   date: string;
+  today: string;
 }) {
   const router = useRouter();
   const occurrences = days.flatMap((day) => day.occurrences);
@@ -266,6 +268,7 @@ export function GradeBoard({
             occurrence={current}
             students={students}
             creditsByStudent={creditsByStudent}
+            readOnly={current.date < today}
           />
         ) : (
           <p className="text-[15px] text-[color:var(--cinza)]">
@@ -277,14 +280,16 @@ export function GradeBoard({
   );
 }
 
-function TurmaPanel({
+export function TurmaPanel({
   occurrence,
   students,
   creditsByStudent,
+  readOnly = false,
 }: {
   occurrence: GradeOccurrence;
   students: StudentOption[];
   creditsByStudent: Record<string, CreditOption[]>;
+  readOnly?: boolean;
 }) {
   const fixed = occurrence.participants.filter(
     (participant) => participant.kind === "fixo",
@@ -419,18 +424,26 @@ function TurmaPanel({
         </div>
       ) : null}
 
-      <div className="mt-5 border-t-2 border-t-[var(--preto)] pt-4">
-        <h3 className="text-[20px]">Adicionar agendamento</h3>
-        <OccurrenceForms
-          students={students}
-          fixedStudents={occurrence.fixedStudents}
-          creditsByStudent={creditsByStudent}
-          classSlotId={occurrence.classSlotId}
-          classSessionId={occurrence.classSessionId}
-          date={occurrence.date}
-          quando={occurrenceTitle(occurrence)}
-        />
-      </div>
+      {readOnly ? (
+        <div className="mt-5 border-t-2 border-t-[var(--preto)] pt-4">
+          <p className="text-[14px] font-semibold text-[color:var(--cinza)]">
+            Esta data já passou. A turma aparece em modo de leitura.
+          </p>
+        </div>
+      ) : (
+        <div className="mt-5 border-t-2 border-t-[var(--preto)] pt-4">
+          <h3 className="text-[20px]">Adicionar agendamento</h3>
+          <OccurrenceForms
+            students={students}
+            fixedStudents={occurrence.fixedStudents}
+            creditsByStudent={creditsByStudent}
+            classSlotId={occurrence.classSlotId}
+            classSessionId={occurrence.classSessionId}
+            date={occurrence.date}
+            quando={occurrenceTitle(occurrence)}
+          />
+        </div>
+      )}
     </>
   );
 }
@@ -601,7 +614,7 @@ export function OccurrenceForms({
         result.value;
       return {
         ok: true,
-        message: `Aula cancelada: ${cancelledBookings} reservas canceladas, ${grantedCredits} créditos gerados, ${returnedCredits} créditos devolvidos.`,
+        message: `Ocorrência cancelada: 1. Reservas canceladas: ${cancelledBookings}. Créditos devolvidos: ${returnedCredits}. Créditos gerados: ${grantedCredits}.`,
       };
     }, INITIAL_STATE);
 

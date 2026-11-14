@@ -158,6 +158,7 @@ export default async function AdminGradePage({
           selectedKey={params.ocorrencia}
           view={calendar.view}
           date={calendar.date}
+          today={today}
         />
       ) : calendar.view === "dia" ? (
         <DayView
@@ -165,6 +166,9 @@ export default async function AdminGradePage({
           selectedKey={params.ocorrencia}
           date={calendar.date}
           period={period}
+          students={allStudentsOptions}
+          creditsByStudent={creditsByStudentOptions}
+          today={today}
         />
       ) : (
         <MonthView
@@ -172,6 +176,9 @@ export default async function AdminGradePage({
           selectedKey={params.ocorrencia}
           date={calendar.date}
           period={period}
+          students={allStudentsOptions}
+          creditsByStudent={creditsByStudentOptions}
+          today={today}
         />
       )}
     </main>

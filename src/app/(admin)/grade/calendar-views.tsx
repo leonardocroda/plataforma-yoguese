@@ -6,7 +6,12 @@ import {
 } from "../../../modules/bookings/domain/calendar";
 import { addDays } from "../../../modules/classes/domain/occurrences";
 import { VacancyDucks } from "../../../modules/ui/components/vacancy-ducks";
-import type { GradeOccurrence } from "./booking-forms";
+import {
+  TurmaPanel,
+  type CreditOption,
+  type GradeOccurrence,
+  type StudentOption,
+} from "./booking-forms";
 
 const WEEKDAYS_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
@@ -19,16 +24,26 @@ export function DayView({
   selectedKey,
   date,
   period,
+  students,
+  creditsByStudent,
+  today,
 }: {
   days: Array<{ date: string; occurrences: GradeOccurrence[] }>;
   selectedKey?: string;
   date: string;
   period: string;
+  students: StudentOption[];
+  creditsByStudent: Record<string, CreditOption[]>;
+  today: string;
 }) {
   const occurrences = days.flatMap((day) => day.occurrences);
+  const selectedOccurrence =
+    occurrences.find((occurrence) => occurrence.key === selectedKey) ??
+    occurrences[0];
 
   return (
-    <section className="rounded-[var(--r-lg)] border-2 border-[var(--preto)] bg-[var(--pena)] p-6 xl:p-7">
+    <>
+      <section className="rounded-[var(--r-lg)] border-2 border-[var(--preto)] bg-[var(--pena)] p-6 xl:p-7">
       <h1 className="text-[34px]">Dia</h1>
       <p className="mt-1.5 text-[15px] text-[color:var(--cinza)]">
         {period}. Cada horário mostra a composição da turma.
@@ -79,7 +94,21 @@ export function DayView({
           ))}
         </div>
       )}
-    </section>
+      </section>
+      {selectedOccurrence ? (
+        <aside
+          aria-live="polite"
+          className="mt-4 rounded-[var(--r-lg)] border-2 border-[var(--preto)] bg-[var(--papel-2)] p-6 xl:p-7"
+        >
+          <TurmaPanel
+            occurrence={selectedOccurrence}
+            students={students}
+            creditsByStudent={creditsByStudent}
+            readOnly={selectedOccurrence.date < today}
+          />
+        </aside>
+      ) : null}
+    </>
   );
 }
 
@@ -93,16 +122,26 @@ export function MonthView({
   selectedKey,
   date,
   period,
+  students,
+  creditsByStudent,
+  today,
 }: {
   days: Array<{ date: string; occurrences: GradeOccurrence[] }>;
   selectedKey?: string;
   date: string;
   period: string;
+  students: StudentOption[];
+  creditsByStudent: Record<string, CreditOption[]>;
+  today: string;
 }) {
   const firstDate = days[0]?.date;
   const lastDate = days[days.length - 1]?.date;
   if (!firstDate || !lastDate) return null;
 
+  const allOccurrences = days.flatMap((day) => day.occurrences);
+  const selectedOccurrence =
+    allOccurrences.find((occurrence) => occurrence.key === selectedKey) ??
+    allOccurrences[0];
   const gridStart = weekStartOf(firstDate);
   const gridEnd = weekEndOf(lastDate);
   const gridDates: string[] = [];
@@ -118,7 +157,8 @@ export function MonthView({
   );
 
   return (
-    <section className="overflow-hidden rounded-[var(--r-lg)] border-2 border-[var(--preto)] bg-[var(--pena)]">
+    <>
+      <section className="overflow-hidden rounded-[var(--r-lg)] border-2 border-[var(--preto)] bg-[var(--pena)]">
       <div className="border-b-2 border-[var(--preto)] p-6 xl:p-7">
         <h1 className="text-[34px]">Mês</h1>
         <p className="mt-1.5 text-[15px] text-[color:var(--cinza)]">
@@ -196,7 +236,21 @@ export function MonthView({
           );
         })}
       </div>
-    </section>
+      </section>
+      {selectedOccurrence ? (
+        <aside
+          aria-live="polite"
+          className="mt-4 rounded-[var(--r-lg)] border-2 border-[var(--preto)] bg-[var(--papel-2)] p-6 xl:p-7"
+        >
+          <TurmaPanel
+            occurrence={selectedOccurrence}
+            students={students}
+            creditsByStudent={creditsByStudent}
+            readOnly={selectedOccurrence.date < today}
+          />
+        </aside>
+      ) : null}
+    </>
   );
 }
 
