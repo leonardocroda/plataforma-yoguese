@@ -251,15 +251,16 @@ T12 -> T13
 
 **Done when**:
 
-- [ ] Testes unit provam cada ramo: fixo pela cobertura do enrollment, avisado fora da lista, reposição/experimental/fixo por reserva ATIVA, experimental APROVADA
-- [ ] A página compila usando o módulo novo e `npm run build` fica limpo
-- [ ] Gate check passes: quick gate
-- [ ] Test count: participants.test.ts verde
+- [x] Testes unit provam cada ramo: fixo pela cobertura do enrollment, avisado fora da lista, reposição/experimental/fixo por reserva ATIVA, experimental APROVADA
+- [x] A página compila usando o módulo novo e `npm run build` fica limpo
+- [x] Gate check passes: quick gate
+- [x] Test count: participants.test.ts verde
 
 **Tests**: unit
 **Gate**: quick
 
 **Commit**: `refactor(bookings): extract occurrence participants into a testable service`
+**Status**: ✅ Complete
 
 ---
 

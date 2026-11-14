@@ -21,6 +21,7 @@ import {
   type StudentCredit,
 } from "../../../modules/credits/services/credits";
 import { bookings, fixedEnrollments, students } from "../../../db/schema";
+import { occurrenceParticipants } from "../../../modules/bookings/services/participants";
 import {
   GradeBoard,
   type CreditOption,
@@ -30,113 +31,12 @@ import {
 
 export const dynamic = "force-dynamic";
 
-type EnrollmentRow = typeof fixedEnrollments.$inferSelect;
-type BookingRow = typeof bookings.$inferSelect;
-
-type Participant = {
-  id: string;
-  name: string;
-  kind: "fixo" | "reposição" | "experimental";
-};
-
-type Notice = {
-  id: string;
-  studentId: string;
-  name: string;
-  status: "CANCELADA" | "FALTA";
-};
-
 function formatTime(time: string): string {
   return time.slice(0, 5);
 }
 
 function formatDate(value: Date): string {
   return value.toLocaleDateString("pt-BR", { timeZone: STUDIO_TIMEZONE });
-}
-
-/** O vinculo fixo cobre a data da ocorrencia (RES-23). */
-function coversDate(enrollment: EnrollmentRow, date: string): boolean {
-  if (enrollment.startDate > date) return false;
-  if (enrollment.endDate && enrollment.endDate <= date) return false;
-  return true;
-}
-
-/**
- * Participantes da ocorrencia: os fixos do vinculo, as reservas ativas e as
- * experimentais aprovadas. O aluno que avisou falta ou cancelamento nao conta
- * como participante: o registro dele aparece no resultado da acao (CRD-09,
- * AD-022).
- */
-function occurrenceParticipants(
-  input: {
-    slotId: string;
-    sessionId: string;
-    date: string;
-  },
-  enrollments: EnrollmentRow[],
-  sessionBookings: BookingRow[],
-  nameById: Map<string, string>,
-  approvedExperimentals: ApprovedExperimental[],
-): { participants: Participant[]; fixed: StudentOption[]; notices: Notice[] } {
-  const nameOf = (studentId: string): string =>
-    nameById.get(studentId) ?? "Aluno";
-
-  const notices = sessionBookings
-    .filter(
-      (booking) =>
-        booking.bookingType === "FIXED" &&
-        (booking.status === "CANCELADA" || booking.status === "FALTA"),
-    )
-    .map((booking) => ({
-      id: booking.id,
-      studentId: booking.studentId,
-      name: nameOf(booking.studentId),
-      status: booking.status as "CANCELADA" | "FALTA",
-    }));
-  const notified = new Set(notices.map((notice) => notice.studentId));
-
-  const participants: Participant[] = [];
-  const listed = new Set<string>();
-  const fixed: StudentOption[] = [];
-
-  for (const enrollment of enrollments) {
-    if (enrollment.classSlotId !== input.slotId) continue;
-    if (!coversDate(enrollment, input.date)) continue;
-    if (listed.has(enrollment.studentId)) continue;
-    listed.add(enrollment.studentId);
-    const name = nameOf(enrollment.studentId);
-    if (!notified.has(enrollment.studentId)) {
-      participants.push({ id: enrollment.studentId, name, kind: "fixo" });
-      fixed.push({ id: enrollment.studentId, name });
-    }
-  }
-
-  for (const booking of sessionBookings) {
-    if (booking.status !== "ATIVA") continue;
-    if (listed.has(booking.studentId)) continue;
-    listed.add(booking.studentId);
-    const name = nameOf(booking.studentId);
-    if (booking.bookingType === "MAKEUP") {
-      participants.push({ id: booking.studentId, name, kind: "reposição" });
-    } else if (booking.bookingType === "EXPERIMENTAL") {
-      participants.push({ id: booking.studentId, name, kind: "experimental" });
-    } else {
-      participants.push({ id: booking.studentId, name, kind: "fixo" });
-    }
-  }
-
-  // As experimentais aprovadas da ocorrencia entram como participantes com
-  // o vinculo "experimental" (EXP-43): a pessoa que veio pela aula
-  // experimental ocupa a vaga da ocorrencia
-  for (const experimental of approvedExperimentals) {
-    participants.push({
-      id: experimental.id,
-      name: experimental.name,
-      kind: "experimental",
-    });
-  }
-
-  return { participants, fixed, notices };
 }
 
 /**
@@ -250,17 +150,14 @@ export default async function AdminGradePage() {
       const occurrenceBookings = sessionBookings.filter(
         (booking) => booking.classSessionId === sessionId,
       );
-      const { participants, fixed, notices } = occurrenceParticipants(
-        {
-          slotId: occurrence.slot.id,
-          sessionId,
-          date: day.date,
-        },
+      const { participants, fixed, notices } = occurrenceParticipants({
+        slotId: occurrence.slot.id,
+        date: day.date,
         enrollments,
-        occurrenceBookings,
+        bookings: occurrenceBookings,
         nameById,
-        experimentalsBySession.get(sessionId) ?? [],
-      );
+        approvedExperimentals: experimentalsBySession.get(sessionId) ?? [],
+      });
       const occurrenceCredits = allCredits.filter(
         (credit) => credit.sourceSessionId === sessionId,
       );
