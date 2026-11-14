@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Design**: `.specs/features/admin-calendario/design.md` (aprovado)
 **Spec**: `.specs/features/admin-calendario/spec.md` (aprovada, CAL-01..22)
-**Status**: Approved
+**Status**: In Progress
 **Approved**: 2026-11-14 - user: "Sim, pode executar"
 **Build**: `npm run build; npm run lint`
 **Run participants**: `npx vitest run src/modules/bookings/services/__tests__/participants.test.ts --reporter=verbose`
@@ -444,14 +444,20 @@ Proof: walk - com uma ocorrência cancelada no banco de dev, as três vistas mos
 **C9** - As vistas mantêm a composição do guia da marca: patinhos mini por slot, tokens, bordas 2px e sem overflow horizontal em 1280px (CAL-09, BRAND-08, AD-041, AD-042)
 Proof: browser captures/admin-calendario-semana.running.png
 
-**C10** - O painel da ocorrência lista os participantes com o vínculo de cada um (fixo, reposição, experimental) incluindo os registros de aviso de falta/cancelamento (CAL-10, CRD-09, AD-022)
-Proof: run participants | ✓ participants > derives fixed, makeup, experimental and notices for the occurrence
+**C10** - O painel da ocorrência lista os participantes com o vínculo de cada um (fixo, reposição, experimental) e mantém os registros de aviso de falta/cancelamento fora da lista de participantes (CAL-10, CRD-09, AD-022)
+Proof: run participants | ✓ participants > lists every participant with its link type and keeps the notices apart
 
 **C11** - Clicar em um participante abre o cadastro do aluno em `/alunos/[id]` (CAL-11)
 Proof: walk - clicar num participante fixo navega para /alunos/<id>
 
-**C12** - Cancelamento pelo estúdio de ocorrência de hoje/futura: CANCELADA, reservas ativas canceladas (cancelledBy ESTUDIO), crédito RESERVADO da reposição devolvido com vencimento original e 1 crédito CANCELAMENTO_ESTUDIO por fixo afetado (CAL-12, CRD-28..30, AD-020, AD-025)
+**C12** - Cancelamento pelo estúdio de ocorrência de hoje/futura: a ocorrência fica CANCELADA e as reservas ativas são canceladas com cancelledBy ESTUDIO (CAL-12, CRD-28)
 Proof: run credits | ✓ studio cancellation > cancels the occurrence and its active bookings
+
+**C23** - Cada aluno fixo afetado pelo cancelamento recebe 1 crédito CANCELAMENTO_ESTUDIO (CAL-12, AD-017, AD-025)
+Proof: run credits | ✓ studio cancellation > grants one credit per affected fixed student
+
+**C24** - O crédito RESERVADO da reposição volta a DISPONIVEL com o vencimento original (CAL-12, AD-020)
+Proof: run credits | ✓ studio cancellation > returns the makeup credit to DISPONIVEL
 
 **C13** - Cancelar a mesma ocorrência novamente não duplica crédito nem altera reservas já canceladas (CAL-13, CRD-31/33)
 Proof: run credits | ✓ studio cancellation > grants no duplicate credit when the cancellation repeats
@@ -469,16 +475,16 @@ Proof: walk - cancelar uma ocorrência futura mostra os quatro contadores no for
 Proof: run bookings | ✓ bookings > refuses a booking on a cancelled occurrence
 
 **C18** - Bloquear uma turma em uma data: ocorrências BLOQUEADAS, reservas ativas canceladas, crédito RESERVADO da reposição devolvido e nenhum crédito de estúdio (CAL-18, AD-026, AD-032)
-Proof: run class-blocks | ✓ class date blocks > blocks a slot on a date cancelling bookings and returning the makeup credit without studio credits
+Proof: run class-blocks | ✓ blocks > blocks a class slot on the date without granting studio credits (CAL-18)
 
 **C19** - Remover o bloqueio: cobertas de hoje em diante voltam a AGENDADA e as reservas canceladas pelo bloqueio não são restauradas (CAL-19, AD-027)
-Proof: run class-blocks | ✓ class date blocks > unblocks from today onward without restoring bookings
+Proof: run class-blocks | ✓ blocks > unblocks the class slot without restoring cancelled bookings (CAL-19)
 
 **C20** - Cancelamento pelo estúdio em ocorrência bloqueada por turma/data é recusado com mensagem clara (CAL-20, AD-031)
-Proof: run class-blocks | ✓ class date blocks > refuses the studio cancellation while blocked
+Proof: run class-blocks | ✓ blocks > refuses studio cancellation while the class slot is blocked (CAL-20)
 
 **C21** - Enquanto qualquer bloqueio (feriado, recesso ou turma/data) cobre a data a ocorrência segue BLOQUEADA e desbloqueia somente quando nenhum cobre (CAL-21, AD-028)
-Proof: run class-blocks | ✓ class date blocks > stays blocked while any block covers the date
+Proof: run class-blocks | ✓ blocks > keeps the occurrence blocked while any block covers the date (CAL-21)
 
 **C22** - A ação "Hoje" renderiza a janela da aba ativa contendo a data de hoje (CAL-22)
 Proof: walk - navegar a qualquer data e usar "Hoje" volta para a janela corrente
@@ -490,8 +496,8 @@ Proof: walk - navegar a qualquer data e usar "Hoje" volta para a janela corrente
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** 2026-11-14 - user: "Sim, pode executar" (aprova as tasks); user: "2 workers por lote (Recommended)" (aprova a delegacao em 2 lotes)
-**Dispatched:** Batch 1 (Fases 1-2, T1-T6) -> worker batch-1, HEAD 014ac9d, returned (6 tasks, 403 testes verdes, 6 commits: 07f294d, 5b633c2, 2358177, 7947050, abb0e6c, 3135644); Batch 2 (Fases 3-4, T7-T13) -> worker batch-2, HEAD 3135644, pending
-**Walked:** (none)
+**Dispatched:** Batch 1 (Fases 1-2, T1-T6) -> worker batch-1, HEAD 014ac9d, returned (6 tasks, 403 testes verdes, 6 commits: 07f294d, 5b633c2, 2358177, 7947050, abb0e6c, 3135644); Batch 2 (Fases 3-4, T7-T13) -> worker batch-2, HEAD 3135644, returned (7 tasks, 414 testes verdes, 7 commits: 4e75d01, d4b625e, f25c52e, 800519b, c52270d, 6cca0c9, 3091c1d)
+**Walked:** 2026-11-14 - walk em chromium headless (playwright-core) contra o dev server na 3001, 41/41 asserts. P1 vistas e navegacao - login em /login (admin@yoguese.com), /grade abre a semana de hoje com os horarios e os patinhos mini; aba Mensal desenha as 5 semanas do mes de novembro (11 ocorrencias, todas em 2026-11); aba Diaria mostra so o dia; as setas andam 1 dia, 7 dias ou 1 mes conforme a aba; o seletor leva a D+14 (2026-11-28) e a semana mostra a turma de terca 19h (24/11). P1 participantes - o painel de terca 24/11 lista 5 fixos com link "Ver cadastro" para /alunos/<id>, 1 reposicao e 1 experimental, com a composicao batendo com o banco; clicar num fixo abre /alunos/<id>. P1 cancelamento - com a ocorrencia de terca 24/11 (semana de D+14) selecionada, "Cancelar aula" mostra "Ocorrencia cancelada: 1. Reservas canceladas: 1. Creditos devolvidos: 1. Creditos gerados: 5."; no banco: sessao CANCELADA, reserva CANCELADA/ESTUDIO, credito RESERVADO de volta a DISPONIVEL e 5 creditos CANCELAMENTO_ESTUDIO (um por fixo). P1 selos - a semana de 16/11 mostra "Cancelada" na segunda 19h e "Bloqueada" na quarta 09:30 (feriado cadastrado pela tela /feriados). P2 bloqueio - na vista Diaria de quinta 19/11, "Bloquear nesta data" deixa a ocorrencia BLOQUEADA, cancela a reserva ativa, devolve o credito a DISPONIVEL e nao gera credito de estudio; "Cancelar aula" e recusado ("ocorrencia bloqueada por feriado/recesso"); "Remover bloqueio" volta a AGENDADA e a reserva cancelada nao e restaurada. Passado - a ocorrencia de 09/11 abre o painel com participantes e historico, sem botao de reservar nem de cancelar. P3 - "Hoje" devolve a janela corrente (2026-11-14). CAL-09 - sem rolagem horizontal em 1280px nas tres vistas, sem erro de console e sem recurso faltando. Capturas: captures/admin-calendario-semana.running.png (semana de 16/11 com os selos) e captures/admin-calendario-painel.running.png (semana de 23/11 com o painel da turma de 24/11). Dados do cenario: 4 alunas "Walk Calendario 1..4" fixas na turma de terca 19h, 1 experimental aprovada em 24/11, a reserva de reposicao com credito RESERVADO, a turma de quinta 19h (Intenso) e o feriado "Walk Calendario feriado" em 18/11; o script .specs/features/admin-calendario/walk.mjs recria o cenario a cada rodada.
 
 ---
 

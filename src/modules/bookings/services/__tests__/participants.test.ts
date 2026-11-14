@@ -134,4 +134,60 @@ describe("participants", () => {
       { id: "experimental-1", name: "Ana Convidada", kind: "experimental" },
     ]);
   });
+
+  it("lists every participant with its link type and keeps the notices apart", () => {
+    const result = occurrenceParticipants({
+      slotId: SLOT_ID,
+      date: DATE,
+      enrollments: [
+        enrollment("fixed-student"),
+        enrollment("notified-student"),
+      ],
+      bookings: [
+        booking("booking-makeup", "makeup-student", "MAKEUP"),
+        booking("booking-experimental", "experimental-student", "EXPERIMENTAL"),
+        booking("notice-1", "notified-student", "FIXED", "FALTA"),
+      ],
+      nameById: names([
+        ["fixed-student", "Ana Fixa"],
+        ["notified-student", "Ana Avisou"],
+        ["makeup-student", "Ana Reposicao"],
+        ["experimental-student", "Ana Experimental"],
+      ]),
+      approvedExperimentals: [
+        { id: "experimental-1", name: "Ana Convidada" },
+      ],
+    });
+
+    expect(result.participants).toEqual([
+      { id: "fixed-student", name: "Ana Fixa", kind: "fixo" },
+      { id: "makeup-student", name: "Ana Reposicao", kind: "reposição" },
+      {
+        id: "experimental-student",
+        name: "Ana Experimental",
+        kind: "experimental",
+      },
+      { id: "experimental-1", name: "Ana Convidada", kind: "experimental" },
+    ]);
+    expect(result.fixed).toEqual([{ id: "fixed-student", name: "Ana Fixa" }]);
+    expect(
+      result.participants.filter((participant) => participant.kind === "reposição"),
+    ).toEqual([{ id: "makeup-student", name: "Ana Reposicao", kind: "reposição" }]);
+    expect(
+      result.participants.filter(
+        (participant) => participant.kind === "experimental",
+      ),
+    ).toEqual([
+      { id: "experimental-student", name: "Ana Experimental", kind: "experimental" },
+      { id: "experimental-1", name: "Ana Convidada", kind: "experimental" },
+    ]);
+    expect(result.notices).toEqual([
+      {
+        id: "notice-1",
+        studentId: "notified-student",
+        name: "Ana Avisou",
+        status: "FALTA",
+      },
+    ]);
+  });
 });
