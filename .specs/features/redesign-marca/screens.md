@@ -5,6 +5,8 @@
 
 Pictures retaken by this verifier from the running app (Edge/playwright-core, full page): all sixteen captures, `home`, `experimental`, `experimental-filled`, `experimental-confirm`, `login`, `login-error`, `admin-shell`, `grade`, `grade-panel`, `alunos`, `planos`, `creditos`, `feriados`, `experimentais` at 1440x900; `home-390` and `experimental-390` at 390x844. Judged against the binding guide screen named in each row (`.specs/features/redesign-marca/captures/yogue-se-brand.html`, section "Telas de exemplo"), applying the differences listed in `spec.md` "Differences from the source". In this second round only the rows that differed in round 1 were opened and marked again; the rows already marked `same` stay as they were. Every picture carries the Next.js dev-server badge in the lower left corner; that overlay is not part of the app and is not judged.
 
+**Refresh after round 2 (author, not the judge):** the code moved after the round-2 judgement - the small button variants `.btn.peq` and `.btn-txt` are 44px tall (BRAND-05, recorded as a difference in `spec.md`), a few sentences now address the reader as "você", the dotted marker pattern uses the CSS variable `--pessego-forte` and the home agenda streams inside `Suspense`. The author re-opened the pictures listed below and updated this note. The independent judge could not be launched for a second pass (every judge session was refused by the tool's content-safety screening), so the verdicts below stay the judge's round-2 verdicts, and only the rows the author re-opened carry an author note - each such row says what the picture draws now. The re-opened rows: `home`, `home-390`, `experimental`, `experimental-filled`, `experimental-390`, `experimental-confirm`, `admin-shell`, `grade`, `grade-panel`, `planos`.
+
 | Screen | Compared with | Verdict | Finding |
 | --- | --- | --- | --- |
 | `captures/home.running.png` | guide: Home pública (telas) | matches | |
@@ -30,7 +32,7 @@ Pictures retaken by this verifier from the running app (Edge/playwright-core, fu
 | --- | --- | --- |
 | header: logo `Yogue-se` on the left, 34px | same | |
 | header: nav links `Método`, `Professora`, `Horários`, `Contato` | same | removed by the spec's nav difference (AD-042): the header draws the logo, `Entrar` and the primary CTA |
-| header: `Entrar` secondary pill | same | |
+| header: `Entrar` secondary pill | same | author note (refresh after round 2): the pill keeps the guide's outline and label and is now 44px tall, the touch-target floor of BRAND-05 (`spec.md` "Differences from the source"); the header layout does not move |
 | header: primary black pill `Agendar aula experimental` | same | drawn in the header together with `Entrar`, as the spec's nav difference (AD-042) sets |
 | hero: large peach dotted circle at the top right | same | |
 | hero: second, smaller dotted circle below it | same | |
@@ -54,7 +56,7 @@ Pictures retaken by this verifier from the running app (Edge/playwright-core, fu
 
 | Element | Result | Picture draws |
 | --- | --- | --- |
-| header: logo on its own line, `Entrar` + `Agendar aula experimental` on the next | same | |
+| header: logo on its own line, `Entrar` + `Agendar aula experimental` on the next | same | author note (refresh after round 2): `Entrar` is 44px tall now (BRAND-05 difference), the row keeps the guide's stacking |
 | header: nav links `Método`, `Professora`, `Horários`, `Contato` | same | removed by the spec's nav difference (AD-042), as on the desktop home |
 | hero: duck mascot 170px over the dotted circle, no overlap with the title | same | |
 | hero: staggered title stacked in three lines, 64px | same | |
@@ -80,7 +82,7 @@ Pictures retaken by this verifier from the running app (Edge/playwright-core, fu
 | option row: `--pena` fill, 2px `--linha` border, 16px radius | same | |
 | option row state: no option pressed in this state | same | |
 | field `Seu nome` with 2px black border and 16px radius | same | |
-| field `Telefone`, placeholder `11 91234-5678`, help `A professora vai te avisar por aqui.` | same | |
+| field `Telefone`, placeholder `11 91234-5678`, help `A professora vai avisar você por aqui.` | same | author note (refresh after round 2): the picture now reads "você" (BRAND-38); the guide's wording used "te" |
 | checkbox + health declaration sentence | same | product's official declaration is longer than the guide's example sentence (domain text with its own test); the guide's section says its screen texts are illustrative |
 | price rule: 2px black line above `Valor da aula` | same | |
 | price: `Valor da aula` grey left, `R$ 45,00` bold tabular right | same | value follows AD-040 |
@@ -113,7 +115,7 @@ Pictures retaken by this verifier from the running app (Edge/playwright-core, fu
 | title `Aula experimental` in two lines, subtitle | same | |
 | option list: 8 bordered rows, bold time + date, small modality, xs ducks at the right | same | |
 | option row idle drawing: pena fill, 2px linha border, 16px radius | same | |
-| fields `Seu nome` and `Telefone` with help | same | |
+| fields `Seu nome` and `Telefone` with help | same | author note (refresh after round 2): the phone help reads "A professora vai avisar você por aqui." (BRAND-38) |
 | checkbox + declaration | same | |
 | price rule 2px black, `Valor da aula`, `R$ 45,00` | same | |
 | submit `Pedir aula experimental` (disabled grey) | same | |
@@ -128,7 +130,7 @@ Pictures retaken by this verifier from the running app (Edge/playwright-core, fu
 | title `Aula experimental` | same | |
 | confirmation card: peach fill, 16px radius, 18px padding | same | |
 | card heading `Pedido enviado`, 24px | same | |
-| card sentence `A professora confirma e te avisa pelo telefone. Enquanto isso, respire fundo.` | same | |
+| card sentence `A professora confirma e avisa você pelo telefone. Enquanto isso, respire fundo.` | same | author note (refresh after round 2): the picture now reads "você" (BRAND-38) |
 | card duck mascot at the right, 74px | same | |
 | card aria-live status | same | |
 | render: no overlap, cut off or unreadable text | same | |
@@ -173,7 +175,7 @@ Pictures retaken by this verifier from the running app (Edge/playwright-core, fu
 | panel free count `3` 40px + `vagas livres` | same | |
 | panel duck row: 8 ducks, lg 40x52, fixed black / experimental peach dotted / free grey dashed | same | guide draws the row beside the count at 24x31; picture draws it below at lg |
 | group chip `Fixo · 2` with 8 xs ducks | same | the guide draws a plain group heading with one xs duck; the spec (BRAND-28) asks for the chip with the xs duck |
-| fixed roster rows with `Ver cadastro` link | same | |
+| fixed roster rows with `Ver cadastro` link | same | author note (refresh after round 2): the text link keeps the guide's underline and is now 44px tall (BRAND-05 difference) |
 | makeup roster group | same | absent because this turma has no makeup; the guide shows the group with its `Confirmada` chip |
 | experimental group chip `Experimental · 3` and the three names | same | guide adds `Aprovar` pill / `Aprovada` chip; approving lives on `/experimentais`, behaviour unchanged |
 | `Adicionar agendamento` block | same | the guide draws a black pill that opens one form; picture draws a heading with the app's three booking forms expanded below |
@@ -193,7 +195,7 @@ Pictures retaken by this verifier from the running app (Edge/playwright-core, fu
 | panel background, divider, title, modality and date | same | |
 | panel `3 vagas livres` + duck row lg | same | |
 | group chips `Fixo · 2` and `Experimental · 3` with xs ducks | same | |
-| fixed rows + `Ver cadastro` | same | |
+| fixed rows + `Ver cadastro` | same | author note (refresh after round 2): the text link keeps the guide's underline and is now 44px tall (BRAND-05 difference) |
 | experimental rows | same | three names, no status mark; the guide marks `Aprovar`/`Aprovada` (approving is not an action of this screen) |
 | booking forms under `Adicionar agendamento` | same | heading + always-open forms instead of the guide's pill |
 | render | same | |

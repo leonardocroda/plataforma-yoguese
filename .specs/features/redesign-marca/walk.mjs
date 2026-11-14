@@ -368,16 +368,17 @@ await shot("grade");
 const slotButtons = page.locator('button[aria-label*="vagas livres de 8"]');
 const slotCount = await slotButtons.count();
 check("calendario mostra slots com rotulo de vagas", slotCount > 0, `${slotCount} slots`);
-const miniDucks = await page.evaluate(
-  () =>
-    document.querySelectorAll(
-      '[role="img"][aria-label*="vaga livre de 8"], [role="img"][aria-label*="vagas livres de 8"]',
-    ).length,
+// Cada horario da grade abre a grade 4x2 com os oito patinhos: o assert
+// conta as bolinhas de cada slot, nao o numero de grupos.
+const miniDucks = await page.evaluate(() =>
+  [
+    ...document.querySelectorAll('button[aria-label*="vagas livres de 8"]'),
+  ].map((slot) => slot.querySelectorAll(".vagas.sm .dot").length),
 );
 check(
   "cada slot tem os oito patinhos (miniatura)",
-  miniDucks >= slotCount,
-  `${miniDucks} patinhos para ${slotCount} slots`,
+  miniDucks.length > 0 && miniDucks.every((count) => count === 8),
+  `${miniDucks.join(", ")} patinhos`,
 );
 await slotButtons.first().click();
 await page.waitForTimeout(600);
