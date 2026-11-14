@@ -395,15 +395,16 @@ T12 -> T13
 
 **Done when**:
 
-- [ ] Bloquear/desbloquear persiste pelo painel e a ocorrência reflete BLOQUEADA/AGENDADA após refresh
-- [ ] Ocorrência passada ou cancelada não oferece os botões
-- [ ] `npm run build; npm run lint` limpos
-- [ ] Test count: n/a (tela — walk)
+- [x] Bloquear/desbloquear persiste pelo painel e a ocorrência reflete BLOQUEADA/AGENDADA após refresh
+- [x] Ocorrência passada ou cancelada não oferece os botões
+- [x] `npm run build; npm run lint` limpos
+- [x] Test count: n/a (tela — walk)
 
 **Tests**: none
 **Gate**: build
 
 **Commit**: `feat(grade): block and unblock a class on a specific date from the panel`
+**Status**: ✅ Complete
 
 ---
 

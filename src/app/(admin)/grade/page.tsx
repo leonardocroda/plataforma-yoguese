@@ -108,6 +108,7 @@ export default async function AdminGradePage({
           classTypeName: occurrence.classTypeName,
           capacity: occurrence.capacity,
           sessionStatus: occurrence.sessionStatus,
+          classBlocked: occurrence.classBlocked,
           fixedCount: occurrence.composition.fixedCount,
           makeupCount: occurrence.composition.makeupCount,
           experimentalCount: occurrence.composition.experimentalCount,

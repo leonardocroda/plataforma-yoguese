@@ -10,8 +10,10 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import {
+  blockClassSlotDateAction,
   createBookingAction,
   createEnrollmentAction,
+  unblockClassSlotDateAction,
 } from "../../../modules/classes/actions";
 import {
   bookMakeupByAdminAction,
@@ -69,6 +71,7 @@ export type GradeOccurrence = {
   classTypeName: string;
   capacity: number;
   sessionStatus: "AGENDADA" | "BLOQUEADA" | "CANCELADA";
+  classBlocked: boolean;
   fixedCount: number;
   makeupCount: number;
   experimentalCount: number;
@@ -316,7 +319,7 @@ export function TurmaPanel({
 
       {occurrence.sessionStatus === "BLOQUEADA" ? (
         <p className="mt-2 text-[14.5px] font-medium text-[color:var(--erro)]">
-          Bloqueada por feriado ou recesso.
+          Bloqueada nesta data.
         </p>
       ) : null}
       {occurrence.sessionStatus === "CANCELADA" ? (
@@ -432,6 +435,16 @@ export function TurmaPanel({
         </div>
       ) : (
         <div className="mt-5 border-t-2 border-t-[var(--preto)] pt-4">
+          {occurrence.sessionStatus !== "CANCELADA" ? (
+            <div className="mb-5">
+              <h3 className="text-[20px]">Bloqueio nesta data</h3>
+              <OccurrenceBlockForm
+                classSlotId={occurrence.classSlotId}
+                date={occurrence.date}
+                classBlocked={occurrence.classBlocked}
+              />
+            </div>
+          ) : null}
           <h3 className="text-[20px]">Adicionar agendamento</h3>
           <OccurrenceForms
             students={students}
@@ -483,6 +496,66 @@ function RosterGroup({
         )}
       </ul>
     </div>
+  );
+}
+
+/**
+ * Bloqueia ou desbloqueia a propria turma em uma data. A action mantem as
+ * regras de reservas e creditos; o refresh devolve a occorrencia atualizada.
+ */
+function OccurrenceBlockForm({
+  classSlotId,
+  date,
+  classBlocked,
+}: {
+  classSlotId: string;
+  date: string;
+  classBlocked: boolean;
+}) {
+  const router = useRouter();
+  const [state, formAction, pending] = useActionState<ActionState, FormData>(
+    async (_previous, formData) => {
+      const intent = String(formData.get("intent"));
+      const result =
+        intent === "unblock"
+          ? await unblockClassSlotDateAction({ classSlotId, date })
+          : await blockClassSlotDateAction({ classSlotId, date });
+      if (!result.ok) return { ok: false, message: result.error };
+      return {
+        ok: true,
+        message:
+          intent === "unblock"
+            ? "Bloqueio da turma nesta data removido."
+            : "Turma bloqueada nesta data.",
+      };
+    },
+    INITIAL_STATE,
+  );
+
+  // O refresh depende do estado inteiro: bloquear e desbloquear em sequência
+  // precisa atualizar a grade duas vezes, mesmo com `ok` sempre verdadeiro.
+  useEffect(() => {
+    if (state.ok) router.refresh();
+  }, [state, router]);
+
+  return (
+    <form action={formAction} className="mt-3">
+      <input
+        type="hidden"
+        name="intent"
+        value={classBlocked ? "unblock" : "block"}
+      />
+      <Button type="submit" variant="sec" small disabled={pending}>
+        {pending
+          ? classBlocked
+            ? "Removendo…"
+            : "Bloqueando…"
+          : classBlocked
+            ? "Remover bloqueio"
+            : "Bloquear nesta data"}
+      </Button>
+      <Feedback state={state} />
+    </form>
   );
 }
 
