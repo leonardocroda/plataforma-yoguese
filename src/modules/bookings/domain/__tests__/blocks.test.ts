@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   isDateCoveredByBlocks,
+  isOccurrenceCoveredByBlocks,
   resolveBlockTransition,
 } from "../blocks";
 
@@ -104,5 +105,49 @@ describe("block transition (domain)", () => {
     expect(
       transition({ date: "2026-11-09", currentStatus: "AGENDADA", isCovered: true }),
     ).toBeNull();
+  });
+});
+
+describe("occurrence block coverage", () => {
+  const SLOT_ID = "slot-a";
+  const OTHER_SLOT_ID = "slot-b";
+  const DATE = "2026-11-17";
+
+  it("covers the occurrence when a holiday covers the date", () => {
+    expect(
+      isOccurrenceCoveredByBlocks("2026-12-25", SLOT_ID, [HOLIDAY]),
+    ).toBe(true);
+  });
+
+  it("covers the occurrence when a closure covers the date", () => {
+    expect(
+      isOccurrenceCoveredByBlocks("2026-12-25", SLOT_ID, [CLOSURE]),
+    ).toBe(true);
+  });
+
+  it("covers the occurrence when its own class slot is blocked on the date", () => {
+    expect(
+      isOccurrenceCoveredByBlocks(DATE, SLOT_ID, [
+        { kind: "classSlot", classSlotId: SLOT_ID, date: DATE },
+      ]),
+    ).toBe(true);
+  });
+
+  it("does not spread a class-slot block to another slot on the same date", () => {
+    const blocks = [
+      { kind: "classSlot", classSlotId: OTHER_SLOT_ID, date: DATE },
+    ] as const;
+
+    expect(isOccurrenceCoveredByBlocks(DATE, SLOT_ID, blocks)).toBe(false);
+    expect(isOccurrenceCoveredByBlocks(DATE, OTHER_SLOT_ID, blocks)).toBe(true);
+  });
+
+  it("does not cover an occurrence without a block or on another date", () => {
+    expect(isOccurrenceCoveredByBlocks(DATE, SLOT_ID, [])).toBe(false);
+    expect(
+      isOccurrenceCoveredByBlocks(DATE, SLOT_ID, [
+        { kind: "classSlot", classSlotId: SLOT_ID, date: "2026-11-24" },
+      ]),
+    ).toBe(false);
   });
 });

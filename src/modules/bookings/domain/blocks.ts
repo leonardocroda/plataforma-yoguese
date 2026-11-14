@@ -8,7 +8,8 @@ import { weekdayOf } from "../../classes/domain/occurrences";
 
 export type BlockDate =
   | { kind: "holiday"; date: string }
-  | { kind: "closure"; startDate: string; endDate: string };
+  | { kind: "closure"; startDate: string; endDate: string }
+  | { kind: "classSlot"; classSlotId: string; date: string };
 
 export type OccurrenceStatus = "AGENDADA" | "BLOQUEADA" | "CANCELADA";
 
@@ -25,8 +26,31 @@ export function isDateCoveredByBlocks(
 ): boolean {
   return blocks.some((block) => {
     if (block.kind === "holiday") return block.date === date;
-    return date >= block.startDate && date <= block.endDate;
+    if (block.kind === "closure") {
+      return date >= block.startDate && date <= block.endDate;
+    }
+    return false;
   });
+}
+
+/**
+ * A ocorrencia da turma esta coberta quando um bloqueio global alcanca a data
+ * ou quando a propria turma esta bloqueada na data.
+ */
+export function isOccurrenceCoveredByBlocks(
+  date: string,
+  classSlotId: string,
+  blocks: BlockDate[],
+): boolean {
+  const globalBlocks = blocks.filter((block) => block.kind !== "classSlot");
+  if (isDateCoveredByBlocks(date, globalBlocks)) return true;
+
+  return blocks.some(
+    (block) =>
+      block.kind === "classSlot" &&
+      block.classSlotId === classSlotId &&
+      block.date === date,
+  );
 }
 
 export type BlockTransitionInput = {

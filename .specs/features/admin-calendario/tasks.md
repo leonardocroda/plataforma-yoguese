@@ -178,15 +178,16 @@ T12 -> T13
 
 **Done when**:
 
-- [ ] Cobertura combinada provada nos ramos (L-015): por feriado, por bloqueio do slot, por nenhum; dois bloqueios de slots diferentes na mesma data não se contaminam
-- [ ] Transições existentes seguem provadas (CANCELADA nunca muda; passado nunca muda — testes antigos verdes)
-- [ ] Gate check passes: `npx vitest run src/modules/bookings/domain --reporter=verbose`
-- [ ] Test count: blocks.test.ts inteiro verde
+- [x] Cobertura combinada provada nos ramos (L-015): por feriado, por bloqueio do slot, por nenhum; dois bloqueios de slots diferentes na mesma data não se contaminam
+- [x] Transições existentes seguem provadas (CANCELADA nunca muda; passado nunca muda — testes antigos verdes)
+- [x] Gate check passes: `npx vitest run src/modules/bookings/domain --reporter=verbose`
+- [x] Test count: blocks.test.ts inteiro verde
 
 **Tests**: unit
 **Gate**: quick
 
 **Commit**: `feat(bookings): slot-aware block coverage in the block domain`
+**Status**: ✅ Complete
 
 ---
 
