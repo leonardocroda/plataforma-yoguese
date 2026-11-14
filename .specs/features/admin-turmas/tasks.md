@@ -222,10 +222,10 @@ T4 -> T7
 
 **Done when**:
 
-- [ ] Edição de dia/horário mostra o feedback de ocorrências canceladas e créditos
-- [ ] Desativar/reativar funcionam da tela, sem apagar registro
-- [ ] Erro de capacidade abaixo da ocupação aparece citando a data
-- [ ] Gate: `npm run build; npm run lint`
+- [x] Edição de dia/horário mostra o feedback de ocorrências canceladas e créditos
+- [x] Desativar/reativar funcionam da tela, sem apagar registro
+- [x] Erro de capacidade abaixo da ocupação aparece citando a data
+- [x] Gate: `npm run build; npm run lint`
 
 **Tests**: none (regras provadas em T3; tela provada por walk)
 **Gate**: build

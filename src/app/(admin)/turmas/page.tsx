@@ -5,6 +5,7 @@ import {
 import { Chip } from "../../../modules/ui/components/kit";
 import { CreateModalityForm, ModalityCardForms } from "./modality-forms";
 import { CreateClassForm } from "./turma-create-form";
+import { ClassCardForms } from "./turma-edit-forms";
 
 export const dynamic = "force-dynamic";
 
@@ -129,6 +130,14 @@ export default async function AdminClassesPage() {
                     ? " · modalidade inativa"
                     : ""}
                 </p>
+                <ClassCardForms
+                  slotId={slot.id}
+                  weekday={slot.weekday}
+                  startTime={formatTime(slot.startTime)}
+                  endTime={formatTime(slot.endTime)}
+                  capacity={slot.capacity}
+                  status={slot.status}
+                />
               </li>
             ))}
           </ul>
