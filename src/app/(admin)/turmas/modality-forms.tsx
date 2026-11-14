@@ -55,9 +55,11 @@ export function CreateModalityForm() {
     INITIAL_STATE,
   );
 
+  // O refresh depende do estado inteiro: com so `state.ok` no array, a
+  // segunda operacao bem-sucedida nao atualizava a listagem.
   useEffect(() => {
     if (state.ok) router.refresh();
-  }, [state.ok, router]);
+  }, [state, router]);
 
   const fieldError = !state.ok && state.field === "name" ? state.message : "";
   const generalError = !state.ok && !state.field ? state.message : "";
@@ -112,9 +114,11 @@ export function ModalityCardForms({
     INITIAL_STATE,
   );
 
+  // O refresh depende do estado inteiro: com so `state.ok` no array, a
+  // segunda operacao bem-sucedida nao atualizava a listagem.
   useEffect(() => {
     if (state.ok) router.refresh();
-  }, [state.ok, router]);
+  }, [state, router]);
 
   const fieldError = !state.ok && state.field === "name" ? state.message : "";
   const generalError = !state.ok && !state.field ? state.message : "";

@@ -87,9 +87,11 @@ export function CreateClassForm({
     INITIAL_STATE,
   );
 
+  // O refresh depende do estado inteiro: com so `state.ok` no array, a
+  // segunda operacao bem-sucedida nao atualizava a listagem.
   useEffect(() => {
     if (state.ok) router.refresh();
-  }, [state.ok, router]);
+  }, [state, router]);
 
   const error = state.ok ? "" : state.message;
   const namedFields = [

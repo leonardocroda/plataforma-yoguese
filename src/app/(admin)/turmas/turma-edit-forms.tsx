@@ -115,9 +115,11 @@ export function ClassCardForms({
       : { ok: false, message: result.error };
   }, INITIAL_STATE);
 
+  // O refresh depende do estado inteiro: com so `edited.ok` no array, a
+  // segunda operacao bem-sucedida nao atualizava a listagem.
   useEffect(() => {
     if (edited.ok || deactivated.ok || reactivated.ok) router.refresh();
-  }, [edited.ok, deactivated.ok, reactivated.ok, router]);
+  }, [edited, deactivated, reactivated, router]);
 
   return (
     <div className="mt-3 space-y-4">

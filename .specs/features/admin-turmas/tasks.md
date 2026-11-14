@@ -299,9 +299,10 @@ Proof: run turmas | ✓ classes > reactivating brings back future occurrences an
 
 The feature's live state, written as it happens - a compaction gives no warning.
 
-**Settled mid-build:** [each answer the user gave during Execute, in their words, the turn it arrived - or none]
-**Dispatched:** [each sub-agent before it is sent - at which `HEAD`, and `returned` when it does]
-**Walked:** [each story's Independent Test as you did it - what the screen showed, and how the user reaches each state]
+**Settled mid-build:** nenhum.
+**Dispatched:** [cada sub-agent antes de ser enviado - at which `HEAD`, and `returned` when it does]
+**Walked:** 2026-11-14, chromium headless (playwright-core) contra o dev server na 3001, rota `/turmas`, 18 gestos exercitados: login do admin -> `/grade`; link "Turmas" do shell -> `/turmas`; listagem com 2 modalidades do seed; nome de modalidade em branco recusado no servidor com erro no campo; modalidade "Walk Yôga" criada e aparecendo na listagem; nome editado ("Walk Yôga Editada") refletido; status Inativa refletido; seletor de nova turma oferecendo so "Superioga Clássico | Superioga Intenso" (a inativa fora); turma criada sem capacidade gravando 8 vagas; fim antes do inicio recusado no campo "endTime"; edicao de dia devolvendo o feedback "Turma atualizada. 0 ocorrencias canceladas na grade antiga e 0 creditos gerados."; turma desativada (chip Inativa, linha preservada) e reativada (chip Ativa); turma recem-criada aparecendo na `/grade`; deslogada, `/turmas` redireciona ao `/login`. Sem pageerrors.
+**Achado do walk:** o `useEffect` de refresh dependia do booleano `state.ok`: a segunda operacao bem-sucedida nao atualizava a listagem (a modalidade ficou INATIVA no banco e a tela seguia "Ativa"). Corrigido nos tres formularios (dependencia do estado inteiro) e reconferido no walk.
 
 ---
 
