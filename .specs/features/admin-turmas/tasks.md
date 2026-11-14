@@ -132,17 +132,17 @@ T4 -> T7
 ### T3: Resumo da edição de dia/horário e testes de ciclo de vida
 
 **What**: estender o retorno de `updateSlot`: quando o dia ou o horário mudou, o valor traz `scheduleEdit: { cancelledOccurrences, grantedCredits }` (contagem de `cancelFutureSessions` + créditos gerados, AD-013/AD-017), sem quebrar o tipo para os chamadores atuais. Testes novos: desativar mantém a linha e o histórico e para as ocorrências futuras; reativar traz as ocorrências de volta e nunca ressuscita ocorrência CANCELADA; o resumo reporta 2 ocorrências canceladas e N créditos num cenário com fixos.
-**Where**: `src/modules/classes/services/classes.ts`
+**Where**: `src/modules/classes/services/classes.ts`, `src/modules/bookings/services/sessions.ts`
 **Depends on**: None
 **Reuses**: `cancelFutureSessions` (`bookings/services/sessions.ts`), teste existente "editing the weekday cancels the old future occurrences and their bookings"
 **Requirement**: TURM-15, TURM-16 (lado servidor), TURM-17, TURM-18
 
 **Done when**:
 
-- [ ] `scheduleEdit` presente com contagens quando dia/horário muda; ausente quando não muda
-- [ ] Desativação preserva a linha e o histórico; nenhuma ocorrência nova
-- [ ] Reativação volta a gerar ocorrências; CANCELADAS permanecem CANCELADAS
-- [ ] Gate: `npm test`
+- [x] `scheduleEdit` presente com contagens quando dia/horário muda; ausente quando não muda
+- [x] Desativação preserva a linha e o histórico; nenhuma ocorrência nova
+- [x] Reativação volta a gerar ocorrências; CANCELADAS permanecem CANCELADAS
+- [x] Gate: `npm test` (373 testes, +4)
 
 **Tests**: integration
 **Gate**: full

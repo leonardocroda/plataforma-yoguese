@@ -147,17 +147,30 @@ export async function materializeSession(
 }
 
 /**
+ * Resumo do cancelamento das ocorrencias futuras de uma turma (TURM-16).
+ */
+export type ScheduleEditSummary = {
+  /** Ocorrencias futuras da grade antiga canceladas pela mudanca de dia/horario. */
+  cancelledOccurrences: number;
+  /** Creditos CANCELAMENTO_ESTUDIO gerados (1 por aluno fixo afetado, por ocorrencia). */
+  grantedCredits: number;
+};
+
+/**
  * Cancela as ocorrencias futuras agendadas de uma turma e libera as vagas das
  * reservas ativas delas (AD-013). O historico e preservado: as reservas ficam
  * CANCELADA, nao sao apagadas. Cada ocorrencia cancelada gera 1 credito
  * CANCELAMENTO_ESTUDIO por aluno fixo afetado (AD-017, CRD-32), pelo mesmo
  * caminho do cancelamento de aula pelo estudio.
+ *
+ * Devolve o resumo da operacao: quantas ocorrencias da grade antiga foram
+ * canceladas e quantos creditos de estudio foram gerados (TURM-16).
  */
 export async function cancelFutureSessions(
   db: DbClient,
   input: { classSlotId: string; fromDate: string },
   now: Date = new Date(),
-): Promise<number> {
+): Promise<ScheduleEditSummary> {
   const sessions = await db
     .select({ id: classSessions.id })
     .from(classSessions)
@@ -169,19 +182,23 @@ export async function cancelFutureSessions(
       ),
     );
 
-  if (sessions.length === 0) return 0;
+  let cancelledOccurrences = 0;
+  let grantedCredits = 0;
 
   // O cancelamento pelo estudio cancela a ocorrencia, as reservas e devolve
   // o credito das reposicoes, e da o credito do estudio aos fixos afetados
   for (const session of sessions) {
-    await cancelOccurrenceByStudio(
+    const cancelled = await cancelOccurrenceByStudio(
       db,
       { classSessionId: session.id },
       now,
     );
+    if (!cancelled.ok) continue;
+    cancelledOccurrences += 1;
+    grantedCredits += cancelled.value.grantedCredits;
   }
 
-  return sessions.length;
+  return { cancelledOccurrences, grantedCredits };
 }
 
 /** A data cai em feriado cadastrado ou dentro de um recesso (extremos inclusos). */

@@ -18,6 +18,19 @@ export type { DbClient };
 export type ClassType = typeof classTypes.$inferSelect;
 export type Slot = typeof classSlots.$inferSelect;
 
+/**
+ * Resultado da edicao de uma turma: a turma editada e, quando o dia ou o
+ * horario mudou, o resumo do que a grade antiga perdeu (TURM-16).
+ */
+export type SlotUpdateResult = Slot & {
+  scheduleEdit?: {
+    /** Ocorrencias futuras da grade antiga canceladas. */
+    cancelledOccurrences: number;
+    /** Creditos CANCELAMENTO_ESTUDIO gerados pela edicao. */
+    grantedCredits: number;
+  };
+};
+
 export type Result<T> =
   | { ok: true; value: T }
   | { ok: false; error: string; field?: string };
@@ -147,7 +160,7 @@ export async function updateSlot(
   id: string,
   patch: Partial<SlotData> & { status?: "ATIVA" | "INATIVA" },
   now: Date = new Date(),
-): Promise<Result<Slot>> {
+): Promise<Result<SlotUpdateResult>> {
   const [current] = await db
     .select()
     .from(classSlots)
@@ -198,13 +211,15 @@ export async function updateSlot(
   if (!edited) return { ok: false, error: "falha ao editar turma" };
 
   // Mudou o dia ou o horario: as ocorrencias futuras da grade antiga sao
-  // canceladas e as reservas delas liberadas (AD-013).
+  // canceladas e as reservas delas liberadas (AD-013). O resumo volta para a
+  // tela contar o que a mudanca cancelou (TURM-16).
   if (scheduleChanged(current, merged)) {
-    await cancelFutureSessions(
+    const summary = await cancelFutureSessions(
       db,
       { classSlotId: id, fromDate: todayInStudio(now) },
       now,
     );
+    return { ok: true, value: { ...edited, scheduleEdit: summary } };
   }
 
   return { ok: true, value: edited };

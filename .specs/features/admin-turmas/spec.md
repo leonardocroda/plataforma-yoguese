@@ -160,10 +160,10 @@ apagar linhas; reativar e ver as próximas ocorrências voltarem.
 | TURM-12 | P1: Cadastro de turma | Design | Pending |
 | TURM-13 | P1: Edição, desativação e reativação | Design | Pending |
 | TURM-14 | P1: Edição, desativação e reativação | Design | Pending |
-| TURM-15 | P1: Edição, desativação e reativação | Design | Pending |
-| TURM-16 | P1: Edição, desativação e reativação | Design | Pending |
-| TURM-17 | P1: Edição, desativação e reativação | Design | Pending |
-| TURM-18 | P1: Edição, desativação e reativação | Design | Pending |
+| TURM-15 | P1: Edição, desativação e reativação | Tasks | Implementing |
+| TURM-16 | P1: Edição, desativação e reativação | Tasks | Implementing |
+| TURM-17 | P1: Edição, desativação e reativação | Tasks | Implementing |
+| TURM-18 | P1: Edição, desativação e reativação | Tasks | Implementing |
 
 **Coverage:** 18 total, 18 mapeados a stories P1.
 

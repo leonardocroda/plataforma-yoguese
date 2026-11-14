@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { bookings, classSessions, classSlots, classTypes } from "../../../../db/schema";
+import { bookings, classSessions, classSlots, classTypes, credits } from "../../../../db/schema";
 import { createStudents, createTestClass, clearTables, grantTestCredit } from "../../../../test/fixtures";
 import { PostgresTestInstance, startPostgres } from "../../../../test/postgres";
 import { todayInStudio, nextOccurrence } from "../../domain/occurrences";
@@ -420,6 +420,130 @@ describe("classes", () => {
     if (newReading.ok) {
       expect(newReading.value.sessionStatus).toBe("AGENDADA");
     }
+  });
+
+  it("schedule edit summary reports the cancelled occurrences and the granted credits", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const students = await createStudents(pg.db, 2);
+    for (const student of students) {
+      const fixed = await createEnrollment(pg.db, {
+        studentId: student,
+        classSlotId: slotId,
+        startDate: today,
+      });
+      expect(fixed.ok).toBe(true);
+    }
+
+    // Duas ocorrencias futuras materializadas da grade antiga
+    for (const date of [day, nextDay]) {
+      const composition = await getComposition(pg.db, {
+        classSlotId: slotId,
+        date,
+      });
+      expect(composition.ok).toBe(true);
+    }
+
+    const edited = await updateSlot(pg.db, slotId, {
+      weekday: 4,
+      startTime: "07:00:00",
+      endTime: "08:00:00",
+    });
+    expect(edited.ok).toBe(true);
+    if (!edited.ok) return;
+
+    // 2 ocorrencias canceladas x 2 alunas fixas = 4 creditos de estudio
+    expect(edited.value.scheduleEdit?.cancelledOccurrences).toBe(2);
+    expect(edited.value.scheduleEdit?.grantedCredits).toBe(4);
+
+    const studioCredits = await pg.db.select().from(credits);
+    expect(studioCredits).toHaveLength(4);
+    expect(
+      studioCredits.every((credit) => credit.source === "CANCELAMENTO_ESTUDIO"),
+    ).toBe(true);
+  });
+
+  it("keeps the schedule edit summary absent when the schedule does not change", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+
+    const edited = await updateSlot(pg.db, slotId, { capacity: 10 });
+    expect(edited.ok).toBe(true);
+    if (!edited.ok) return;
+    expect(edited.value.capacity).toBe(10);
+    expect(edited.value.scheduleEdit).toBeUndefined();
+  });
+
+  it("deactivating keeps the slot row and stops future occurrences", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+
+    const before = await getComposition(pg.db, {
+      classSlotId: slotId,
+      date: day,
+    });
+    expect(before.ok).toBe(true);
+
+    const deactivated = await deactivateSlot(pg.db, slotId);
+    expect(deactivated.ok).toBe(true);
+
+    // A linha da turma continua no banco, com status INATIVA
+    const [row] = await pg.db
+      .select()
+      .from(classSlots)
+      .where(eq(classSlots.id, slotId));
+    expect(row.status).toBe("INATIVA");
+    expect(row.weekday).toBe(3);
+
+    // A ocorrencia materializada continua no historico
+    const sessions = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.classSlotId, slotId));
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0].sessionDate).toBe(day);
+
+    // Nenhuma ocorrencia nova e gerada a partir da desativacao
+    const after = await getComposition(pg.db, {
+      classSlotId: slotId,
+      date: nextDay,
+    });
+    expect(after.ok).toBe(false);
+  });
+
+  it("reactivating brings back future occurrences and never resurrects cancelled ones", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+
+    // Uma ocorrencia futura materializada e depois cancelada pela grade antiga
+    const before = await getComposition(pg.db, {
+      classSlotId: slotId,
+      date: day,
+    });
+    expect(before.ok).toBe(true);
+    const edited = await updateSlot(pg.db, slotId, { weekday: 4 });
+    expect(edited.ok).toBe(true);
+
+    const deactivated = await deactivateSlot(pg.db, slotId);
+    expect(deactivated.ok).toBe(true);
+
+    const reactivated = await updateSlot(pg.db, slotId, { status: "ATIVA" });
+    expect(reactivated.ok).toBe(true);
+    if (!reactivated.ok) return;
+    expect(reactivated.value.status).toBe("ATIVA");
+
+    // A ocorrencia cancelada continua cancelada: reativar nao ressuscita
+    const sessions = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.classSlotId, slotId));
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0].status).toBe("CANCELADA");
+
+    // E a turma reativada volta a gerar ocorrencia na nova grade
+    const newDay = nextOccurrence({ weekday: 4 }, today);
+    const after = await getComposition(pg.db, {
+      classSlotId: slotId,
+      date: newDay,
+    });
+    expect(after.ok).toBe(true);
+    if (after.ok) expect(after.value.sessionStatus).toBe("AGENDADA");
   });
 
   it("rejects a capacity below the occupancy of a future occurrence", async () => {
