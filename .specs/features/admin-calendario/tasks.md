@@ -105,17 +105,18 @@ T12 -> T13
 
 **Done when**:
 
-- [ ] `weekStartOf` devolve a segunda e `weekEndOf` o domingo da semana do calendário contendo a data (America/Sao_Paulo só entra no `today` do chamador)
-- [ ] `monthBoundsOf` cobre o mês inteiro, inclusive meses que começam/terminam em qualquer dia da semana
-- [ ] `resolveCalendarWindow` recusa view desconhecida e data mal formada com `ok: false`
-- [ ] Testes unit provam cada janela e cada recusa
-- [ ] Gate check passes: `npx vitest run src/modules/bookings/domain --reporter=verbose`
-- [ ] Test count: testes de calendar.test.ts passam (nenhum teste apagado)
+- [x] `weekStartOf` devolve a segunda e `weekEndOf` o domingo da semana do calendário contendo a data (America/Sao_Paulo só entra no `today` do chamador)
+- [x] `monthBoundsOf` cobre o mês inteiro, inclusive meses que começam/terminam em qualquer dia da semana
+- [x] `resolveCalendarWindow` recusa view desconhecida e data mal formada com `ok: false`
+- [x] Testes unit provam cada janela e cada recusa
+- [x] Gate check passes: `npx vitest run src/modules/bookings/domain --reporter=verbose`
+- [x] Test count: testes de calendar.test.ts passam (nenhum teste apagado)
 
 **Tests**: unit
 **Gate**: quick
 
 **Commit**: `feat(bookings): calendar window domain for day/week/month views`
+**Status**: ✅ Complete
 
 ---
 
