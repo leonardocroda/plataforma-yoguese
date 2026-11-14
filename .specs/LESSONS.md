@@ -9,16 +9,16 @@
 Corroborated across multiple features. Safe to apply as guidance.
 
 ### L-002 - A proof line must name a test that asserts every case the check names, so one test covers the whole claim.
-- signal: `weak_test` · recurrence: 2 feature(s) · scope: `tests` · harmful: 1
-- features: core-turmas-reservas, core-creditos-cancelamentos
-- evidence: C3, C7, C9, C10 (tests) (+2 more)
-- last seen: 2026-11-13T02:09:55Z
+- signal: `weak_test` · recurrence: 3 feature(s) · scope: `tests` · harmful: 1
+- features: core-turmas-reservas, core-creditos-cancelamentos, admin-turmas
+- evidence: C3, C7, C9, C10 (tests) (+3 more)
+- last seen: 2026-11-14T16:27:23Z
 
 ### L-009 - Every rule the source document states gets its own check, because behavior that is correct only by probe breaks silently when no test names it.
-- signal: `weak_test` · recurrence: 2 feature(s) · scope: `tests` · harmful: 0
-- features: core-turmas-reservas, core-creditos-cancelamentos
-- evidence: C28, C29, C30 (tests) (+1 more)
-- last seen: 2026-11-10T12:21:45Z
+- signal: `weak_test` · recurrence: 3 feature(s) · scope: `tests` · harmful: 0
+- features: core-turmas-reservas, core-creditos-cancelamentos, admin-turmas
+- evidence: C28, C29, C30 (tests) (+2 more)
+- last seen: 2026-11-14T16:28:10Z
 
 ### L-015 - A rule with two branches is proven on both branches, because the branch the happy path never reaches stays untested.
 - signal: `weak_test` · recurrence: 2 feature(s) · scope: `bookings` · harmful: 0
@@ -185,6 +185,36 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - features: core-experimentais
 - evidence: src/db/__tests__/students-schema.int.test.ts:102 (db)
 - last seen: 2026-11-13T02:09:55Z
+
+### L-030 - A criterion that says the record appears in a listing is proven by re-reading that listing service, not by reading the table directly.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
+- features: admin-turmas
+- evidence: verification.md C3/C5 (tests)
+- last seen: 2026-11-14T16:27:11Z
+
+### L-031 - A rule that chooses among candidates is proven with two candidates of different values.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
+- features: admin-turmas
+- evidence: verification.md C14 (tests)
+- last seen: 2026-11-14T16:27:24Z
+
+### L-032 - A screen check that counts something is exercised with a non-zero count, because a screen that always shows zero passes the walk.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `ui` · harmful: 0
+- features: admin-turmas
+- evidence: verification.md C16 (ui)
+- last seen: 2026-11-14T16:27:37Z
+
+### L-033 - The future occurrences closed by a schedule change include the blocked ones, because a blocked occurrence left behind comes back when the block is removed.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `classes` · harmful: 0
+- features: admin-turmas
+- evidence: verification.md (occurrences BLOQUEADA da grade antiga) (classes)
+- last seen: 2026-11-14T16:27:37Z
+
+### L-034 - A screen refreshes after a server action by depending on the action state, not on a boolean field of it, because the second successful action leaves the boolean unchanged.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `ui` · harmful: 0
+- features: admin-turmas
+- evidence: tasks.md (Achado do walk) (ui)
+- last seen: 2026-11-14T16:28:10Z
 
 ## Quarantined (failed when applied - ignore)
 

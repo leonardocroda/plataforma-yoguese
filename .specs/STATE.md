@@ -385,6 +385,48 @@ surfaced it. Bookings/history of the past stay read-only.
 
 Snapshot - updated when work pauses.
 
+### Handoff snapshot (2026-11-14) - `admin-turmas` FECHADA
+
+- Feature `admin-turmas` EXECUTADA e FECHADA: 7 tasks (T1-T7) em 2 fases, uma commit atomica por
+  task, mais 4 commits de correcao (refresh da listagem achado no walk, ocorrencia BLOQUEADA
+  achada pelo Verifier, reforco das provas e o round do Verifier documentado).
+- Verifier (author != verifier) devolveu FAIL com 8 findings; fechados em uma passada -
+  `a051ae2` (check C23), `4f24941` (checks C3/C5/C10/C13/C14/C15/C17 e os novos C20-C22) e
+  `c5c98fb` (checks C16 e C19, provados no walk round 2) - com `verification.md` na coluna
+  `Closed`.
+- Suite: 378 testes verdes (363 no inicio), build e lint limpos, `check_proofs.py` com 25 pass /
+  0 fail e `validate_verification.py` com 0 erro e 0 warning no HEAD de fechamento.
+- O que entrega: rota nova `/turmas` no shell (`NAV_LINKS`), listagem de modalidades e turmas
+  ativas e inativas com status/dia/horario/capacidade, formulario de criar e editar modalidade,
+  formulario de criar turma (capacidade 8 quando em branco, so modalidades ativas no seletor),
+  edicao de dia/horario/capacidade, desativar/reativar sem apagar registro e feedback da
+  edicao com quantas ocorrencias foram canceladas e quantos creditos foram gerados.
+- Guardas de servidor novas: nome de modalidade em branco recusado com `field: "name"`;
+  modalidade inexistente ou INATIVA recusada na criacao de turma; horario, dia e capacidade
+  invalidos recusados nomeando o campo (validador de dominio, fonte unica).
+- Bug de produto achado pelo Verificador: a mudanca de dia/horario tambem fecha agora a
+  ocorrencia BLOQUEADA da grade antiga, sem credito de estudio (feriado/recesso veda credito,
+  AD-031) - antes ela ressuscitaria sozinha quando o bloqueio fosse removido (AD-027).
+- Bug de produto achado pelo walk: o refresh da listagem dependia do booleano `state.ok` e a
+  segunda operacao bem-sucedida nao atualizava a tela (a modalidade ficava INATIVA no banco e a
+  tela seguia "Ativa"). Depende do estado inteiro agora.
+- Walk: 2 rodadas no chromium headless (playwright-core) contra o dev server na 3001; round 2 com
+  20 gestos, contagens nao-zero no feedback da edicao ("Turma atualizada. 1 ocorrencia cancelada
+  na grade antiga e 1 credito gerado"), o estado sem nenhuma modalidade ativa (seletor vazio e
+  botao desabilitado) e o banco de dev restaurado ao estado anterior.
+- Licoes: L-030 (criterio que fala de listagem prova relendo a listagem, nao a tabela), L-031
+  (regra que escolhe entre candidatos prova com dois candidatos de valores diferentes), L-032
+  (check de tela que conta algo exercita com contagem nao-zero), L-033 (a mudanca de agenda
+  fecha tambem as ocorrencias bloqueadas da grade antiga) e L-034 (a tela atualiza depois da
+  action dependendo do estado, nao de um booleano dele) - as cinco candidate; **L-002** (a
+  prova nomeia o teste que cobre toda a claim) e **L-009** (toda regra do documento tem check
+  proprio) reconfirmadas com recorrencia 3.
+- PROXIMA feature da ordem do AD-044: `admin-calendario` (spec aprovada, 22 criterios
+  CAL-01..22), com Design/Tasks a fazer. O bug do passado (AD-045) fica para la.
+- Estado local esperado pos-gate: `proofs.md` e `.specs/features/admin-turmas/proofs.md` sao
+  artefatos gerados e ficam como modificacao local nao commitada (commitar movimenta o HEAD e
+  invalida o hash das provas).
+
 ### Handoff snapshot (2026-11-14) - specs `admin-turmas` + `admin-calendario` APROVADAS
 
 - Fase Specify das duas features fechada com `validate_spec.py` limpo (0 erro/0 warning

@@ -146,26 +146,24 @@ apagar linhas; reativar e ver as próximas ocorrências voltarem.
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| TURM-01 | P1: Entrada no shell e listagem | Tasks | Implementing |
-| TURM-02 | P1: Entrada no shell e listagem | Tasks | Implementing |
-| TURM-03 | P1: Gestão de modalidades | Tasks | Implementing |
-| TURM-04 | P1: Gestão de modalidades | Tasks | Implementing |
-| TURM-05 | P1: Gestão de modalidades | Tasks | Implementing |
-| TURM-06 | P1: Gestão de modalidades | Tasks | Implementing |
-| TURM-07 | P1: Gestão de modalidades | Tasks | Implementing |
-| TURM-08 | P1: Cadastro de turma | Tasks | Implementing |
-| TURM-08 | P1: Cadastro de turma | Tasks | Implementing |
-| TURM-09 | P1: Cadastro de turma | Tasks | Implementing |
-| TURM-10 | P1: Cadastro de turma | Tasks | Implementing |
-| TURM-11 | P1: Cadastro de turma | Tasks | Implementing |
-| TURM-12 | P1: Cadastro de turma | Tasks | Implementing |
-| TURM-12 | P1: Cadastro de turma | Design | Pending |
-| TURM-13 | P1: Edição, desativação e reativação | Tasks | Implementing |
-| TURM-14 | P1: Edição, desativação e reativação | Tasks | Implementing |
-| TURM-15 | P1: Edição, desativação e reativação | Tasks | Implementing |
-| TURM-16 | P1: Edição, desativação e reativação | Tasks | Implementing |
-| TURM-17 | P1: Edição, desativação e reativação | Tasks | Implementing |
-| TURM-18 | P1: Edição, desativação e reativação | Tasks | Implementing |
+| TURM-01 | P1: Entrada no shell e listagem | Tasks | Verified |
+| TURM-02 | P1: Entrada no shell e listagem | Tasks | Verified |
+| TURM-03 | P1: Gestão de modalidades | Tasks | Verified |
+| TURM-04 | P1: Gestão de modalidades | Tasks | Verified |
+| TURM-05 | P1: Gestão de modalidades | Tasks | Verified |
+| TURM-06 | P1: Gestão de modalidades | Tasks | Verified |
+| TURM-07 | P1: Gestão de modalidades | Tasks | Verified |
+| TURM-08 | P1: Cadastro de turma | Tasks | Verified |
+| TURM-09 | P1: Cadastro de turma | Tasks | Verified |
+| TURM-10 | P1: Cadastro de turma | Tasks | Verified |
+| TURM-11 | P1: Cadastro de turma | Tasks | Verified |
+| TURM-12 | P1: Cadastro de turma | Tasks | Verified |
+| TURM-13 | P1: Edição, desativação e reativação | Tasks | Verified |
+| TURM-14 | P1: Edição, desativação e reativação | Tasks | Verified |
+| TURM-15 | P1: Edição, desativação e reativação | Tasks | Verified |
+| TURM-16 | P1: Edição, desativação e reativação | Tasks | Verified |
+| TURM-17 | P1: Edição, desativação e reativação | Tasks | Verified |
+| TURM-18 | P1: Edição, desativação e reativação | Tasks | Verified |
 
 **Coverage:** 18 total, 18 mapeados a stories P1.
 

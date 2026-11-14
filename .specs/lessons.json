@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 30,
+  "next_id": 35,
   "lessons": [
     {
       "id": "L-001",
@@ -32,17 +32,19 @@
       "status": "confirmed",
       "features": [
         "core-turmas-reservas",
-        "core-creditos-cancelamentos"
+        "core-creditos-cancelamentos",
+        "admin-turmas"
       ],
-      "recurrence": 2,
+      "recurrence": 3,
       "harmful": 1,
       "evidence": [
         "C3, C7, C9, C10 (tests)",
         "C41 (tests)",
-        "C40 (tests)"
+        "C40 (tests)",
+        "verification.md C10/C13/C15/C17 (tests)"
       ],
       "created": "2026-11-07T11:24:38Z",
-      "last_seen": "2026-11-13T02:09:55Z"
+      "last_seen": "2026-11-14T16:27:23Z"
     },
     {
       "id": "L-003",
@@ -161,16 +163,18 @@
       "status": "confirmed",
       "features": [
         "core-turmas-reservas",
-        "core-creditos-cancelamentos"
+        "core-creditos-cancelamentos",
+        "admin-turmas"
       ],
-      "recurrence": 2,
+      "recurrence": 3,
       "harmful": 0,
       "evidence": [
         "C28, C29, C30 (tests)",
-        "spec.md edge cases CRD-46/CRD-47 (tests)"
+        "spec.md edge cases CRD-46/CRD-47 (tests)",
+        "verification.md (edge cases sem check) (tests)"
       ],
       "created": "2026-11-07T11:24:42Z",
-      "last_seen": "2026-11-10T12:21:45Z"
+      "last_seen": "2026-11-14T16:28:10Z"
     },
     {
       "id": "L-010",
@@ -533,6 +537,96 @@
       ],
       "created": "2026-11-13T02:09:55Z",
       "last_seen": "2026-11-13T02:09:55Z"
+    },
+    {
+      "id": "L-030",
+      "key": "weak_test::a criterion that says the record appears in a listing is proven by re reading that listing service not by reading the table directly",
+      "text": "A criterion that says the record appears in a listing is proven by re-reading that listing service, not by reading the table directly.",
+      "signal": "weak_test",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "admin-turmas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md C3/C5 (tests)"
+      ],
+      "created": "2026-11-14T16:27:11Z",
+      "last_seen": "2026-11-14T16:27:11Z"
+    },
+    {
+      "id": "L-031",
+      "key": "weak_test::a rule that chooses among candidates is proven with two candidates of different values",
+      "text": "A rule that chooses among candidates is proven with two candidates of different values.",
+      "signal": "weak_test",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "admin-turmas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md C14 (tests)"
+      ],
+      "created": "2026-11-14T16:27:24Z",
+      "last_seen": "2026-11-14T16:27:24Z"
+    },
+    {
+      "id": "L-032",
+      "key": "weak_test::a screen check that counts something is exercised with a non zero count because a screen that always shows zero passes the walk",
+      "text": "A screen check that counts something is exercised with a non-zero count, because a screen that always shows zero passes the walk.",
+      "signal": "weak_test",
+      "scope": "ui",
+      "status": "candidate",
+      "features": [
+        "admin-turmas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md C16 (ui)"
+      ],
+      "created": "2026-11-14T16:27:37Z",
+      "last_seen": "2026-11-14T16:27:37Z"
+    },
+    {
+      "id": "L-033",
+      "key": "ac_gap::the future occurrences closed by a schedule change include the blocked ones because a blocked occurrence left behind comes back when the block is removed",
+      "text": "The future occurrences closed by a schedule change include the blocked ones, because a blocked occurrence left behind comes back when the block is removed.",
+      "signal": "ac_gap",
+      "scope": "classes",
+      "status": "candidate",
+      "features": [
+        "admin-turmas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md (occurrences BLOQUEADA da grade antiga) (classes)"
+      ],
+      "created": "2026-11-14T16:27:37Z",
+      "last_seen": "2026-11-14T16:27:37Z"
+    },
+    {
+      "id": "L-034",
+      "key": "ac_gap::a screen refreshes after a server action by depending on the action state not on a boolean field of it because the second successful action leaves the boolean unchanged",
+      "text": "A screen refreshes after a server action by depending on the action state, not on a boolean field of it, because the second successful action leaves the boolean unchanged.",
+      "signal": "ac_gap",
+      "scope": "ui",
+      "status": "candidate",
+      "features": [
+        "admin-turmas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "tasks.md (Achado do walk) (ui)"
+      ],
+      "created": "2026-11-14T16:28:10Z",
+      "last_seen": "2026-11-14T16:28:10Z"
     }
   ]
 }
