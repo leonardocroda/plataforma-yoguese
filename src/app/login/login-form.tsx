@@ -2,13 +2,13 @@
 
 import { useActionState } from "react";
 import { loginAction, type LoginState } from "../../modules/auth/actions";
+import { Button, Field } from "../../modules/ui/components/kit";
+
+// Formulario de login (AUTH-02, AUTH-04): email e senha no estilo de campo
+// do guia, um unico botao preto "Entrar" e a mensagem generica de credencial
+// invalida em texto puro no token de erro, sem apontar qual fator falhou.
 
 const INITIAL_STATE: LoginState = {};
-
-const inputClass =
-  "mt-1 w-full rounded border border-[var(--yoguese-bege)] bg-white px-2 py-1 text-sm text-[var(--yoguese-cinza)]";
-const buttonClass =
-  "mt-3 w-full rounded bg-[var(--yoguese-salvia)] px-3 py-1 text-sm text-white disabled:opacity-60";
 
 export function LoginForm() {
   const [state, formAction, pending] = useActionState(
@@ -17,35 +17,37 @@ export function LoginForm() {
   );
 
   return (
-    <form action={formAction} className="mt-4">
-      <label className="block text-xs">
-        E-mail
+    <form action={formAction}>
+      <Field label="E-mail" id="login-email">
         <input
+          id="login-email"
           name="email"
           type="email"
           autoComplete="email"
-          className={inputClass}
         />
-      </label>
-      <label className="mt-2 block text-xs">
-        Senha
+      </Field>
+
+      <Field label="Senha" id="login-senha">
         <input
+          id="login-senha"
           name="password"
           type="password"
           autoComplete="current-password"
-          className={inputClass}
         />
-      </label>
+      </Field>
 
       {state.error ? (
-        <p role="alert" className="mt-3 text-xs text-red-700">
+        <p
+          className="mt-2 text-[14.5px] font-medium text-[color:var(--erro)]"
+          role="alert"
+        >
           {state.error}
         </p>
       ) : null}
 
-      <button type="submit" disabled={pending} className={buttonClass}>
+      <Button type="submit" variant="prim" disabled={pending}>
         Entrar
-      </button>
+      </Button>
     </form>
   );
 }

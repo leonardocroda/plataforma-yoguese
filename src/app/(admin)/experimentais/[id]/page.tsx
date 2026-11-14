@@ -15,12 +15,14 @@ import {
 } from "../../../../modules/experimentals/services/experimentals";
 import { listActiveSlots } from "../../../../modules/classes/services/classes";
 import { listSelectablePlans } from "../../../../modules/plans/services/plans";
+import { Chip } from "../../../../modules/ui/components/kit";
 import { ExperimentalActions } from "./experimental-forms";
 
 export const dynamic = "force-dynamic";
 
-const blockClass =
-  "rounded-lg border border-[var(--yoguese-bege)] bg-white p-3 text-xs";
+const sectionClass = "border-t-2 border-t-[var(--preto)] pt-4";
+const headingClass = "mb-2 text-[22px]";
+const listClass = "m-0 list-none p-0 text-[15px]";
 
 function formatDate(value: Date): string {
   return value.toLocaleDateString("pt-BR", { timeZone: STUDIO_TIMEZONE });
@@ -59,7 +61,8 @@ function formatOccurrenceTime(time: string): string {
  * Detalhe da aula experimental (EXP-19, EXP-24, EXP-29, EXP-31, EXP-32,
  * EXP-33, EXP-49): todos os dados da solicitacao com os timestamps do
  * ciclo de vida, as acoes administrativas e o resultado de cada uma. A
- * tentativa duplicada aparece somente leitura, sem nenhuma acao.
+ * tentativa duplicada aparece somente leitura, sem nenhuma acao. A pele e a
+ * do admin do guia: secoes em divisores e as acoes na superficie pena.
  */
 export default async function ExperimentalDetailPage({
   params,
@@ -76,10 +79,13 @@ export default async function ExperimentalDetailPage({
 
   if (!detail.ok) {
     return (
-      <main className="min-h-screen bg-[var(--yoguese-off-white)] p-6 text-[var(--yoguese-cinza)]">
-        <p className="text-sm">Solicitação não encontrada.</p>
-        <p className="mt-2 text-xs">
-          <Link href="/experimentais" className="underline">
+      <main>
+        <p className="text-[15px]">Solicitação não encontrada.</p>
+        <p className="mt-2 text-[14px]">
+          <Link
+            href="/experimentais"
+            className="underline decoration-2 underline-offset-4"
+          >
             Voltar para experimentais
           </Link>
         </p>
@@ -115,102 +121,124 @@ export default async function ExperimentalDetailPage({
   const cancelLosesRight = !cancellationKeepsRight(hoursBeforeStart);
 
   return (
-    <main className="min-h-screen bg-[var(--yoguese-off-white)] p-6 text-[var(--yoguese-cinza)]">
+    <main>
       <header className="mb-6">
-        <p className="text-xs">
-          <Link href="/experimentais" className="underline">
+        <p className="text-[13.5px] text-[color:var(--cinza)]">
+          <Link
+            href="/experimentais"
+            className="underline decoration-2 underline-offset-4"
+          >
             Experimentais
           </Link>{" "}
           / {experimental.name}
         </p>
-        <h1 className="text-2xl font-light">{experimental.name}</h1>
-        <p className="text-xs opacity-70">
-          Aula experimental: {formatPrice(EXPERIMENTAL_PRICE_CENTS)}
+        <h1 className="mt-1 text-[34px]">{experimental.name}</h1>
+        <p className="mt-1 text-[15px] text-[color:var(--cinza)]">
+          Aula experimental: <span className="tnum">{formatPrice(EXPERIMENTAL_PRICE_CENTS)}</span>
         </p>
       </header>
 
-      <section className="space-y-4">
-        <div className={blockClass}>
-          <h2 className="text-sm font-medium">Solicitação</h2>
-          <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1">
-            <dt className="opacity-70">Nome</dt>
-            <dd>{experimental.name}</dd>
-            <dt className="opacity-70">Telefone</dt>
-            <dd>{experimental.phone}</dd>
-            <dt className="opacity-70">Modalidade</dt>
-            <dd>{occurrence.classTypeName}</dd>
-            <dt className="opacity-70">Data e horário</dt>
-            <dd>
-              {formatOccurrenceDate(occurrence.date)} -{" "}
-              {formatOccurrenceTime(occurrence.startTime)}
-            </dd>
-            <dt className="opacity-70">Status</dt>
-            <dd>{EXPERIMENTAL_STATUS_LABELS[experimental.status]}</dd>
-            <dt className="opacity-70">Pagamento</dt>
-            <dd>{PAYMENT_STATUS_LABELS[experimental.paymentStatus]}</dd>
-            {experimental.duplicateOfId ? (
-              <>
-                <dt className="opacity-70">Tentativa ligada a</dt>
-                <dd>
-                  <Link
-                    href={`/experimentais/${experimental.duplicateOfId}`}
-                    className="underline"
-                  >
-                    solicitação existente
-                  </Link>
-                </dd>
-              </>
-            ) : null}
-          </dl>
-          <p className="mt-3 text-xs opacity-70">Declaração de saúde</p>
-          <p className="mt-1 text-xs">{experimental.healthDeclaration}</p>
-        </div>
-
-        <div className={blockClass}>
-          <h2 className="text-sm font-medium">Timestamps</h2>
-          <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1">
-            <dt className="opacity-70">Solicitada em</dt>
-            <dd>{formatMoment(experimental.requestedAt)}</dd>
-            <dt className="opacity-70">Aprovada em</dt>
-            <dd>{formatMoment(experimental.approvedAt)}</dd>
-            <dt className="opacity-70">Cancelada em</dt>
-            <dd>{formatMoment(experimental.cancelledAt)}</dd>
-            <dt className="opacity-70">Falta em</dt>
-            <dd>{formatMoment(experimental.noShowAt)}</dd>
-            <dt className="opacity-70">Contato via WhatsApp em</dt>
-            <dd>{formatMoment(experimental.whatsappContactedAt)}</dd>
-            <dt className="opacity-70">Realizada em</dt>
-            <dd>{formatMoment(experimental.attendedAt)}</dd>
-          </dl>
-        </div>
-
-        {convertedStudent ? (
-          <div className={blockClass}>
-            <h2 className="text-sm font-medium">Aluna convertida</h2>
-            <p className="mt-2">
-              <Link
-                href={`/alunos/${convertedStudent.id}`}
-                className="underline"
-              >
-                {convertedStudent.name}
-              </Link>{" "}
-              - {convertedStudent.email}
+      <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,430px)] xl:items-start">
+        <div className="grid gap-6">
+          <section className={sectionClass}>
+            <h2 className={headingClass}>Solicitação</h2>
+            <dl className="grid grid-cols-[10em_1fr] gap-x-4 gap-y-1 text-[15px]">
+              <dt className="text-[color:var(--cinza)]">Nome</dt>
+              <dd>{experimental.name}</dd>
+              <dt className="text-[color:var(--cinza)]">Telefone</dt>
+              <dd>{experimental.phone}</dd>
+              <dt className="text-[color:var(--cinza)]">Modalidade</dt>
+              <dd>{occurrence.classTypeName}</dd>
+              <dt className="text-[color:var(--cinza)]">Data e horário</dt>
+              <dd className="tnum">
+                {formatOccurrenceDate(occurrence.date)} -{" "}
+                {formatOccurrenceTime(occurrence.startTime)}
+              </dd>
+              <dt className="text-[color:var(--cinza)]">Status</dt>
+              <dd>
+                <Chip
+                  variant={experimental.status === "PENDENTE" ? undefined : "cl"}
+                >
+                  {EXPERIMENTAL_STATUS_LABELS[experimental.status]}
+                </Chip>
+              </dd>
+              <dt className="text-[color:var(--cinza)]">Pagamento</dt>
+              <dd>{PAYMENT_STATUS_LABELS[experimental.paymentStatus]}</dd>
+              {experimental.duplicateOfId ? (
+                <>
+                  <dt className="text-[color:var(--cinza)]">
+                    Tentativa ligada a
+                  </dt>
+                  <dd>
+                    <Link
+                      href={`/experimentais/${experimental.duplicateOfId}`}
+                      className="underline decoration-2 underline-offset-4"
+                    >
+                      solicitação existente
+                    </Link>
+                  </dd>
+                </>
+              ) : null}
+            </dl>
+            <p className="mt-3 text-[13.5px] text-[color:var(--cinza)]">
+              Declaração de saúde
             </p>
-          </div>
-        ) : null}
+            <p className="mt-1 text-[15px]">{experimental.healthDeclaration}</p>
+          </section>
 
-        {reschedules.length > 0 ? (
-          <div className={blockClass}>
-            <h2 className="text-sm font-medium">Histórico de reagendamentos</h2>
-            <ul className="mt-2 space-y-1">
-              {reschedules.map((entry) => (
-                <li key={entry.id}>
-                  {entry.reason} - {formatMoment(entry.rescheduledAt)}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
+          <section className={sectionClass}>
+            <h2 className={headingClass}>Timestamps</h2>
+            <dl className="grid grid-cols-[10em_1fr] gap-x-4 gap-y-1 text-[15px]">
+              <dt className="text-[color:var(--cinza)]">Solicitada em</dt>
+              <dd className="tnum">{formatMoment(experimental.requestedAt)}</dd>
+              <dt className="text-[color:var(--cinza)]">Aprovada em</dt>
+              <dd className="tnum">{formatMoment(experimental.approvedAt)}</dd>
+              <dt className="text-[color:var(--cinza)]">Cancelada em</dt>
+              <dd className="tnum">{formatMoment(experimental.cancelledAt)}</dd>
+              <dt className="text-[color:var(--cinza)]">Falta em</dt>
+              <dd className="tnum">{formatMoment(experimental.noShowAt)}</dd>
+              <dt className="text-[color:var(--cinza)]">
+                Contato via WhatsApp em
+              </dt>
+              <dd className="tnum">
+                {formatMoment(experimental.whatsappContactedAt)}
+              </dd>
+              <dt className="text-[color:var(--cinza)]">Realizada em</dt>
+              <dd className="tnum">{formatMoment(experimental.attendedAt)}</dd>
+            </dl>
+          </section>
+
+          {convertedStudent ? (
+            <section className={sectionClass}>
+              <h2 className={headingClass}>Aluna convertida</h2>
+              <p className="text-[15px]">
+                <Link
+                  href={`/alunos/${convertedStudent.id}`}
+                  className="underline decoration-2 underline-offset-4"
+                >
+                  {convertedStudent.name}
+                </Link>{" "}
+                - {convertedStudent.email}
+              </p>
+            </section>
+          ) : null}
+
+          {reschedules.length > 0 ? (
+            <section className={sectionClass}>
+              <h2 className={headingClass}>Histórico de reagendamentos</h2>
+              <ul className={listClass}>
+                {reschedules.map((entry) => (
+                  <li
+                    key={entry.id}
+                    className="border-t border-t-[var(--linha)] py-1.5 first:border-t-0"
+                  >
+                    {entry.reason} - {formatMoment(entry.rescheduledAt)}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+        </div>
 
         <ExperimentalActions
           experimentalId={experimental.id}
@@ -225,7 +253,7 @@ export default async function ExperimentalDetailPage({
           plans={plans}
           schedules={schedules}
         />
-      </section>
+      </div>
     </main>
   );
 }

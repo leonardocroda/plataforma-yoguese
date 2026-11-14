@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getStudentProfileAction } from "../../../../modules/students/actions";
 import { STUDIO_TIMEZONE } from "../../../../modules/classes/domain/occurrences";
+import { Chip } from "../../../../modules/ui/components/kit";
 
 export const dynamic = "force-dynamic";
 
@@ -30,8 +31,10 @@ const bookingTypeLabel: Record<string, string> = {
   EXPERIMENTAL: "Experimental",
 };
 
-const blockClass =
-  "rounded-lg border border-[var(--yoguese-bege)] bg-white p-3 text-xs";
+const sectionClass = "border-t-2 border-t-[var(--preto)] pt-4";
+const headingClass = "mb-2 text-[22px]";
+const emptyClass = "text-[15px] text-[color:var(--cinza)]";
+const listClass = "m-0 list-none p-0 text-[15px]";
 
 function formatDate(value: string | Date): string {
   return new Date(value).toLocaleDateString("pt-BR", {
@@ -46,7 +49,8 @@ function formatTime(value: string): string {
 /**
  * Detalhe da aluna (STUD-08): os quatro blocos de informacao do perfil -
  * cadastro, horarios fixos ativos, creditos disponiveis com vencimento e
- * historico de reservas - consumindo getStudentProfile.
+ * historico de reservas - consumindo getStudentProfile. A pele e a do admin
+ * do guia: papel, bordas pretas de 2px e listas em divisores.
  */
 export default async function StudentDetailPage({
   params,
@@ -58,10 +62,13 @@ export default async function StudentDetailPage({
 
   if (!profile.ok) {
     return (
-      <main className="min-h-screen bg-[var(--yoguese-off-white)] p-6 text-[var(--yoguese-cinza)]">
-        <p className="text-sm">Aluna não encontrada.</p>
-        <p className="mt-2 text-xs">
-          <Link href="/alunos" className="underline">
+      <main>
+        <p className="text-[15px]">Aluna não encontrada.</p>
+        <p className="mt-2 text-[14px]">
+          <Link
+            href="/alunos"
+            className="underline decoration-2 underline-offset-4"
+          >
             Voltar para alunas
           </Link>
         </p>
@@ -72,49 +79,61 @@ export default async function StudentDetailPage({
   const { student, plan, fixedEnrollments, credits, bookings } = profile.value;
 
   return (
-    <main className="min-h-screen bg-[var(--yoguese-off-white)] p-6 text-[var(--yoguese-cinza)]">
+    <main>
       <header className="mb-6">
-        <p className="text-xs">
-          <Link href="/alunos" className="underline">
+        <p className="text-[13.5px] text-[color:var(--cinza)]">
+          <Link
+            href="/alunos"
+            className="underline decoration-2 underline-offset-4"
+          >
             Alunas
           </Link>{" "}
           / {student.name}
         </p>
-        <h1 className="text-2xl font-light">{student.name}</h1>
+        <h1 className="mt-1 text-[34px]">{student.name}</h1>
       </header>
 
-      <section className="space-y-4">
-        <div className={blockClass}>
-          <h2 className="text-sm font-medium">Dados cadastrais</h2>
-          <dl className="mt-2 grid grid-cols-2 gap-1">
-            <dt className="opacity-70">Telefone</dt>
+      <div className="grid gap-8 xl:grid-cols-2">
+        <section className={sectionClass}>
+          <h2 className={headingClass}>Dados cadastrais</h2>
+          <dl className="grid grid-cols-[9em_1fr] gap-x-4 gap-y-1 text-[15px]">
+            <dt className="text-[color:var(--cinza)]">Telefone</dt>
             <dd>{student.phone}</dd>
-            <dt className="opacity-70">E-mail</dt>
+            <dt className="text-[color:var(--cinza)]">E-mail</dt>
             <dd>{student.email}</dd>
-            <dt className="opacity-70">Nascimento</dt>
+            <dt className="text-[color:var(--cinza)]">Nascimento</dt>
             <dd>{formatDate(student.birthDate)}</dd>
-            <dt className="opacity-70">Matrícula</dt>
+            <dt className="text-[color:var(--cinza)]">Matrícula</dt>
             <dd>{formatDate(student.enrollmentDate)}</dd>
-            <dt className="opacity-70">Status</dt>
-            <dd>{statusLabel[student.status]}</dd>
-            <dt className="opacity-70">Plano</dt>
+            <dt className="text-[color:var(--cinza)]">Status</dt>
+            <dd>
+              <Chip variant={student.status === "ATIVO" ? undefined : "cl"}>
+                {statusLabel[student.status]}
+              </Chip>
+            </dd>
+            <dt className="text-[color:var(--cinza)]">Plano</dt>
             {/* A aluna mantem o plano visivel mesmo com ele inativo (PLAN-05) */}
             <dd>
-              {plan ? `${plan.name} (${plan.status === "ATIVO" ? "Ativo" : "Inativo"})` : "Sem plano"}
+              {plan
+                ? `${plan.name} (${plan.status === "ATIVO" ? "Ativo" : "Inativo"})`
+                : "Sem plano"}
             </dd>
-            <dt className="opacity-70">Observações</dt>
+            <dt className="text-[color:var(--cinza)]">Observações</dt>
             <dd>{student.notes ?? "-"}</dd>
           </dl>
-        </div>
+        </section>
 
-        <div className={blockClass}>
-          <h2 className="text-sm font-medium">Horários fixos ativos</h2>
+        <section className={sectionClass}>
+          <h2 className={headingClass}>Horários fixos ativos</h2>
           {fixedEnrollments.length === 0 ? (
-            <p className="mt-2 opacity-70">Nenhum horário fixo ativo.</p>
+            <p className={emptyClass}>Nenhum horário fixo ativo.</p>
           ) : (
-            <ul className="mt-2 space-y-1">
+            <ul className={listClass}>
               {fixedEnrollments.map((enrollment) => (
-                <li key={enrollment.id}>
+                <li
+                  key={enrollment.id}
+                  className="border-t border-t-[var(--linha)] py-2 first:border-t-0"
+                >
                   {WEEKDAY_LABELS[enrollment.weekday - 1]} das{" "}
                   {formatTime(enrollment.startTime)} às{" "}
                   {formatTime(enrollment.endTime)} -{" "}
@@ -124,36 +143,38 @@ export default async function StudentDetailPage({
               ))}
             </ul>
           )}
-        </div>
+        </section>
 
-        <div className={blockClass}>
-          <h2 className="text-sm font-medium">Créditos disponíveis</h2>
+        <section className={sectionClass}>
+          <h2 className={headingClass}>Créditos disponíveis</h2>
           {credits.length === 0 ? (
-            <p className="mt-2 opacity-70">
-              Nenhum crédito disponível.
-            </p>
+            <p className={emptyClass}>Nenhum crédito disponível.</p>
           ) : (
-            <ul className="mt-2 space-y-1">
+            <ul className={listClass}>
               {credits.map((credit) => (
-                <li key={credit.id}>
+                <li
+                  key={credit.id}
+                  className="border-t border-t-[var(--linha)] py-2 first:border-t-0"
+                >
                   Vence em {formatDate(credit.expiresAt)} - origem{" "}
                   {credit.source} (gerado em {formatDate(credit.generatedAt)})
                 </li>
               ))}
             </ul>
           )}
-        </div>
+        </section>
 
-        <div className={blockClass}>
-          <h2 className="text-sm font-medium">Histórico de reservas</h2>
+        <section className={sectionClass}>
+          <h2 className={headingClass}>Histórico de reservas</h2>
           {bookings.length === 0 ? (
-            <p className="mt-2 opacity-70">
-              Nenhuma reserva registrada.
-            </p>
+            <p className={emptyClass}>Nenhuma reserva registrada.</p>
           ) : (
-            <ul className="mt-2 space-y-1">
+            <ul className={listClass}>
               {bookings.map((booking) => (
-                <li key={booking.id}>
+                <li
+                  key={booking.id}
+                  className="border-t border-t-[var(--linha)] py-2 first:border-t-0"
+                >
                   {formatDate(booking.date)} - {booking.classTypeName} das{" "}
                   {formatTime(booking.startTime)} às{" "}
                   {formatTime(booking.endTime)} -{" "}
@@ -163,8 +184,8 @@ export default async function StudentDetailPage({
               ))}
             </ul>
           )}
-        </div>
-      </section>
+        </section>
+      </div>
     </main>
   );
 }

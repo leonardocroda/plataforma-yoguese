@@ -1,6 +1,11 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import {
+  useActionState,
+  useEffect,
+  useId,
+  type ReactNode,
+} from "react";
 import { useRouter } from "next/navigation";
 import {
   approveExperimentalAction,
@@ -18,6 +23,7 @@ import {
   type ExperimentalPaymentStatus,
   type ExperimentalStatus,
 } from "../../../../modules/experimentals/domain/validators";
+import { Button, Field, Toast } from "../../../../modules/ui/components/kit";
 
 // Formularios de acao do detalhe da experimental (EXP-24, EXP-29, EXP-31,
 // EXP-32, EXP-33, EXP-49). Cada acao mostra o resultado sem perder a tela
@@ -30,10 +36,35 @@ type ActionState = {
 
 const INITIAL_STATE: ActionState = { ok: false, message: "" };
 
-const inputClass =
-  "mt-1 w-full rounded border border-[var(--yoguese-bege)] bg-white px-2 py-1 text-xs text-[var(--yoguese-cinza)]";
-const buttonClass =
-  "rounded bg-[var(--yoguese-salvia)] px-3 py-1 text-xs text-white disabled:opacity-60";
+const sectionClass = "border-t-2 border-t-[var(--preto)] pt-4";
+const headingClass = "mb-2 text-[22px]";
+const dividerClass =
+  "border-t border-t-[var(--linha)] pt-4 first:border-t-0 first:pt-0";
+
+/** Cada acao ocupa um bloco separado pelo divisor do guia. */
+function Block({ children }: { children: ReactNode }) {
+  return <div className={dividerClass}>{children}</div>;
+}
+
+/** Sucesso na pilula preta do guia; falha em texto puro no token de erro. */
+function Feedback({ state }: { state: ActionState }) {
+  if (!state.message) return null;
+  if (state.ok) {
+    return (
+      <div className="mt-3">
+        <Toast>{state.message}</Toast>
+      </div>
+    );
+  }
+  return (
+    <p
+      role="alert"
+      className="mt-2 text-[14px] font-medium text-[color:var(--erro)]"
+    >
+      {state.message}
+    </p>
+  );
+}
 
 /** Opcao de ocorrencia futura com vaga, oferecida na troca e no reagendamento. */
 export type OccurrenceChoice = {
@@ -41,15 +72,6 @@ export type OccurrenceChoice = {
   date: string;
   label: string;
 };
-
-function Message({ state }: { state: ActionState }) {
-  if (!state.message) return null;
-  return (
-    <p className={state.ok ? "text-xs" : "text-xs text-red-700"}>
-      {state.message}
-    </p>
-  );
-}
 
 /**
  * Confirma a acao destrutiva antes de aplicar. Devolve false quando o
@@ -79,7 +101,12 @@ function SimpleActionForm({
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
     async () => {
       const result = await run();
-      if (!result.ok) return { ok: false, message: result.error ?? "erro" };
+      if (!result.ok) {
+        return {
+          ok: false,
+          message: result.error ?? "Não foi possível concluir a ação. Tente de novo.",
+        };
+      }
       return { ok: true, message: `${label} concluído.` };
     },
     INITIAL_STATE,
@@ -97,12 +124,11 @@ function SimpleActionForm({
           event.preventDefault();
         }
       }}
-      className="space-y-1"
     >
-      <button type="submit" disabled={pending} className={buttonClass}>
+      <Button type="submit" variant="sec" small disabled={pending}>
         {pending ? pendingLabel : label}
-      </button>
-      <Message state={state} />
+      </Button>
+      <Feedback state={state} />
     </form>
   );
 }
@@ -125,6 +151,7 @@ function OccurrenceActionForm({
   >;
 }) {
   const router = useRouter();
+  const fieldId = useId();
 
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
     async (_previous, formData) => {
@@ -134,7 +161,12 @@ function OccurrenceActionForm({
         return { ok: false, message: "Escolha a nova data e horário." };
       }
       const result = await run({ classSlotId, date });
-      if (!result.ok) return { ok: false, message: result.error ?? "erro" };
+      if (!result.ok) {
+        return {
+          ok: false,
+          message: result.error ?? "Não foi possível concluir a ação. Tente de novo.",
+        };
+      }
       return { ok: true, message: `${label} concluído.` };
     },
     INITIAL_STATE,
@@ -145,10 +177,14 @@ function OccurrenceActionForm({
   }, [state.ok, router]);
 
   return (
-    <form action={formAction} className="space-y-1">
-      <label className="block text-xs font-medium">
-        Nova data e horário
-        <select name="occurrence" className={inputClass} required>
+    <form action={formAction}>
+      <Field label="Nova data e horário" id={fieldId}>
+        <select
+          id={fieldId}
+          name="occurrence"
+          required
+          defaultValue=""
+        >
           <option value="">Selecione a data e o horário</option>
           {occurrences.map((option) => (
             <option
@@ -159,11 +195,11 @@ function OccurrenceActionForm({
             </option>
           ))}
         </select>
-      </label>
-      <button type="submit" disabled={pending} className={buttonClass}>
+      </Field>
+      <Button type="submit" variant="sec" small disabled={pending}>
         {pending ? pendingLabel : label}
-      </button>
-      <Message state={state} />
+      </Button>
+      <Feedback state={state} />
     </form>
   );
 }
@@ -177,6 +213,7 @@ function PaymentForm({
   current: ExperimentalPaymentStatus;
 }) {
   const router = useRouter();
+  const fieldId = useId();
 
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
     async (_previous, formData) => {
@@ -195,35 +232,30 @@ function PaymentForm({
   }, [state.ok, router]);
 
   return (
-    <form action={formAction} className="space-y-1">
-      <label className="block text-xs font-medium">
-        Pagamento
+    <form action={formAction}>
+      <Field label="Pagamento" id={fieldId}>
         <select
+          id={fieldId}
           name="paymentStatus"
-          className={inputClass}
           defaultValue={current}
         >
-          {(Object.keys(PAYMENT_STATUS_LABELS) as ExperimentalPaymentStatus[]).map(
-            (status) => (
-              <option key={status} value={status}>
-                {PAYMENT_STATUS_LABELS[status]}
-              </option>
-            ),
-          )}
+          {(Object.keys(
+            PAYMENT_STATUS_LABELS,
+          ) as ExperimentalPaymentStatus[]).map((status) => (
+            <option key={status} value={status}>
+              {PAYMENT_STATUS_LABELS[status]}
+            </option>
+          ))}
         </select>
-      </label>
-      <button type="submit" disabled={pending} className={buttonClass}>
-        {pending ? "Registrando..." : "Registrar pagamento"}
-      </button>
-      <Message state={state} />
+      </Field>
+      <Button type="submit" variant="sec" small disabled={pending}>
+        {pending ? "Registrando…" : "Registrar pagamento"}
+      </Button>
+      <Feedback state={state} />
     </form>
   );
 }
 
-/**
- * Bloco de acoes do detalhe. O status decide o que o admin ainda pode
- * fazer; a tentativa duplicada aparece somente leitura (EXP-49).
- */
 /** Plano escolhido na conversao (EXP-51). */
 export type ConversionPlanOption = {
   id: string;
@@ -251,6 +283,9 @@ export function ConversionForm({
   schedules: ConversionScheduleOption[];
 }) {
   const router = useRouter();
+  const emailId = useId();
+  const birthDateId = useId();
+  const planId = useId();
 
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
     async (_previous, formData) => {
@@ -291,27 +326,23 @@ export function ConversionForm({
           event.preventDefault();
         }
       }}
-      className="space-y-2"
     >
-      <label className="block text-xs font-medium">
-        E-mail da aluna
+      <Field label="E-mail da aluna" id={emailId}>
         <input
+          id={emailId}
           name="email"
           type="email"
           required
-          className={inputClass}
           placeholder="maria@exemplo.com"
         />
-      </label>
+      </Field>
 
-      <label className="block text-xs font-medium">
-        Data de nascimento
-        <input name="birthDate" type="date" required className={inputClass} />
-      </label>
+      <Field label="Data de nascimento" id={birthDateId}>
+        <input id={birthDateId} name="birthDate" type="date" required />
+      </Field>
 
-      <label className="block text-xs font-medium">
-        Plano
-        <select name="planId" required className={inputClass} defaultValue="">
+      <Field label="Plano" id={planId}>
+        <select id={planId} name="planId" required defaultValue="">
           <option value="">Selecione o plano</option>
           {plans.map((plan) => (
             <option key={plan.id} value={plan.id}>
@@ -319,25 +350,25 @@ export function ConversionForm({
             </option>
           ))}
         </select>
-      </label>
+      </Field>
 
-      <fieldset className="space-y-1">
-        <legend className="text-xs font-medium">Horário fixo</legend>
+      <fieldset className="mb-4">
+        <legend className="mb-1 text-[13.5px] font-medium">Horário fixo</legend>
         {schedules.length === 0 ? (
-          <p className="text-xs opacity-70">
+          <p className="text-[13.5px] text-[color:var(--cinza)]">
             Nenhuma turma ativa cadastrada.
           </p>
         ) : (
           schedules.map((schedule) => (
             <label
               key={schedule.id}
-              className="flex items-center gap-2 text-xs font-normal"
+              className="flex items-center gap-2 text-[15px]"
             >
               <input
                 type="checkbox"
                 name="classSlotIds"
                 value={schedule.id}
-                className="h-3 w-3"
+                className="h-4 w-4"
               />
               {schedule.label}
             </label>
@@ -345,10 +376,10 @@ export function ConversionForm({
         )}
       </fieldset>
 
-      <button type="submit" disabled={pending} className={buttonClass}>
-        {pending ? "Convertendo..." : "Converter em aluna"}
-      </button>
-      <Message state={state} />
+      <Button type="submit" disabled={pending}>
+        {pending ? "Convertendo…" : "Converter em aluna"}
+      </Button>
+      <Feedback state={state} />
     </form>
   );
 }
@@ -379,13 +410,13 @@ export function ExperimentalActions({
 }) {
   if (status === "DUPLICADA") {
     return (
-      <div className="rounded-lg border border-[var(--yoguese-bege)] bg-white p-3 text-xs">
-        <h2 className="text-sm font-medium">Tentativa duplicada</h2>
-        <p className="mt-2 opacity-70">
+      <section className={sectionClass}>
+        <h2 className={headingClass}>Tentativa duplicada</h2>
+        <p className="text-[15px]">
           Esta tentativa foi bloqueada pelo telefone e é somente leitura: não
           há ação a aplicar.
         </p>
-      </div>
+      </section>
     );
   }
 
@@ -393,98 +424,114 @@ export function ExperimentalActions({
   const reagendavel = status === "CANCELADA_COM_DIREITO";
 
   return (
-    <div className="rounded-lg border border-[var(--yoguese-bege)] bg-white p-3 text-xs">
-      <h2 className="text-sm font-medium">Ações</h2>
+    <section className={sectionClass}>
+      <h2 className={headingClass}>Ações</h2>
 
-      <div className="mt-2 space-y-3">
+      <div className="space-y-4">
         {status === "PENDENTE" ? (
-          <SimpleActionForm
-            label="Aprovar"
-            pendingLabel="Aprovando..."
-            run={() => approveExperimentalAction({ experimentalId })}
-          />
+          <Block>
+            <SimpleActionForm
+              label="Aprovar"
+              pendingLabel="Aprovando…"
+              run={() => approveExperimentalAction({ experimentalId })}
+            />
+          </Block>
         ) : null}
 
         {viva ? (
-          <SimpleActionForm
-            label="Recusar"
-            pendingLabel="Recusando..."
-            confirmMessage="Recusar esta solicitação? O telefone volta a ficar livre para uma nova solicitação."
-            run={() => refuseExperimentalAction({ experimentalId })}
-          />
+          <Block>
+            <SimpleActionForm
+              label="Recusar"
+              pendingLabel="Recusando…"
+              confirmMessage="Recusar esta solicitação? O telefone volta a ficar livre para uma nova solicitação."
+              run={() => refuseExperimentalAction({ experimentalId })}
+            />
+          </Block>
         ) : null}
 
         {viva ? (
-          <OccurrenceActionForm
-            label="Trocar data e horário"
-            pendingLabel="Trocando..."
-            occurrences={occurrences}
-            run={(choice) =>
-              changeExperimentalOccurrenceAction({
-                experimentalId,
-                classSlotId: choice.classSlotId,
-                date: choice.date,
-              })
-            }
-          />
+          <Block>
+            <OccurrenceActionForm
+              label="Trocar data e horário"
+              pendingLabel="Trocando…"
+              occurrences={occurrences}
+              run={(choice) =>
+                changeExperimentalOccurrenceAction({
+                  experimentalId,
+                  classSlotId: choice.classSlotId,
+                  date: choice.date,
+                })
+              }
+            />
+          </Block>
         ) : null}
 
         {reagendavel ? (
-          <OccurrenceActionForm
-            label="Reagendar"
-            pendingLabel="Reagendando..."
-            occurrences={occurrences}
-            run={(choice) =>
-              rescheduleExperimentalAction({
-                experimentalId,
-                classSlotId: choice.classSlotId,
-                date: choice.date,
-              })
-            }
-          />
+          <Block>
+            <OccurrenceActionForm
+              label="Reagendar"
+              pendingLabel="Reagendando…"
+              occurrences={occurrences}
+              run={(choice) =>
+                rescheduleExperimentalAction({
+                  experimentalId,
+                  classSlotId: choice.classSlotId,
+                  date: choice.date,
+                })
+              }
+            />
+          </Block>
         ) : null}
 
         {viva ? (
-          <SimpleActionForm
-            label="Cancelar"
-            pendingLabel="Cancelando..."
-            confirmMessage={
-              cancelLosesRight
-                ? "Cancelar esta solicitação? O direito ao reagendamento acaba."
-                : "Cancelar esta solicitação? O direito ao reagendamento é mantido."
-            }
-            run={() => cancelExperimentalAction({ experimentalId })}
-          />
+          <Block>
+            <SimpleActionForm
+              label="Cancelar"
+              pendingLabel="Cancelando…"
+              confirmMessage={
+                cancelLosesRight
+                  ? "Cancelar esta solicitação? O direito ao reagendamento acaba."
+                  : "Cancelar esta solicitação? O direito ao reagendamento é mantido."
+              }
+              run={() => cancelExperimentalAction({ experimentalId })}
+            />
+          </Block>
         ) : null}
 
         {viva ? (
-          <SimpleActionForm
-            label="Registrar falta"
-            pendingLabel="Registrando..."
-            confirmMessage="Registrar falta nesta experimental? A vaga é liberada e o direito ao reagendamento acaba."
-            run={() => registerNoShowAction({ experimentalId })}
-          />
+          <Block>
+            <SimpleActionForm
+              label="Registrar falta"
+              pendingLabel="Registrando…"
+              confirmMessage="Registrar falta nesta experimental? A vaga é liberada e o direito ao reagendamento acaba."
+              run={() => registerNoShowAction({ experimentalId })}
+            />
+          </Block>
         ) : null}
 
-        <PaymentForm experimentalId={experimentalId} current={paymentStatus} />
+        <Block>
+          <PaymentForm experimentalId={experimentalId} current={paymentStatus} />
+        </Block>
 
-        <SimpleActionForm
-          label="Registrar contato via WhatsApp"
-          pendingLabel="Registrando..."
-          run={() => registerWhatsAppContactAction({ experimentalId })}
-        />
+        <Block>
+          <SimpleActionForm
+            label="Registrar contato via WhatsApp"
+            pendingLabel="Registrando…"
+            run={() => registerWhatsAppContactAction({ experimentalId })}
+          />
+        </Block>
 
         {status === "APROVADA" ? (
-          <div className="space-y-2 rounded border border-[var(--yoguese-bege)] p-2">
-            <h3 className="text-xs font-medium">Converter em aluna</h3>
+          <Block>
+            <h3 className="mb-2 text-[17px]">Converter em aluna</h3>
             <ConversionForm
               experimentalId={experimentalId}
               plans={plans}
               schedules={schedules}
             />
-          </div>
+          </Block>
         ) : null}
       </div>
-    </div>
+    </section>
   );
 }
