@@ -160,9 +160,9 @@ T4 -> T7
 
 **Done when**:
 
-- [ ] Nav "Turmas" alcança a página logada; deslogada a rota cai no login
-- [ ] Listagem mostra ativas e inativas com status, dia, horário e capacidade
-- [ ] Gate: `npm run build; npm run lint`
+- [x] Nav "Turmas" alcança a página logada; deslogada a rota cai no login
+- [x] Listagem mostra ativas e inativas com status, dia, horário e capacidade
+- [x] Gate: `npm run build; npm run lint` (rota `/turmas` no build, 0 erros de lint)
 
 **Tests**: none (regras provadas em T1/T2; tela provada por walk)
 **Gate**: build

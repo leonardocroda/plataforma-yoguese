@@ -7,6 +7,7 @@ import { Button } from "../../modules/ui/components/kit";
 
 const NAV_LINKS = [
   { href: "/grade", label: "Grade" },
+  { href: "/turmas", label: "Turmas" },
   { href: "/alunos", label: "Alunos" },
   { href: "/experimentais", label: "Experimentais" },
   { href: "/planos", label: "Planos" },
