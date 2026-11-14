@@ -89,21 +89,21 @@ T4 -> T7
 
 ### T1: Guardas de servidor para modalidades e turma
 
-**What**: em `createClassType`/`updateClassType`, recusar nome vazio ou em branco com erro do campo; em `createSlot`, recusar modalidade inexistente (já existe: `field classTypeId`) e modalidade INATIVA com erro do campo. Testes novos: nome em branco recusado, modalidade inativa recusada, modalidade inexistente recusada, e a criação de turma ATIVA com os dados submetidos.
-**Where**: `src/modules/classes/services/classes.ts`
+**What**: em `createClassType`/`updateClassType`, recusar nome vazio ou em branco com erro do campo; em `createSlot`, recusar modalidade inexistente (já existe: `field classTypeId`) e modalidade INATIVA com erro do campo. Testes novos: nome em branco recusado, modalidade inativa recusada, modalidade inexistente recusada, e a criação de turma ATIVA com os dados submetidos. A recusa de campo obrigatório vazio ficou no validador de domínio (`validateSlot`), fonte única da validação: hoje horário vazio passava porque a comparação de `NaN` nunca é verdadeira.
+**Where**: `src/modules/classes/services/classes.ts`, `src/modules/classes/domain/validators.ts`
 **Depends on**: None
 **Reuses**: `validateSlot`/`SlotValidationError` (`domain/validators.ts`), padrão `Result<T>` do próprio arquivo
 **Requirement**: TURM-04, TURM-07, TURM-08, TURM-10, TURM-11
 
 **Done when**:
 
-- [ ] Nome vazio/branco de modalidade recusado no servidor com `field: "name"`
-- [ ] `createSlot` com modalidade inexistente ou INATIVA recusa com `field: "classTypeId"`
-- [ ] Criação de turma válida grava ATIVA com modalidade, dia, horários
-- [ ] Suíte inteira verde (~363 + novos), sem teste enfraquecido
-- [ ] Gate: `npm test`
+- [x] Nome vazio/branco de modalidade recusado no servidor com `field: "name"`
+- [x] `createSlot` com modalidade inexistente ou INATIVA recusa com `field: "classTypeId"`
+- [x] Criação de turma válida grava ATIVA com modalidade, dia, horários
+- [x] Suíte inteira verde (368 testes, +5 novos), sem teste enfraquecido
+- [x] Gate: `npm test`
 
-**Tests**: integration
+**Tests**: unit, integration
 **Gate**: full
 **Commit**: `feat(classes): server guards for modality name and inactive class type`
 

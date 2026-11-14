@@ -19,24 +19,46 @@ function timeInMinutes(time: string): number {
   return hour * 60 + minute;
 }
 
+/** Horario no formato HH:MM ou HH:MM:SS, dentro do dia. */
+const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/;
+
+function isValidTime(time: string): boolean {
+  return TIME_PATTERN.test(time);
+}
+
 export function validateSlot(data: SlotData): SlotValidationResult {
   const errors: SlotValidationError[] = [];
 
-  if (data.weekday < 1 || data.weekday > 7) {
+  if (!Number.isInteger(data.weekday) || data.weekday < 1 || data.weekday > 7) {
     errors.push({
       field: "weekday",
       message: "weekday deve estar entre 1 (domingo) e 7 (sabado)",
     });
   }
 
-  if (timeInMinutes(data.endTime) <= timeInMinutes(data.startTime)) {
+  if (!isValidTime(data.startTime)) {
+    errors.push({
+      field: "startTime",
+      message: "startTime deve ser um horario valido (HH:MM)",
+    });
+  }
+
+  if (!isValidTime(data.endTime)) {
+    errors.push({
+      field: "endTime",
+      message: "endTime deve ser um horario valido (HH:MM)",
+    });
+  } else if (
+    isValidTime(data.startTime) &&
+    timeInMinutes(data.endTime) <= timeInMinutes(data.startTime)
+  ) {
     errors.push({
       field: "endTime",
       message: "endTime deve ser maior que startTime",
     });
   }
 
-  if (data.capacity < 1) {
+  if (!Number.isInteger(data.capacity) || data.capacity < 1) {
     errors.push({
       field: "capacity",
       message: "capacity deve ser maior ou igual a 1",

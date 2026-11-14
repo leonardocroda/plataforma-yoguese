@@ -108,10 +108,127 @@ describe("classes", () => {
     expect(weekdayOut.ok).toBe(false);
     if (!weekdayOut.ok) expect(weekdayOut.field).toBe("weekday");
 
+    // Campo obrigatorio vazio: hoje passava pelo validador (NaN na comparacao)
+    const emptyStart = await createSlot(pg.db, {
+      classTypeId,
+      weekday: 3,
+      startTime: "",
+      endTime: "20:00:00",
+    });
+    expect(emptyStart.ok).toBe(false);
+    if (!emptyStart.ok) expect(emptyStart.field).toBe("startTime");
+
+    const emptyEnd = await createSlot(pg.db, {
+      classTypeId,
+      weekday: 3,
+      startTime: "19:00:00",
+      endTime: "",
+    });
+    expect(emptyEnd.ok).toBe(false);
+    if (!emptyEnd.ok) expect(emptyEnd.field).toBe("endTime");
+
+    const emptyWeekday = await createSlot(pg.db, {
+      classTypeId,
+      weekday: Number.NaN,
+      startTime: "19:00:00",
+      endTime: "20:00:00",
+    });
+    expect(emptyWeekday.ok).toBe(false);
+    if (!emptyWeekday.ok) expect(emptyWeekday.field).toBe("weekday");
+
     // Nenhuma das recusas gravou: segue existindo apenas a turma do fixture
     const classes = await pg.db.select().from(classSlots);
     expect(classes).toHaveLength(1);
     expect(classes[0].weekday).toBe(3);
+  });
+
+  it("refuses a blank modality name on the server", async () => {
+    const blank = await createClassType(pg.db, { name: "   " });
+    expect(blank.ok).toBe(false);
+    if (!blank.ok) {
+      expect(blank.field).toBe("name");
+      expect(blank.error).toContain("name");
+    }
+
+    // O nome gravado e o nome sem espacos das pontas
+    const created = await createClassType(pg.db, { name: "  Superioga Fluide  " });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+    expect(created.value.name).toBe("Superioga Fluide");
+
+    const renamed = await updateClassType(pg.db, created.value.id, { name: " " });
+    expect(renamed.ok).toBe(false);
+    if (!renamed.ok) expect(renamed.field).toBe("name");
+
+    const types = await pg.db.select().from(classTypes);
+    expect(types).toHaveLength(1);
+    expect(types[0].name).toBe("Superioga Fluide");
+  });
+
+  it("refuses a slot whose class type does not exist with a field error", async () => {
+    const slot = await createSlot(pg.db, {
+      classTypeId: "00000000-0000-0000-0000-000000000000",
+      weekday: 3,
+      startTime: "19:00:00",
+      endTime: "20:00:00",
+    });
+    expect(slot.ok).toBe(false);
+    if (!slot.ok) {
+      expect(slot.field).toBe("classTypeId");
+      expect(slot.error).toContain("classTypeId");
+    }
+
+    const slots = await pg.db.select().from(classSlots);
+    expect(slots).toHaveLength(0);
+  });
+
+  it("refuses a slot under an inactive class type", async () => {
+    const created = await createClassType(pg.db, { name: "Superioga Clássico" });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    const deactivated = await updateClassType(pg.db, created.value.id, {
+      status: "INATIVA",
+    });
+    expect(deactivated.ok).toBe(true);
+
+    const slot = await createSlot(pg.db, {
+      classTypeId: created.value.id,
+      weekday: 3,
+      startTime: "19:00:00",
+      endTime: "20:00:00",
+    });
+    expect(slot.ok).toBe(false);
+    if (!slot.ok) {
+      expect(slot.field).toBe("classTypeId");
+      expect(slot.error).toContain("classTypeId");
+    }
+
+    const slots = await pg.db.select().from(classSlots);
+    expect(slots).toHaveLength(0);
+  });
+
+  it("creates an active slot with the submitted data", async () => {
+    const created = await createClassType(pg.db, { name: "Superioga Intenso" });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    const slot = await createSlot(pg.db, {
+      classTypeId: created.value.id,
+      weekday: 5,
+      startTime: "07:00:00",
+      endTime: "08:00:00",
+      capacity: 4,
+    });
+    expect(slot.ok).toBe(true);
+    if (slot.ok) {
+      expect(slot.value.status).toBe("ATIVA");
+      expect(slot.value.classTypeId).toBe(created.value.id);
+      expect(slot.value.weekday).toBe(5);
+      expect(slot.value.startTime).toBe("07:00:00");
+      expect(slot.value.endTime).toBe("08:00:00");
+      expect(slot.value.capacity).toBe(4);
+    }
   });
 
   it("creates, edits and deactivates a class type", async () => {

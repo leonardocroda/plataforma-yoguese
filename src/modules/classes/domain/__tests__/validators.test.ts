@@ -131,6 +131,63 @@ describe("validators", () => {
     }
   });
 
+  it("rejects empty or malformed required fields", () => {
+    const emptyStart = validateSlot({
+      weekday: 3,
+      startTime: "",
+      endTime: "20:00:00",
+      capacity: 8,
+    });
+    expect(emptyStart.ok).toBe(false);
+    if (!emptyStart.ok) {
+      expect(emptyStart.errors.map((e) => e.field)).toEqual(["startTime"]);
+    }
+
+    const emptyEnd = validateSlot({
+      weekday: 3,
+      startTime: "19:00:00",
+      endTime: "",
+      capacity: 8,
+    });
+    expect(emptyEnd.ok).toBe(false);
+    if (!emptyEnd.ok) {
+      expect(emptyEnd.errors.map((e) => e.field)).toEqual(["endTime"]);
+    }
+
+    const malformed = validateSlot({
+      weekday: 3,
+      startTime: "25:00",
+      endTime: "26:00",
+      capacity: 8,
+    });
+    expect(malformed.ok).toBe(false);
+    if (!malformed.ok) {
+      expect(malformed.errors.map((e) => e.field)).toEqual(["startTime", "endTime"]);
+    }
+
+    const notIntegerWeekday = validateSlot({
+      weekday: 3.5,
+      startTime: "19:00:00",
+      endTime: "20:00:00",
+      capacity: 8,
+    });
+    expect(notIntegerWeekday.ok).toBe(false);
+    if (!notIntegerWeekday.ok) {
+      expect(notIntegerWeekday.errors.map((e) => e.field)).toEqual(["weekday"]);
+    }
+
+    const fractionalCapacity = validateSlot({
+      weekday: 3,
+      startTime: "19:00:00",
+      endTime: "20:00:00",
+      capacity: 8.5,
+    });
+    expect(fractionalCapacity.ok).toBe(false);
+    if (!fractionalCapacity.ok) {
+      expect(fractionalCapacity.errors.map((e) => e.field)).toEqual(["capacity"]);
+    }
+  });
+
   it("points out all invalid fields at once", () => {
     const result = validateSlot({
       weekday: 9,

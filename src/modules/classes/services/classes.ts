@@ -34,7 +34,16 @@ export async function createClassType(
   db: DbClient,
   input: { name: string },
 ): Promise<Result<ClassType>> {
-  const [created] = await db.insert(classTypes).values(input).returning();
+  const name = input.name.trim();
+  if (!name) {
+    return {
+      ok: false,
+      error: "name: nome da modalidade e obrigatorio",
+      field: "name",
+    };
+  }
+
+  const [created] = await db.insert(classTypes).values({ name }).returning();
   return created
     ? { ok: true, value: created }
     : { ok: false, error: "falha ao gravar modalidade" };
@@ -46,9 +55,22 @@ export async function updateClassType(
   patch: { name?: string; status?: "ATIVA" | "INATIVA" },
   now: Date = new Date(),
 ): Promise<Result<ClassType>> {
+  const values = { ...patch };
+  if (values.name !== undefined) {
+    const name = values.name.trim();
+    if (!name) {
+      return {
+        ok: false,
+        error: "name: nome da modalidade e obrigatorio",
+        field: "name",
+      };
+    }
+    values.name = name;
+  }
+
   const [updated] = await db
     .update(classTypes)
-    .set({ ...patch, updatedAt: now })
+    .set({ ...values, updatedAt: now })
     .where(eq(classTypes.id, id))
     .returning();
   return updated
@@ -75,7 +97,16 @@ export async function createSlot(
   if (!classType) {
     return {
       ok: false,
-      error: "modalidade nao encontrada",
+      error: "classTypeId: modalidade nao encontrada",
+      field: "classTypeId",
+    };
+  }
+  // Turma de modalidade inativa nunca apareceria na grade (RES-05, AD-014):
+  // recusa no servidor em vez de gravar uma turma invisivel.
+  if (classType.status !== "ATIVA") {
+    return {
+      ok: false,
+      error: "classTypeId: modalidade inativa",
       field: "classTypeId",
     };
   }
