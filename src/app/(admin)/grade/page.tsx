@@ -15,6 +15,7 @@ import {
   type StudentOption,
 } from "./booking-forms";
 import { CalendarNav } from "./calendar-nav";
+import { DayView, MonthView } from "./calendar-views";
 
 export const dynamic = "force-dynamic";
 
@@ -158,15 +159,20 @@ export default async function AdminGradePage({
           view={calendar.view}
           date={calendar.date}
         />
+      ) : calendar.view === "dia" ? (
+        <DayView
+          days={days}
+          selectedKey={params.ocorrencia}
+          date={calendar.date}
+          period={period}
+        />
       ) : (
-        <section className="rounded-[var(--r-lg)] border-2 border-[var(--preto)] bg-[var(--pena)] p-7">
-          <h1 className="text-[34px]">
-            {calendar.view === "dia" ? "Dia" : "Mês"}
-          </h1>
-          <p className="mt-2 text-[15px] text-[color:var(--cinza)]">
-            As ocorrências desta janela já estão carregadas no calendário.
-          </p>
-        </section>
+        <MonthView
+          days={days}
+          selectedKey={params.ocorrencia}
+          date={calendar.date}
+          period={period}
+        />
       )}
     </main>
   );

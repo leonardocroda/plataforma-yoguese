@@ -347,16 +347,17 @@ T12 -> T13
 
 **Done when**:
 
-- [ ] Aba Diária mostra só o dia da URL; Mensal mostra o mês inteiro com as ocorrências do mês
-- [ ] Selos de BLOQUEADA e CANCELADA visíveis nas três vistas (com as ocorrências criadas pelos testes de bloqueio/cancelamento no banco de dev)
-- [ ] Sem overflow horizontal em 1280px nas três vistas
-- [ ] `npm run build; npm run lint` limpos
-- [ ] Test count: n/a (tela — walk)
+- [x] Aba Diária mostra só o dia da URL; Mensal mostra o mês inteiro com as ocorrências do mês
+- [x] Selos de BLOQUEADA e CANCELADA visíveis nas três vistas (com as ocorrências criadas pelos testes de bloqueio/cancelamento no banco de dev)
+- [x] Sem overflow horizontal em 1280px nas três vistas
+- [x] `npm run build; npm run lint` limpos
+- [x] Test count: n/a (tela — walk)
 
 **Tests**: none
 **Gate**: build
 
 **Commit**: `feat(grade): day and month calendar views`
+**Status**: ✅ Complete
 
 ---
 
