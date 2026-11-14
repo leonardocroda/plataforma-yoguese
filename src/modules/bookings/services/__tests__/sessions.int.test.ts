@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
+  bookings,
   classSessions,
   classSlots,
   credits,
@@ -11,6 +12,7 @@ import {
   createStudents,
   createTestClass,
   clearTables,
+  grantTestCredit,
 } from "../../../../test/fixtures";
 import {
   PostgresTestInstance,
@@ -19,6 +21,7 @@ import {
 import { todayInStudio, nextOccurrence } from "../../../classes/domain/occurrences";
 import { createEnrollment } from "../../../students/services/enrollments";
 import { updateSlot } from "../../../classes/services/classes";
+import { createBooking } from "../bookings";
 import { materializeSession } from "../sessions";
 
 describe("sessions", () => {
@@ -175,6 +178,17 @@ describe("sessions", () => {
       expect(enrollment.ok).toBe(true);
     }
 
+    // Uma reserva ativa na primeira ocorrencia futura
+    const [visitor] = await createStudents(pg.db, 1);
+    const booking = await createBooking(pg.db, {
+      studentId: visitor,
+      classSlotId: slotId,
+      date: dates[0],
+      type: "MAKEUP",
+      creditId: await grantTestCredit(pg.db, visitor),
+    });
+    expect(booking.ok).toBe(true);
+
     // Editar o dia da turma cancela as ocorrencias futuras antigas
     const edited = await updateSlot(pg.db, slotId, {
       weekday: 4,
@@ -193,18 +207,30 @@ describe("sessions", () => {
 
     // Oito ocorrencias x quatro fixos = 32 creditos do estudio
     const stored = await pg.db.select().from(credits);
-    expect(stored).toHaveLength(32);
-    expect(stored.every((row) => row.source === "CANCELAMENTO_ESTUDIO")).toBe(
-      true,
+    const studioCredits = stored.filter(
+      (row) => row.source === "CANCELAMENTO_ESTUDIO",
     );
-    expect(stored.every((row) => row.status === "DISPONIVEL")).toBe(true);
+    expect(studioCredits).toHaveLength(32);
+    expect(studioCredits.every((row) => row.status === "DISPONIVEL")).toBe(true);
 
     for (const studentId of students) {
-      const own = stored.filter((row) => row.studentId === studentId);
+      const own = studioCredits.filter((row) => row.studentId === studentId);
       expect(own).toHaveLength(8);
       // Um credito por ocorrencia cancelada
       expect(new Set(own.map((row) => row.sourceSessionId)).size).toBe(8);
     }
+
+    // A reserva ativa da ocorrencia cancelada tambem e cancelada e o credito
+    // da reposicao volta a DISPONIVEL (AD-013, AD-020)
+    const storedBookings = await pg.db.select().from(bookings);
+    expect(storedBookings).toHaveLength(1);
+    expect(storedBookings[0].status).toBe("CANCELADA");
+    expect(storedBookings[0].cancelledBy).toBe("ESTUDIO");
+
+    const makeupCredit = stored.find(
+      (row) => row.source !== "CANCELAMENTO_ESTUDIO",
+    );
+    expect(makeupCredit?.status).toBe("DISPONIVEL");
   });
 });
 

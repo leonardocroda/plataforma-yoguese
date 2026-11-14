@@ -276,7 +276,7 @@ Proof: run turmas | ✓ classes > refuses a slot whose class type does not exist
 Proof: walk - turma de quinta criada pela tela aparece na /grade da próxima quinta
 
 **C13** - Edição de dia/horário/capacidade/status persiste e as ocorrências futuras refletem o novo estado (TURM-13)
-Proof: run turmas | ✓ classes > editing or deactivating a class affects future occurrences
+Proof: run turmas | ✓ classes > editing the class data persists the change and the future occurrences reflect it
 
 **C14** - Redução de capacidade abaixo da ocupação é recusada citando a ocorrência mais afetada (TURM-14)
 Proof: run turmas | ✓ classes > rejects a capacity below the occupancy of a future occurrence
@@ -293,6 +293,21 @@ Proof: run turmas | ✓ classes > deactivating keeps the slot row and stops futu
 **C18** - Reativar traz as ocorrências futuras de volta e ocorrências CANCELADAS não ressuscitam (TURM-18)
 Proof: run turmas | ✓ classes > reactivating brings back future occurrences and never resurrects cancelled ones
 
+**C19** - Sem nenhuma modalidade ATIVA, o formulário de nova turma não oferece modalidade e não permite criar (TURM-06, edge case "todas as modalidades inativas")
+Proof: walk - sem modalidade ativa, o seletor mostra "Nenhuma modalidade ativa" e o botao de criar fica desabilitado
+
+**C20** - Desativar duas vezes não falha nem duplica a linha da turma (TURM-17, edge case "desativação idempotente")
+Proof: run turmas | ✓ classes > deactivating twice keeps the slot inactive and does not fail
+
+**C21** - Modalidade INATIVA oculta as turmas da listagem ativa; reativar as restaura sem recriar ocorrências (TURM-02, TURM-05, edge case "modalidade inativa ocultando/restaurando suas turmas")
+Proof: run turmas | ✓ classes > an inactive class type hides its slots from the grade and reactivating restores them without new occurrences
+
+**C22** - Duas turmas podem ocupar o mesmo dia e horário (edge case "turmas sobrepostas permitidas")
+Proof: run turmas | ✓ classes > two classes can share the same weekday and time
+
+**C23** - Na mudança de agenda, a ocorrência BLOQUEADA da grade antiga também fecha, sem crédito de estúdio (TURM-15, AD-013, AD-027)
+Proof: run turmas | ✓ classes > schedule edit closes the blocked future occurrence of the old schedule without studio credits
+
 ---
 
 ## Handoff
@@ -300,7 +315,7 @@ Proof: run turmas | ✓ classes > reactivating brings back future occurrences an
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** nenhum.
-**Dispatched:** [cada sub-agent antes de ser enviado - at which `HEAD`, and `returned` when it does]
+**Dispatched:** Verifier (sub-agent independente, author != verifier) - feature `admin-turmas`, HEAD 5c7bf28, diff `d5c0375..5c7bf28` (planejamento + 7 tasks + fix do walk), com `spec.md`, `tasks.md` (## Checks), `proofs.md` e `references/validate.md`; sem sub-agent de telas (nenhum criterio cita captura). `returned`: pendente.
 **Walked:** 2026-11-14, chromium headless (playwright-core) contra o dev server na 3001, rota `/turmas`, 18 gestos exercitados: login do admin -> `/grade`; link "Turmas" do shell -> `/turmas`; listagem com 2 modalidades do seed; nome de modalidade em branco recusado no servidor com erro no campo; modalidade "Walk Yôga" criada e aparecendo na listagem; nome editado ("Walk Yôga Editada") refletido; status Inativa refletido; seletor de nova turma oferecendo so "Superioga Clássico | Superioga Intenso" (a inativa fora); turma criada sem capacidade gravando 8 vagas; fim antes do inicio recusado no campo "endTime"; edicao de dia devolvendo o feedback "Turma atualizada. 0 ocorrencias canceladas na grade antiga e 0 creditos gerados."; turma desativada (chip Inativa, linha preservada) e reativada (chip Ativa); turma recem-criada aparecendo na `/grade`; deslogada, `/turmas` redireciona ao `/login`. Sem pageerrors.
 **Achado do walk:** o `useEffect` de refresh dependia do booleano `state.ok`: a segunda operacao bem-sucedida nao atualizava a listagem (a modalidade ficou INATIVA no banco e a tela seguia "Ativa"). Corrigido nos tres formularios (dependencia do estado inteiro) e reconferido no walk.
 

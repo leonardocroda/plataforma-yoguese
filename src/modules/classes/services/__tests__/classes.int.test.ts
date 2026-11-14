@@ -138,6 +138,32 @@ describe("classes", () => {
     expect(emptyWeekday.ok).toBe(false);
     if (!emptyWeekday.ok) expect(emptyWeekday.field).toBe("weekday");
 
+    // Capacidade abaixo de 1 e dia abaixo de 1 tambem sao recusados
+    const zeroCapacity = await createSlot(pg.db, {
+      classTypeId,
+      weekday: 3,
+      startTime: "19:00:00",
+      endTime: "20:00:00",
+      capacity: 0,
+    });
+    expect(zeroCapacity.ok).toBe(false);
+    if (!zeroCapacity.ok) {
+      expect(zeroCapacity.field).toBe("capacity");
+      expect(zeroCapacity.error).toContain("capacity");
+    }
+
+    const zeroWeekday = await createSlot(pg.db, {
+      classTypeId,
+      weekday: 0,
+      startTime: "19:00:00",
+      endTime: "20:00:00",
+    });
+    expect(zeroWeekday.ok).toBe(false);
+    if (!zeroWeekday.ok) {
+      expect(zeroWeekday.field).toBe("weekday");
+      expect(zeroWeekday.error).toContain("weekday");
+    }
+
     // Nenhuma das recusas gravou: segue existindo apenas a turma do fixture
     const classes = await pg.db.select().from(classSlots);
     expect(classes).toHaveLength(1);
@@ -296,6 +322,13 @@ describe("classes", () => {
     if (!created.ok) return;
     expect(created.value.status).toBe("ATIVA");
 
+    // A modalidade criada aparece na listagem de gestao de turmas (TURM-03)
+    const afterCreate = await listAllClassTypes(pg.db);
+    expect(afterCreate).toHaveLength(1);
+    expect(afterCreate[0].id).toBe(created.value.id);
+    expect(afterCreate[0].name).toBe("Superioga Fluide");
+    expect(afterCreate[0].status).toBe("ATIVA");
+
     const edited = await updateClassType(pg.db, created.value.id, { name: "Superioga Fluide 2" });
     expect(edited.ok).toBe(true);
     if (edited.ok) expect(edited.value.name).toBe("Superioga Fluide 2");
@@ -310,6 +343,12 @@ describe("classes", () => {
       .where(eq(classTypes.id, created.value.id));
     expect(row.name).toBe("Superioga Fluide 2");
     expect(row.status).toBe("INATIVA");
+
+    // A listagem reflete o novo nome e o status (TURM-05)
+    const afterEdit = await listAllClassTypes(pg.db);
+    expect(afterEdit).toHaveLength(1);
+    expect(afterEdit[0].name).toBe("Superioga Fluide 2");
+    expect(afterEdit[0].status).toBe("INATIVA");
   });
 
   it("an inactive class type hides its classes and refuses bookings", async () => {
@@ -505,12 +544,23 @@ describe("classes", () => {
 
   it("deactivating keeps the slot row and stops future occurrences", async () => {
     const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const students = await createStudents(pg.db, 1);
 
     const before = await getComposition(pg.db, {
       classSlotId: slotId,
       date: day,
     });
     expect(before.ok).toBe(true);
+
+    // Uma reserva antiga da proxima ocorrencia
+    const booking = await createBooking(pg.db, {
+      studentId: students[0],
+      classSlotId: slotId,
+      date: day,
+      type: "MAKEUP",
+      creditId: await grantTestCredit(pg.db, students[0]),
+    });
+    expect(booking.ok).toBe(true);
 
     const deactivated = await deactivateSlot(pg.db, slotId);
     expect(deactivated.ok).toBe(true);
@@ -530,6 +580,13 @@ describe("classes", () => {
       .where(eq(classSessions.classSlotId, slotId));
     expect(sessions).toHaveLength(1);
     expect(sessions[0].sessionDate).toBe(day);
+
+    // A reserva antiga e preservada no historico: desativar nao apaga nem
+    // cancela o que ja foi reservado
+    const keptBookings = await pg.db.select().from(bookings);
+    expect(keptBookings).toHaveLength(1);
+    expect(keptBookings[0].status).toBe("ATIVA");
+    expect(keptBookings[0].classSessionId).toBe(sessions[0].id);
 
     // Nenhuma ocorrencia nova e gerada a partir da desativacao
     const after = await getComposition(pg.db, {
@@ -577,24 +634,124 @@ describe("classes", () => {
     if (after.ok) expect(after.value.sessionStatus).toBe("AGENDADA");
   });
 
+  it("deactivating twice keeps the slot inactive and does not fail", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+
+    const first = await deactivateSlot(pg.db, slotId);
+    expect(first.ok).toBe(true);
+
+    // Desativar de novo nao falha nem cria outra linha
+    const second = await deactivateSlot(pg.db, slotId);
+    expect(second.ok).toBe(true);
+    if (second.ok) expect(second.value.status).toBe("INATIVA");
+
+    const rows = await pg.db
+      .select()
+      .from(classSlots)
+      .where(eq(classSlots.id, slotId));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].status).toBe("INATIVA");
+  });
+
+  it("an inactive class type hides its slots from the grade and reactivating restores them without new occurrences", async () => {
+    const { classTypeId, slotId } = await createTestClass(pg.db, {
+      weekday: 3,
+      capacity: 8,
+    });
+
+    // Com a modalidade ativa, a turma aparece na grade
+    expect(await listActiveSlots(pg.db)).toHaveLength(1);
+
+    const deactivated = await updateClassType(pg.db, classTypeId, {
+      status: "INATIVA",
+    });
+    expect(deactivated.ok).toBe(true);
+
+    // Com a modalidade inativa, a turma sai da grade
+    expect(await listActiveSlots(pg.db)).toHaveLength(0);
+
+    const reactivated = await updateClassType(pg.db, classTypeId, {
+      status: "ATIVA",
+    });
+    expect(reactivated.ok).toBe(true);
+
+    // E volta na proxima leitura, sem recriar nenhuma ocorrencia
+    expect(await listActiveSlots(pg.db)).toHaveLength(1);
+    const sessions = await pg.db
+      .select()
+      .from(classSessions)
+      .where(eq(classSessions.classSlotId, slotId));
+    expect(sessions).toHaveLength(0);
+  });
+
+  it("two classes can share the same weekday and time", async () => {
+    const { classTypeId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+
+    const first = await createSlot(pg.db, {
+      classTypeId,
+      weekday: 5,
+      startTime: "19:00:00",
+      endTime: "20:00:00",
+    });
+    expect(first.ok).toBe(true);
+
+    const second = await createSlot(pg.db, {
+      classTypeId,
+      weekday: 5,
+      startTime: "19:00:00",
+      endTime: "20:00:00",
+    });
+    expect(second.ok).toBe(true);
+
+    // A sobreposicao e permitida: as duas turmas existem
+    const slots = await listAllSlots(pg.db);
+    expect(slots).toHaveLength(3);
+    const overlapping = slots.filter(
+      (slot) => slot.weekday === 5 && slot.startTime === "19:00:00",
+    );
+    expect(overlapping).toHaveLength(2);
+  });
+
   it("rejects a capacity below the occupancy of a future occurrence", async () => {
     const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
-    const students = await createStudents(pg.db, 5);
-    for (const student of students) {
+    const students = await createStudents(pg.db, 8);
+
+    // Cinco fixos desde a primeira ocorrencia e tres so a partir da segunda:
+    // a segunda ocorrencia futura e a mais afetada
+    for (const studentId of students.slice(0, 5)) {
       const fixed = await createEnrollment(pg.db, {
-        studentId: student,
+        studentId,
         classSlotId: slotId,
         startDate: day,
       });
       expect(fixed.ok).toBe(true);
+    }
+    for (const studentId of students.slice(5)) {
+      const fixed = await createEnrollment(pg.db, {
+        studentId,
+        classSlotId: slotId,
+        startDate: nextDay,
+      });
+      expect(fixed.ok).toBe(true);
+    }
+
+    // As duas ocorrencias futuras materializadas
+    for (const date of [day, nextDay]) {
+      const composition = await getComposition(pg.db, {
+        classSlotId: slotId,
+        date,
+      });
+      expect(composition.ok).toBe(true);
     }
 
     const rejected = await updateSlot(pg.db, slotId, { capacity: 4 });
     expect(rejected.ok).toBe(false);
     if (!rejected.ok) {
       expect(rejected.field).toBe("capacity");
-      expect(rejected.error).toContain("ocupacao 5");
-      expect(rejected.error).toContain(day); // informa a ocorrencia mais afetada
+      expect(rejected.error).toContain("ocupacao 8");
+      // Informa a ocorrencia mais afetada, nao a primeira
+      expect(rejected.error).toContain(nextDay);
+      expect(rejected.error).not.toContain(day);
     }
 
     // Recusa sem estado parcial: a capacidade continua 8
@@ -607,6 +764,80 @@ describe("classes", () => {
     // Aumento e permitido
     const enlarged = await updateSlot(pg.db, slotId, { capacity: 10 });
     expect(enlarged.ok).toBe(true);
+  });
+
+  it("editing the class data persists the change and the future occurrences reflect it", async () => {
+    const { slotId } = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const oldDate = nextOccurrence({ weekday: 3 }, today);
+
+    // A ocorrencia da grade antiga existe antes da edicao
+    const before = await getComposition(pg.db, {
+      classSlotId: slotId,
+      date: oldDate,
+    });
+    expect(before.ok).toBe(true);
+
+    const edited = await updateSlot(pg.db, slotId, {
+      weekday: 5,
+      startTime: "18:00:00",
+      endTime: "19:00:00",
+      capacity: 6,
+    });
+    expect(edited.ok).toBe(true);
+    if (!edited.ok) return;
+
+    // A mudanca fica persistida na linha da turma
+    const [row] = await pg.db
+      .select()
+      .from(classSlots)
+      .where(eq(classSlots.id, slotId));
+    expect(row.weekday).toBe(5);
+    expect(row.startTime).toBe("18:00:00");
+    expect(row.endTime).toBe("19:00:00");
+    expect(row.capacity).toBe(6);
+
+    // A listagem de gestao mostra a turma ja editada
+    const listed = await listAllSlots(pg.db);
+    expect(listed).toHaveLength(1);
+    expect(listed[0].weekday).toBe(5);
+    expect(listed[0].capacity).toBe(6);
+
+    // A grade antiga deixa de gerar ocorrencia: a que existia fica cancelada
+    const oldReading = await getComposition(pg.db, {
+      classSlotId: slotId,
+      date: oldDate,
+    });
+    expect(oldReading.ok).toBe(true);
+    if (oldReading.ok) expect(oldReading.value.sessionStatus).toBe("CANCELADA");
+
+    // E a nova grade gera ocorrencia com a capacidade nova
+    const newDate = nextOccurrence({ weekday: 5 }, today);
+    const newReading = await getComposition(pg.db, {
+      classSlotId: slotId,
+      date: newDate,
+    });
+    expect(newReading.ok).toBe(true);
+    if (newReading.ok) {
+      expect(newReading.value.sessionStatus).toBe("AGENDADA");
+      expect(newReading.value.availableSpots).toBe(6);
+    }
+
+    // O status tambem e editado e persistido
+    const deactivated = await deactivateSlot(pg.db, slotId);
+    expect(deactivated.ok).toBe(true);
+    const [inactive] = await pg.db
+      .select()
+      .from(classSlots)
+      .where(eq(classSlots.id, slotId));
+    expect(inactive.status).toBe("INATIVA");
+
+    const reactivated = await updateSlot(pg.db, slotId, { status: "ATIVA" });
+    expect(reactivated.ok).toBe(true);
+    const [active] = await pg.db
+      .select()
+      .from(classSlots)
+      .where(eq(classSlots.id, slotId));
+    expect(active.status).toBe("ATIVA");
   });
 
   it("accepts editing valid required class data", async () => {
