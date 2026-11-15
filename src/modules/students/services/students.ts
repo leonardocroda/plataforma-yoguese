@@ -23,6 +23,7 @@ import {
   validateStudent,
   type StudentStatus,
 } from "../domain/validators";
+import { countActiveEnrollments } from "./enrollments";
 
 export type { DbClient, StudentStatus };
 
@@ -219,6 +220,36 @@ export async function updateStudent(
   }
   if (input.planId && !(await planExists(db, input.planId))) {
     return { ok: false, error: "planId: plano nao encontrado", field: "planId" };
+  }
+
+  // PLIM-05/PLIM-06: a edicao nao pode violar o limite dos vinculos fixos
+  // ativos - o limite vem do plano NOVO, e sem plano o vinculo fixo nao
+  // existe (PLIM-03). Sem vinculos ativos, qualquer edicao passa (PLIM-07).
+  const activeCount = await countActiveEnrollments(
+    db,
+    input.studentId,
+    todayInStudio(now),
+  );
+  if (activeCount > 0) {
+    if (!input.planId) {
+      return {
+        ok: false,
+        error: "aluna com horarios fixos ativos precisa de plano",
+        field: "planId",
+      };
+    }
+    const [targetPlan] = await db
+      .select()
+      .from(plans)
+      .where(eq(plans.id, input.planId));
+    if (targetPlan && targetPlan.weeklyFrequency < activeCount) {
+      const plural = activeCount === 1 ? "turma" : "turmas";
+      return {
+        ok: false,
+        error: `Plano ${targetPlan.name} ${targetPlan.weeklyFrequency}x/semana: a aluna ja esta fixa em ${activeCount} ${plural}`,
+        field: "planId",
+      };
+    }
   }
 
   try {

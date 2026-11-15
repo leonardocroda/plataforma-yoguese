@@ -130,10 +130,10 @@ trocar para plano com frequência menor que a contagem recusa; remover o plano
 
 **Done when**:
 
-- [ ] Baixar a frequência abaixo dos vínculos ativos recusa nomeando contagem e limite
-- [ ] Limpar o plano com vínculos ativos recusa
-- [ ] Sem vínculos ativos, trocar/baixar/limpar o plano passa
-- [ ] Gate: `npm test`
+- [x] Baixar a frequência abaixo dos vínculos ativos recusa nomeando contagem e limite
+- [x] Limpar o plano com vínculos ativos recusa
+- [x] Sem vínculos ativos, trocar/baixar/limpar o plano passa
+- [x] Gate: `npm test` (422 testes verdes, +3 novos)
 
 **Tests**: integration
 **Gate**: full
