@@ -1,4 +1,4 @@
-import { count } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { fixedEnrollments } from "../../../../db/schema";
 import { createStudents, createTestClass, clearTables, grantTestCredit } from "../../../../test/fixtures";
@@ -218,6 +218,135 @@ describe("enrollments", () => {
       startDate: date,
     });
     expect(next.ok).toBe(true);
+    if (!next.ok) return;
+
+    // RES-23 tem dois lados: endDate futura AINDA ocupa a vaga ate a data
+    // chegar, e a partir da data encerrada ela se libera
+    const futureEnd = await endEnrollment(pg.db, next.value.id, {
+      date: addDays(date, 7),
+    });
+    expect(futureEnd.ok).toBe(true);
+    if (futureEnd.ok) {
+      expect(futureEnd.value.endDate).toBe(addDays(date, 7));
+    }
+
+    const [c] = await createStudents(pg.db, 1);
+    const blocked = await createEnrollment(pg.db, {
+      studentId: c,
+      classSlotId: slotId,
+      startDate: date,
+    });
+    expect(blocked.ok).toBe(false);
+
+    const freed = await createEnrollment(pg.db, {
+      studentId: c,
+      classSlotId: slotId,
+      startDate: addDays(date, 7),
+    });
+    expect(freed.ok).toBe(true);
+
+    const [total] = await pg.db
+      .select({ total: count() })
+      .from(fixedEnrollments);
+    expect(Number(total?.total)).toBe(3);
+  });
+
+  it("refuses an end date before the start date", async () => {
+    const { slotId, date } = await base(8);
+    const [a] = await createStudents(pg.db, 1);
+
+    const created = await createEnrollment(pg.db, {
+      studentId: a,
+      classSlotId: slotId,
+      startDate: date,
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    // FIX-03: data de encerramento anterior ao inicio recusa sem alterar
+    const backdated = await endEnrollment(pg.db, created.value.id, {
+      date: addDays(date, -1),
+    });
+    expect(backdated.ok).toBe(false);
+    if (!backdated.ok) {
+      expect(backdated.error).toContain("anterior");
+    }
+
+    const [row] = await pg.db
+      .select()
+      .from(fixedEnrollments)
+      .where(eq(fixedEnrollments.id, created.value.id));
+    expect(row?.endDate).toBeNull();
+    expect(row?.status).toBe("ATIVA");
+
+    // Borda aceita: encerrar no proprio dia de inicio
+    const sameDay = await endEnrollment(pg.db, created.value.id, { date });
+    expect(sameDay.ok).toBe(true);
+    if (sameDay.ok) {
+      expect(sameDay.value.endDate).toBe(date);
+    }
+  });
+
+  it("refuses ending an already ended or missing enrollment", async () => {
+    const { slotId, date } = await base(8);
+    const [a] = await createStudents(pg.db, 1);
+
+    const created = await createEnrollment(pg.db, {
+      studentId: a,
+      classSlotId: slotId,
+      startDate: date,
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    const first = await endEnrollment(pg.db, created.value.id);
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+
+    // FIX-05, branch por status: re-encerrar um vinculo encerrado por
+    // status recusa no servidor
+    const again = await endEnrollment(pg.db, created.value.id);
+    expect(again.ok).toBe(false);
+    if (!again.ok) {
+      expect(again.error).toContain("ja encerrado");
+    }
+
+    // FIX-05, branch por data: um SEGUNDO vinculo encerrado POR DATA
+    // recusa as duas re-tentativas, e a recusa cita a data gravada
+    const [b] = await createStudents(pg.db, 1);
+    const second = await createEnrollment(pg.db, {
+      studentId: b,
+      classSlotId: slotId,
+      startDate: date,
+    });
+    expect(second.ok).toBe(true);
+    if (!second.ok) return;
+    const datedEnd = await endEnrollment(pg.db, second.value.id, { date });
+    expect(datedEnd.ok).toBe(true);
+    if (!datedEnd.ok) return;
+
+    const reDated = await endEnrollment(pg.db, second.value.id, {
+      date: addDays(date, 1),
+    });
+    expect(reDated.ok).toBe(false);
+    if (!reDated.ok) {
+      expect(reDated.error).toContain(`ja encerrado em ${date}`);
+    }
+
+    const reStatus = await endEnrollment(pg.db, second.value.id);
+    expect(reStatus.ok).toBe(false);
+    if (!reStatus.ok) {
+      expect(reStatus.error).toContain(`ja encerrado em ${date}`);
+    }
+
+    const missing = await endEnrollment(
+      pg.db,
+      "00000000-0000-0000-0000-000000000000",
+    );
+    expect(missing.ok).toBe(false);
+    if (!missing.ok) {
+      expect(missing.error).toContain("nao encontrado");
+    }
   });
 
   it("student history", async () => {
@@ -258,5 +387,88 @@ describe("enrollments", () => {
 
     const empty = await listEnrollmentsByStudent(pg.db, lonely);
     expect(empty).toHaveLength(0);
+  });
+
+  it("allows exactly the plan frequency of active enrollments", async () => {
+    // PLIM-01: plano de 2x/semana comporta 2 vinculos fixos ativos
+    const [a] = await createStudents(pg.db, 1, {
+      plan: { weeklyFrequency: 2 },
+    });
+    const monday = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const friday = await createTestClass(pg.db, { weekday: 5, capacity: 8 });
+
+    const first = await createEnrollment(pg.db, {
+      studentId: a,
+      classSlotId: monday.slotId,
+      startDate: nextOccurrence({ weekday: 3 }, today),
+    });
+    expect(first.ok).toBe(true);
+
+    const second = await createEnrollment(pg.db, {
+      studentId: a,
+      classSlotId: friday.slotId,
+      startDate: nextOccurrence({ weekday: 5 }, today),
+    });
+    expect(second.ok).toBe(true);
+
+    const history = await listEnrollmentsByStudent(pg.db, a);
+    expect(history).toHaveLength(2);
+  });
+
+  it("refuses the enrollment beyond the plan frequency naming the plan and the count", async () => {
+    // PLIM-02: o 3o vinculo de um plano 2x recusa nomeando plano e contagem
+    const [a] = await createStudents(pg.db, 1, {
+      plan: { weeklyFrequency: 2 },
+    });
+    const monday = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const friday = await createTestClass(pg.db, { weekday: 5, capacity: 8 });
+    const saturday = await createTestClass(pg.db, { weekday: 6, capacity: 8 });
+
+    const first = await createEnrollment(pg.db, {
+      studentId: a,
+      classSlotId: monday.slotId,
+      startDate: nextOccurrence({ weekday: 3 }, today),
+    });
+    expect(first.ok).toBe(true);
+    const second = await createEnrollment(pg.db, {
+      studentId: a,
+      classSlotId: friday.slotId,
+      startDate: nextOccurrence({ weekday: 5 }, today),
+    });
+    expect(second.ok).toBe(true);
+
+    const third = await createEnrollment(pg.db, {
+      studentId: a,
+      classSlotId: saturday.slotId,
+      startDate: nextOccurrence({ weekday: 6 }, today),
+    });
+    expect(third.ok).toBe(false);
+    if (!third.ok) {
+      expect(third.error).toMatch(/Plano .+ 2x\/semana/);
+      expect(third.error).toContain("ja esta fixa em 2 turmas");
+    }
+
+    const history = await listEnrollmentsByStudent(pg.db, a);
+    expect(history).toHaveLength(2);
+  });
+
+  it("refuses a fixed enrollment for a student without a plan", async () => {
+    // PLIM-03: sem plano nao ha vinculo fixo
+    const [a] = await createStudents(pg.db, 1, { plan: false });
+    const monday = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+
+    const result = await createEnrollment(pg.db, {
+      studentId: a,
+      classSlotId: monday.slotId,
+      startDate: nextOccurrence({ weekday: 3 }, today),
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toContain("sem plano");
+      expect(result.field).toBe("planId");
+    }
+
+    const history = await listEnrollmentsByStudent(pg.db, a);
+    expect(history).toHaveLength(0);
   });
 });

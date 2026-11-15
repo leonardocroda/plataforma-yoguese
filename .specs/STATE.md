@@ -235,7 +235,7 @@ which a holiday forbids (PRD 7.1).
 
 ### AD-032 - ACTIVE - Per-slot blocking is deferred to the admin panel feature (2026-11-10)
 
-User decision: PRD 4.3 "bloquear horários" (blocking a specific class slot,
+User decision: PRD 4.3 "bloquear horÃ¡rios" (blocking a specific class slot,
 not a date) stays out of this feature and lands with the admin panel (AD-009
 order). Today the equivalent effect is deactivating the slot in the grade.
 
@@ -315,18 +315,18 @@ automatic charge (PRD 8.4).
 ### AD-041 - ACTIVE - Brand: the studio guide supersedes the PRD palette (2026-11-12)
 
 User decision: PRD section 14's "paleta sugerida" (off-white, bege, verde
-sálvia, tons terrosos) is superseded. The frontend of every existing screen
+sÃ¡lvia, tons terrosos) is superseded. The frontend of every existing screen
 (home publica, /experimental, /login, admin) adopts the studio's own direction of
 art, authored in `captures/yogue-se-brand.html` of feature `redesign-marca`:
 papel #F3F2F1 with manchinhas texture, pena #FFFBF9 surfaces, preto #000 titles
-and 2px borders, pêssego #FFC798 as the only real color, Outfit as the sole
+and 2px borders, pÃªssego #FFC798 as the only real color, Outfit as the sole
 font, mascot (pato.png) only in home/confirmation/empty/404, vacancies always as
 8 ducks with the five states of the guide, and the guide voice/vocabulary in all
 copy. Implementation lives as CSS custom properties in `globals.css` plus
 components in `src/modules/ui/` over the existing Tailwind v4. PRD section 14
 non-color requirements (responsive, mobile-first student area, clear feedback,
 fast loading) stand unchanged. Rationale: the user built the guide ("montei um
-html com toda a direção de arte e branding do site"), the PRD palette was
+html com toda a direÃ§Ã£o de arte e branding do site"), the PRD palette was
 provisional and the result "ficou meio ruim". Trade-off: every reskinned screen
 must be re-verified against the design, and the area do aluno inherits this
 system when it lands. NOTA: AD-041 is numbered for the redesign worktree
@@ -372,6 +372,17 @@ prev/next arrows and a date picker (D+14 reachable). A CANCELADA occurrence stay
 visible with a badge in all three views. Per-slot/date blocking (AD-032, PRD 4.3)
 lands as P2 of `admin-calendario`.
 
+### AD-046 - ACTIVE - Fixo exige plano; frequÃªncia do plano limita os vÃ­nculos fixos (2026-11-14)
+
+User decision durante o Specify do candidato `aluno-fixo-limite`: sem plano a
+aluna NÃƒO pode ser fixa (createEnrollment recusa), e uma aluna com plano de
+N vezes por semana nÃ£o pode ter mais de N vÃ­nculos fixos ativos - a regra
+vale na criaÃ§Ã£o pela grade, na conversÃ£o de experimental (AD-037) e recusa a
+ediÃ§Ã£o que baixe a frequÃªncia ou limpe o plano com vÃ­nculos ativos. RemoÃ§Ã£o
+de vÃ­nculo: pelo detalhe da aluna, encerrando em data (default hoje).
+NOTE: numbered in the worktree `spec-aluno-fixo`; the mainline agent may take
+the same number - renumber on merge if both survive (same caveat as AD-041).
+
 ### AD-045 - ACTIVE - Studio cancellation is refused on a past occurrence (2026-11-14)
 
 User decision: with free-time navigation, `cancelOccurrenceByStudio` gains a guard
@@ -384,6 +395,26 @@ surfaced it. Bookings/history of the past stay read-only.
 ## Handoff
 
 Snapshot - updated when work pauses.
+
+### Handoff snapshot (2026-11-15) - `aluno-fixo-limite` FECHADA (worktree `spec-aluno-fixo`)
+
+- Feature `aluno-fixo-limite` EXECUTADA e FECHADA: 6 tasks (T1-T6), uma commit atomica por task
+  (`2cd6b3a`..`d088db2`) mais `65bfb2e` fechando os findings do Verifier.
+- T1-T4: guards no servidor (encerramento, limite do plano na criacao, guards de plano na
+  edicao, limite na conversao). T5: UI de encerramento em `/alunos/[id]`. T6 nasceu de um
+  ACHADO DE WALK: `getStudentProfile` listava `endDate = hoje` como ativo (`gte`) enquanto a
+  composicao ja nao contava no dia (RES-23) - corrigido para `gt` com criterios novos
+  FIX-06/FIX-07 no spec.
+- Verifier (author != verifier) devolveu FAIL com 4 findings (perna por-data de C5 sem prova,
+  C2 unilateral, walk nao-duravel, proofs.md untracked); todos fechados em `65bfb2e` com
+  `verification.md` na coluna `Closed` (o 4o por decisao documentada: proofs.md permanece
+  untracked porque carrega o hash do HEAD).
+- Suite: 425 testes verdes, build e lint limpos, `check_proofs.py` no HEAD `65bfb2e`: 16/16
+  pass; walk do detalhe: 10/10 asserts (roteiro em `.specs/features/aluno-fixo-limite/walk.mjs`).
+- FIX: fixture `createStudents` agora vincula um plano de teste (frequencia 7) por default;
+  `plan: false` cria sem plano (usado pelo STUD-09). Student sem plano NAO pode ser fixo.
+- `validate_verification.py aluno-fixo-limite`: 0 erros / 0 warnings no HEAD de fechamento.
+- MERGE: feito - sem colisao de AD (a mainline parou no AD-045) e codigo disjunto; so .specs/STATE.md conflitou (snapshots de Handoff intercalados).
 
 ### Handoff snapshot (2026-11-14) - `admin-calendario` FECHADA
 
@@ -414,6 +445,7 @@ Snapshot - updated when work pauses.
   vistas, bloqueio por turma/data e a guarda de ocorrencia passada (AD-045).
 - Estado local esperado pos-gate: `proofs.md` (desta feature e das outras) e artefato gerado e
   fica como modificacao local nao commitada - commitar movimenta o HEAD e invalida o hash.
+
 
 ### Handoff snapshot (2026-11-14) - `admin-turmas` FECHADA
 

@@ -15,9 +15,12 @@ import {
   grantTestCredit,
 } from "../../../../test/fixtures";
 import { PostgresTestInstance, startPostgres } from "../../../../test/postgres";
-import { nextOccurrence, todayInStudio } from "../../../classes/domain/occurrences";
+import { addDays, nextOccurrence, todayInStudio } from "../../../classes/domain/occurrences";
 import { createBooking } from "../../../bookings/services/bookings";
-import { createEnrollment } from "../enrollments";
+import {
+  createEnrollment,
+  endEnrollment,
+} from "../enrollments";
 import {
   createStudent,
   getStudentProfile,
@@ -51,6 +54,7 @@ describe("students services", () => {
       name: string;
       price: string;
       status: "ATIVO" | "INATIVO";
+      weeklyFrequency: number;
     }> = {},
   ): Promise<{ id: string; name: string; status: string }> {
     const [plan] = await pg.db
@@ -58,7 +62,7 @@ describe("students services", () => {
       .values({
         name: overrides.name ?? `Plano ${Math.random().toString(16).slice(2, 8)}`,
         price: overrides.price ?? "150.00",
-        weeklyFrequency: 2,
+        weeklyFrequency: overrides.weeklyFrequency ?? 2,
         status: overrides.status ?? "ATIVO",
       })
       .returning();
@@ -333,11 +337,11 @@ describe("students services", () => {
   });
 
   it("reativar aluna sem plano e recusado e com plano funciona (STUD-09)", async () => {
-    const [created] = await createStudents(pg.db, 1);
+    // A aluna fixture nasce sem plano quando o teste pede `plan: false`:
+    // reativar recusa com erro do campo
+    const [created] = await createStudents(pg.db, 1, { plan: false });
     expect(created).toBeTruthy();
     if (!created) return;
-
-    // A aluna fixture nasce sem plano: reativar recusa com erro do campo
     const refused = await setStudentStatus(pg.db, {
       studentId: created,
       status: "ATIVO",
@@ -476,5 +480,167 @@ describe("students services", () => {
     const profile = await getStudentProfile(pg.db, "00000000-0000-0000-0000-000000000000");
     expect(profile.ok).toBe(false);
     if (!profile.ok) expect(profile.error).toContain("nao encontrada");
+  });
+
+  it("recusa plano com frequencia menor que os vinculos fixos ativos (PLIM-05)", async () => {
+    const planFreq2 = await createTestPlan({ name: "Mensal 2x" });
+    const planFreq1 = await createTestPlan({
+      name: "Mensal 1x",
+      weeklyFrequency: 1,
+    });
+    const created = await createStudent(
+      pg.db,
+      studentInput({ status: "ATIVO", planId: planFreq2.id }),
+    );
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    // Fixa em duas turmas (dentro do limite do plano atual)
+    const monday = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const friday = await createTestClass(pg.db, { weekday: 5, capacity: 8 });
+    const first = await createEnrollment(pg.db, {
+      studentId: created.value.id,
+      classSlotId: monday.slotId,
+      startDate: nextOccurrence({ weekday: 3 }, todayInStudio(new Date())),
+    });
+    expect(first.ok).toBe(true);
+    const second = await createEnrollment(pg.db, {
+      studentId: created.value.id,
+      classSlotId: friday.slotId,
+      startDate: nextOccurrence({ weekday: 5 }, todayInStudio(new Date())),
+    });
+    expect(second.ok).toBe(true);
+
+    // PLIM-05: trocar para um plano de 1x recusa nomeando contagem e limite
+    const edited = await updateStudent(pg.db, {
+      studentId: created.value.id,
+      ...studentInput({ planId: planFreq1.id }),
+    });
+    expect(edited.ok).toBe(false);
+    if (!edited.ok) {
+      expect(edited.field).toBe("planId");
+      expect(edited.error).toContain("1x/semana");
+      expect(edited.error).toContain("ja esta fixa em 2 turmas");
+    }
+
+    // A aluna segue com o plano e os vinculos originais
+    const [row] = await pg.db
+      .select()
+      .from(students)
+      .where(eq(students.id, created.value.id));
+    expect(row?.planId).toBe(planFreq2.id);
+  });
+
+  it("recusa remover o plano de aluna com vinculos fixos ativos (PLIM-06)", async () => {
+    const plan = await createTestPlan();
+    const created = await createStudent(
+      pg.db,
+      studentInput({ status: "ATIVO", planId: plan.id }),
+    );
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    const monday = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const enrollment = await createEnrollment(pg.db, {
+      studentId: created.value.id,
+      classSlotId: monday.slotId,
+      startDate: nextOccurrence({ weekday: 3 }, todayInStudio(new Date())),
+    });
+    expect(enrollment.ok).toBe(true);
+
+    const edited = await updateStudent(pg.db, {
+      studentId: created.value.id,
+      ...studentInput({ planId: null }),
+    });
+    expect(edited.ok).toBe(false);
+    if (!edited.ok) {
+      expect(edited.field).toBe("planId");
+      expect(edited.error).toContain("precisa de plano");
+    }
+  });
+
+  it("edita o plano livremente sem vinculos fixos ativos (PLIM-07)", async () => {
+    const planFreq2 = await createTestPlan({ name: "Mensal 2x" });
+    const planFreq1 = await createTestPlan({
+      name: "Mensal 1x",
+      weeklyFrequency: 1,
+    });
+    const created = await createStudent(
+      pg.db,
+      studentInput({ status: "ATIVO", planId: planFreq2.id }),
+    );
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    const monday = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const enrollment = await createEnrollment(pg.db, {
+      studentId: created.value.id,
+      classSlotId: monday.slotId,
+      startDate: nextOccurrence({ weekday: 3 }, todayInStudio(new Date())),
+    });
+    expect(enrollment.ok).toBe(true);
+
+    // Encerrado o vinculo, baixar e depois limpar o plano passa
+    const ended = await endEnrollment(pg.db, enrollment.ok ? enrollment.value.id : "");
+    expect(ended.ok).toBe(true);
+
+    const lowered = await updateStudent(pg.db, {
+      studentId: created.value.id,
+      ...studentInput({ planId: planFreq1.id }),
+    });
+    expect(lowered.ok).toBe(true);
+
+    const cleared = await updateStudent(pg.db, {
+      studentId: created.value.id,
+      ...studentInput({ planId: null }),
+    });
+    expect(cleared.ok).toBe(true);
+  });
+
+  it("perfil deixa de listar o fixo encerrado no proprio dia (FIX-06)", async () => {
+    const plan = await createTestPlan();
+    const created = await createStudent(
+      pg.db,
+      studentInput({ status: "ATIVO", planId: plan.id }),
+    );
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    const today = todayInStudio(new Date());
+    const monday = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const endedToday = await createEnrollment(pg.db, {
+      studentId: created.value.id,
+      classSlotId: monday.slotId,
+      startDate: today,
+    });
+    expect(endedToday.ok).toBe(true);
+    const wednesday = await createTestClass(pg.db, { weekday: 4, capacity: 8 });
+    const endsTomorrow = await createEnrollment(pg.db, {
+      studentId: created.value.id,
+      classSlotId: wednesday.slotId,
+      startDate: today,
+    });
+    expect(endsTomorrow.ok).toBe(true);
+
+    // Um encerrado hoje (deixa de contar no proprio dia, RES-23, FIX-06) e
+    // outro encerrado amanha (ainda ativo ate la, FIX-07)
+    const ended = await endEnrollment(
+      pg.db,
+      endedToday.ok ? endedToday.value.id : "",
+      { date: today },
+    );
+    expect(ended.ok).toBe(true);
+    const scheduled = await endEnrollment(
+      pg.db,
+      endsTomorrow.ok ? endsTomorrow.value.id : "",
+      { date: addDays(today, 1) },
+    );
+    expect(scheduled.ok).toBe(true);
+
+    const profile = await getStudentProfile(pg.db, created.value.id);
+    expect(profile.ok).toBe(true);
+    if (!profile.ok) return;
+    expect(profile.value.fixedEnrollments).toHaveLength(1);
+    expect(profile.value.fixedEnrollments[0].classSlotId).toBe(wednesday.slotId);
   });
 });

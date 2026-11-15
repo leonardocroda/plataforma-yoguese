@@ -3,7 +3,7 @@
 // bookings; aqui vive o cadastro e a leitura agregada.
 
 import { asc, eq, or } from "drizzle-orm";
-import { and, gte, isNull } from "drizzle-orm";
+import { and, gt, isNull } from "drizzle-orm";
 import {
   classSlots,
   classTypes,
@@ -23,6 +23,7 @@ import {
   validateStudent,
   type StudentStatus,
 } from "../domain/validators";
+import { countActiveEnrollments } from "./enrollments";
 
 export type { DbClient, StudentStatus };
 
@@ -221,6 +222,36 @@ export async function updateStudent(
     return { ok: false, error: "planId: plano nao encontrado", field: "planId" };
   }
 
+  // PLIM-05/PLIM-06: a edicao nao pode violar o limite dos vinculos fixos
+  // ativos - o limite vem do plano NOVO, e sem plano o vinculo fixo nao
+  // existe (PLIM-03). Sem vinculos ativos, qualquer edicao passa (PLIM-07).
+  const activeCount = await countActiveEnrollments(
+    db,
+    input.studentId,
+    todayInStudio(now),
+  );
+  if (activeCount > 0) {
+    if (!input.planId) {
+      return {
+        ok: false,
+        error: "aluna com horarios fixos ativos precisa de plano",
+        field: "planId",
+      };
+    }
+    const [targetPlan] = await db
+      .select()
+      .from(plans)
+      .where(eq(plans.id, input.planId));
+    if (targetPlan && targetPlan.weeklyFrequency < activeCount) {
+      const plural = activeCount === 1 ? "turma" : "turmas";
+      return {
+        ok: false,
+        error: `Plano ${targetPlan.name} ${targetPlan.weeklyFrequency}x/semana: a aluna ja esta fixa em ${activeCount} ${plural}`,
+        field: "planId",
+      };
+    }
+  }
+
   try {
     const [updated] = await db
       .update(students)
@@ -371,10 +402,11 @@ export async function getStudentProfile(
       and(
         eq(fixedEnrollments.studentId, studentId),
         eq(fixedEnrollments.status, "ATIVA"),
-        // Fixo encerrado por data deixa de ser ativo (RES-23)
+        // Fixo encerrado por data deixa de ser ativo (RES-23): endDate =
+        // hoje ja nao conta - deixa de contar A PARTIR do proprio dia (FIX-06)
         or(
           isNull(fixedEnrollments.endDate),
-          gte(fixedEnrollments.endDate, today),
+          gt(fixedEnrollments.endDate, today),
         ),
       ),
     )

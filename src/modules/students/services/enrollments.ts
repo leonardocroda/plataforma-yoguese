@@ -1,5 +1,11 @@
-import { asc, eq } from "drizzle-orm";
-import { classSessions, classSlots, fixedEnrollments } from "../../../db/schema";
+import { and, asc, count, eq, gt, isNull, or } from "drizzle-orm";
+import {
+  classSessions,
+  classSlots,
+  fixedEnrollments,
+  plans,
+  students,
+} from "../../../db/schema";
 import {
   todayInStudio,
   isDatePast,
@@ -27,11 +33,38 @@ export type EnrollmentInput = {
 };
 
 /**
+ * Conta os vinculos fixos ativos da aluna: ATIVA com endDate nula ou
+ * futura - a mesma definicao de "Horarios fixos ativos" do perfil (RES-23).
+ */
+export async function countActiveEnrollments(
+  db: DbClient,
+  studentId: string,
+  today: string,
+): Promise<number> {
+  const [row] = await db
+    .select({ total: count() })
+    .from(fixedEnrollments)
+    .where(
+      and(
+        eq(fixedEnrollments.studentId, studentId),
+        eq(fixedEnrollments.status, "ATIVA"),
+        or(
+          isNull(fixedEnrollments.endDate),
+          gt(fixedEnrollments.endDate, today),
+        ),
+      ),
+    );
+  return Number(row?.total ?? 0);
+}
+
+/**
  * Vinculo fixo do aluno a uma turma (RES-20 a RES-24). A criacao checa vagas
  * na proxima ocorrencia da turma a partir da data inicial (RES-21) e recusa
  * antes de persistir quando a composicao atinge a capacidade (RES-22,
  * transacao). Fixo deriva dela mesma a contagem (AD-008) e para de contar a
- * partir da data encerrada (RES-23).
+ * partir da data encerrada (RES-23). O plano limita: sem plano nao ha
+ * vinculo fixo (PLIM-03) e a frequencia semanal do plano e o maximo de
+ * vinculos ativos (PLIM-01, PLIM-02).
  */
 export async function createEnrollment(
   db: DbClient,
@@ -39,6 +72,37 @@ export async function createEnrollment(
   now: Date = new Date(),
 ): Promise<EnrollmentResult> {
   const today = todayInStudio(now);
+
+  const [studentRow] = await db
+    .select({ planId: students.planId })
+    .from(students)
+    .where(eq(students.id, input.studentId));
+  if (!studentRow) {
+    return { ok: false, error: "aluna nao encontrada" };
+  }
+  if (!studentRow.planId) {
+    return {
+      ok: false,
+      error: "Aluna sem plano nao pode ser fixa",
+      field: "planId",
+    };
+  }
+  const [plan] = await db
+    .select()
+    .from(plans)
+    .where(eq(plans.id, studentRow.planId));
+  if (!plan) {
+    return { ok: false, error: "plano nao encontrado", field: "planId" };
+  }
+  const activeCount = await countActiveEnrollments(db, input.studentId, today);
+  if (activeCount >= plan.weeklyFrequency) {
+    const plural = activeCount === 1 ? "turma" : "turmas";
+    return {
+      ok: false,
+      error: `Plano ${plan.name} ${plan.weeklyFrequency}x/semana: a aluna ja esta fixa em ${activeCount} ${plural}`,
+      field: "planId",
+    };
+  }
 
   const [slot] = await db
     .select()
@@ -107,7 +171,9 @@ export async function createEnrollment(
 
 /**
  * Encerra o vinculo por end_date (a partir dela deixa de contar) ou
- * tornando inativo (RES-23 AC4).
+ * tornando inativo (RES-23 AC4). Recusas: vinculo inexistente, vinculo
+ * ja encerrado (por data ou por status) e data de encerramento anterior
+ * ao inicio do vinculo (FIX-03, FIX-05) - nenhuma recusa altera a linha.
  */
 export async function endEnrollment(
   db: DbClient,
@@ -115,6 +181,35 @@ export async function endEnrollment(
   input: { date?: string } = {},
   now: Date = new Date(),
 ): Promise<EnrollmentResult> {
+  const [current] = await db
+    .select()
+    .from(fixedEnrollments)
+    .where(eq(fixedEnrollments.id, enrollmentId));
+  if (!current) {
+    return { ok: false, error: "enrollment nao encontrado" };
+  }
+  if (current.endDate) {
+    return {
+      ok: false,
+      error: `vinculo ja encerrado em ${current.endDate}`,
+      field: "date",
+    };
+  }
+  if (current.status === "INATIVA") {
+    return {
+      ok: false,
+      error: "vinculo ja encerrado",
+      field: "status",
+    };
+  }
+  if (input.date && input.date < current.startDate) {
+    return {
+      ok: false,
+      error: "data de encerramento anterior ao inicio do vinculo",
+      field: "date",
+    };
+  }
+
   const update = input.date
     ? { endDate: input.date, updatedAt: now }
     : { status: "INATIVA" as const, updatedAt: now };
