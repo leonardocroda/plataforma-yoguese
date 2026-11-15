@@ -418,13 +418,15 @@ T12 -> T13
 **Build**: `npm run build; npm run lint`
 
 **C1** - Logada, `/grade` sem parÃ¢metros renderiza a semana de calendÃ¡rio contendo hoje, cada ocorrÃªncia com horÃ¡rio, modalidade, fixos, reposiÃ§Ãµes, experimentais confirmadas e vagas (CAL-01)
-Proof: walk - /grade logada mostra a semana corrente com as contagens da composiÃ§Ã£o em cada ocorrÃªncia
+Proof: walk - /grade logada abre a semana de hoje com as sete colunas Seg..Dom e as datas de segunda a domingo
+Proof: walk - a ocorrencia concreta de terca de D+14 traz horario, modalidade, fixos, reposicoes, experimentais e vagas iguais ao banco
 
 **C2** - As abas DiÃ¡ria, Semanal e Mensal renderizam as ocorrÃªncias da data, da semana e do mÃªs da data selecionada (CAL-02)
-Proof: walk - as trÃªs abas mostram a mesma turma nas respectivas janelas
+Proof: walk - as tres abas mostram so as ocorrencias do dia, da semana e do mes da data escolhida, com lista nao vazia no mes
+Proof: walk - a grade mensal tem os sete cabecalhos Seg..Dom e cada celula cai no dia da semana da sua coluna
 
 **C3** - As setas avanÃ§am e recuam exatamente um dia, uma semana ou um mÃªs conforme a aba ativa (CAL-03)
-Proof: walk - com cada aba ativa, a seta muda ?data em Â±1 dia / Â±7 dias (segunda seguinte/anterior) / Â±1 mÃªs
+Proof: walk - com cada aba ativa, a seta muda ?data em +/-1 dia / +/-7 dias (segunda seguinte/anterior) / +/-1 mes, e a seta oposta volta pelo mesmo passo
 
 **C4** - O seletor de data leva a qualquer data, incluindo D+14 e alÃ©m, sem limite de 7 dias (CAL-04)
 Proof: walk - escolher a data de D+14 no seletor renderiza a ocorrÃªncia da turma daquela semana
@@ -434,24 +436,29 @@ Proof: run occ | âœ“ occurrences > derives every count from the single compo
 
 **C6** - OcorrÃªncia passada nunca materializada Ã© omitida das trÃªs visualizaÃ§Ãµes (CAL-06, AD-008)
 Proof: run occ | âœ“ occurrences > omits a past occurrence that was never materialized
+Proof: walk - a data passada sem sessao materializada some das tres vistas: dia sem ocorrencia, coluna vazia na semana e mes sem o link dela
 
 **C7** - OcorrÃªncia BLOQUEADA por feriado/recesso aparece marcada nas trÃªs visualizaÃ§Ãµes (CAL-07, AD-014)
-Proof: walk - com um feriado no banco de dev cobrindo um dia da semana, as trÃªs vistas mostram a ocorrÃªncia com selo de bloqueada
+Proof: walk - feriado cadastrado em /feriados para uma quarta aparece com selo de bloqueio nas vistas diaria, semanal e mensal
+Proof: walk - recesso cadastrado em /feriados (02/12) aparece com selo de bloqueio nas vistas diaria, semanal e mensal
 
 **C8** - OcorrÃªncia CANCELADA aparece com selo de cancelada nas trÃªs visualizaÃ§Ãµes (CAL-08)
-Proof: walk - com uma ocorrÃªncia cancelada no banco de dev, as trÃªs vistas mostram o selo
+Proof: walk - a ocorrencia de terca de D+14 cancelada pela tela aparece com selo de cancelada nas vistas diaria, semanal e mensal
 
 **C9** - As vistas mantÃªm a composiÃ§Ã£o do guia da marca: patinhos mini por slot, tokens, bordas 2px e sem overflow horizontal em 1280px (CAL-09, BRAND-08, AD-041, AD-042)
+Proof: walk - em 1280px as tres vistas ficam sem overflow horizontal (ate 1px), com os patinhos mini por slot e as bordas de 2px do container
 Proof: browser captures/admin-calendario-semana.running.png
 
 **C10** - O painel da ocorrÃªncia lista os participantes com o vÃ­nculo de cada um (fixo, reposiÃ§Ã£o, experimental) e mantÃ©m os registros de aviso de falta/cancelamento fora da lista de participantes (CAL-10, CRD-09, AD-022)
-Proof: run participants | âœ“ participants > lists every participant with its link type and keeps the notices apart
+Proof: run participants | âœ“ participants > lists every participant with its link type and keeps the notices apart (avisos FALTA e CANCELADA ficam fora da lista)
 
 **C11** - Clicar em um participante abre o cadastro do aluno em `/alunos/[id]` (CAL-11)
 Proof: walk - clicar num participante fixo navega para /alunos/<id>
+Proof: walk - a reposicao de uma aluna fora do fixo da turma aparece no grupo Reposicao e o link dela abre /alunos/<id>
 
 **C12** - Cancelamento pelo estÃºdio de ocorrÃªncia de hoje/futura: a ocorrÃªncia fica CANCELADA e as reservas ativas sÃ£o canceladas com cancelledBy ESTUDIO (CAL-12, CRD-28)
 Proof: run credits | âœ“ studio cancellation > cancels the occurrence and its active bookings
+Proof: run credits | âœ“ studio cancellation > cancels the occurrence of today and its active bookings
 
 **C23** - Cada aluno fixo afetado pelo cancelamento recebe 1 crÃ©dito CANCELAMENTO_ESTUDIO (CAL-12, AD-017, AD-025)
 Proof: run credits | âœ“ studio cancellation > grants one credit per affected fixed student
@@ -463,13 +470,15 @@ Proof: run credits | âœ“ studio cancellation > returns the makeup credit to 
 Proof: run credits | âœ“ studio cancellation > grants no duplicate credit when the cancellation repeats
 
 **C14** - Cancelamento em ocorrÃªncia BLOQUEADA por feriado/recesso Ã© recusado com mensagem clara (CAL-14, FER-09, AD-031)
-Proof: run credits | âœ“ studio cancellation > refuses the cancellation of a blocked occurrence (FER-09)
+Proof: run credits | âœ“ studio cancellation > refuses the cancellation of a blocked occurrence by feriado (FER-09)
+Proof: run credits | âœ“ studio cancellation > refuses the cancellation of a blocked occurrence by recesso (FER-09)
 
 **C15** - Cancelamento em ocorrÃªncia de data passada Ã© recusado com mensagem clara, sem alterar estado algum (CAL-15, AD-045)
-Proof: run credits | âœ“ studio cancellation > refuses the cancellation of a past occurrence (AD-045)
+Proof: run credits | âœ“ studio cancellation > refuses the cancellation of a past occurrence (AD-045), com cardinalidade de sessoes, reservas, creditos e transacoes igual antes e depois
 
 **C16** - ApÃ³s cancelar, a tela exibe o resultado: ocorrÃªncia cancelada, reservas canceladas, crÃ©ditos devolvidos e crÃ©ditos gerados (CAL-16)
-Proof: walk - cancelar uma ocorrÃªncia futura mostra os quatro contadores no formulÃ¡rio
+Proof: walk - cancelar uma ocorrencia futura mostra os quatro contadores no formulario
+Proof: walk - os quatro numeros da mensagem batem com o banco: sessao CANCELADA, reservas CANCELADA/ESTUDIO, transacoes DEVOLUCAO e creditos CANCELAMENTO_ESTUDIO
 
 **C17** - OcorrÃªncia CANCELADA recusa novas reservas (CAL-17)
 Proof: run bookings | âœ“ bookings > refuses a booking on a cancelled occurrence
@@ -479,15 +488,17 @@ Proof: run class-blocks | âœ“ blocks > blocks a class slot on the date witho
 
 **C19** - Remover o bloqueio: cobertas de hoje em diante voltam a AGENDADA e as reservas canceladas pelo bloqueio nÃ£o sÃ£o restauradas (CAL-19, AD-027)
 Proof: run class-blocks | âœ“ blocks > unblocks the class slot without restoring cancelled bookings (CAL-19)
+Proof: run class-blocks | âœ“ blocks > unblocks the class slot of today without restoring cancelled bookings (CAL-19)
 
 **C20** - Cancelamento pelo estÃºdio em ocorrÃªncia bloqueada por turma/data Ã© recusado com mensagem clara (CAL-20, AD-031)
 Proof: run class-blocks | âœ“ blocks > refuses studio cancellation while the class slot is blocked (CAL-20)
 
 **C21** - Enquanto qualquer bloqueio (feriado, recesso ou turma/data) cobre a data a ocorrÃªncia segue BLOQUEADA e desbloqueia somente quando nenhum cobre (CAL-21, AD-028)
 Proof: run class-blocks | âœ“ blocks > keeps the occurrence blocked while any block covers the date (CAL-21)
+Proof: run class-blocks | âœ“ blocks > keeps the occurrence blocked while a closure covers the date (CAL-21)
 
 **C22** - A aÃ§Ã£o "Hoje" renderiza a janela da aba ativa contendo a data de hoje (CAL-22)
-Proof: walk - navegar a qualquer data e usar "Hoje" volta para a janela corrente
+Proof: walk - partindo de uma data distante, "Hoje" nas tres abas volta ?data para hoje e desenha a janela corrente do dia, da semana e do mes
 
 ---
 
@@ -497,7 +508,7 @@ The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** 2026-11-14 - user: "Sim, pode executar" (aprova as tasks); user: "2 workers por lote (Recommended)" (aprova a delegacao em 2 lotes)
 **Dispatched:** Batch 1 (Fases 1-2, T1-T6) -> worker batch-1, HEAD 014ac9d, returned (6 tasks, 403 testes verdes, 6 commits: 07f294d, 5b633c2, 2358177, 7947050, abb0e6c, 3135644); Batch 2 (Fases 3-4, T7-T13) -> worker batch-2, HEAD 3135644, returned (7 tasks, 414 testes verdes, 7 commits: 4e75d01, d4b625e, f25c52e, 800519b, c52270d, 6cca0c9, 3091c1d); Verifier + juiz de telas -> sub-agentes independentes, HEAD c4eee69, diff 014ac9d..c4eee69, returned (Verifier FAIL com 21 findings; juiz de telas Round 1: 2/2 matches)
-**Walked:** 2026-11-14 - walk em chromium headless (playwright-core) contra o dev server na 3001, 41/41 asserts. P1 vistas e navegacao - login em /login (admin@yoguese.com), /grade abre a semana de hoje com os horarios e os patinhos mini; aba Mensal desenha as 5 semanas do mes de novembro (11 ocorrencias, todas em 2026-11); aba Diaria mostra so o dia; as setas andam 1 dia, 7 dias ou 1 mes conforme a aba; o seletor leva a D+14 (2026-11-28) e a semana mostra a turma de terca 19h (24/11). P1 participantes - o painel de terca 24/11 lista 5 fixos com link "Ver cadastro" para /alunos/<id>, 1 reposicao e 1 experimental, com a composicao batendo com o banco; clicar num fixo abre /alunos/<id>. P1 cancelamento - com a ocorrencia de terca 24/11 (semana de D+14) selecionada, "Cancelar aula" mostra "Ocorrencia cancelada: 1. Reservas canceladas: 1. Creditos devolvidos: 1. Creditos gerados: 5."; no banco: sessao CANCELADA, reserva CANCELADA/ESTUDIO, credito RESERVADO de volta a DISPONIVEL e 5 creditos CANCELAMENTO_ESTUDIO (um por fixo). P1 selos - a semana de 16/11 mostra "Cancelada" na segunda 19h e "Bloqueada" na quarta 09:30 (feriado cadastrado pela tela /feriados). P2 bloqueio - na vista Diaria de quinta 19/11, "Bloquear nesta data" deixa a ocorrencia BLOQUEADA, cancela a reserva ativa, devolve o credito a DISPONIVEL e nao gera credito de estudio; "Cancelar aula" e recusado ("ocorrencia bloqueada por feriado/recesso"); "Remover bloqueio" volta a AGENDADA e a reserva cancelada nao e restaurada. Passado - a ocorrencia de 09/11 abre o painel com participantes e historico, sem botao de reservar nem de cancelar. P3 - "Hoje" devolve a janela corrente (2026-11-14). CAL-09 - sem rolagem horizontal em 1280px nas tres vistas, sem erro de console e sem recurso faltando. Capturas: captures/admin-calendario-semana.running.png (semana de 16/11 com os selos) e captures/admin-calendario-painel.running.png (semana de 23/11 com o painel da turma de 24/11). Dados do cenario: 4 alunas "Walk Calendario 1..4" fixas na turma de terca 19h, 1 experimental aprovada em 24/11, a reserva de reposicao com credito RESERVADO, a turma de quinta 19h (Intenso) e o feriado "Walk Calendario feriado" em 18/11; o script .specs/features/admin-calendario/walk.mjs recria o cenario a cada rodada.
+**Walked:** 2026-11-14 - walk em chromium headless (playwright-core) contra o dev server na 3001, 66/66 asserts, capturas fullPage em 1440x900. P1 vistas - /grade sem parametros abre a semana de hoje com as sete colunas Seg..Dom de 09/11 a 15/11 e a terca materializada 10/11 na coluna certa; a aba Mensal desenha 42 celulas desde 2026-10-26 com os sete cabecalhos alinhados ao dia da semana de cada celula (CAL-08); a aba Diaria mostra so o dia e as setas andam +/-1 dia, +/-7 dias e +/-1 mes, voltando pelo mesmo passo; o seletor leva a D+14 (2026-11-28) e a ocorrencia concreta de terca 24/11 traz 19h, Superioga Intenso, 5 fixos, 1 reposicao, 1 experimental e 1 vaga livre, iguais ao banco (CAL-01, CAL-05). P1 participantes - o painel de 24/11 lista fixos, reposicao e experimental com a composicao do banco; clicar num fixo abre /alunos/<id>; a reposicao e de uma aluna fora do fixo da turma, aparece no grupo Reposicao e o link dela abre /alunos/<id> (CAL-10, CAL-11). P1 selos - feriado cadastrado em /feriados para quarta 18/11 e recesso para 02/12 aparecem com selo de bloqueio na diaria, na semanal e na mensal (CAL-07). P1 cancelamento - cancelar a ocorrencia de terca 24/11 mostra "Ocorrencia cancelada: 1. Reservas canceladas: 1. Creditos devolvidos: 1. Creditos gerados: 5."; os quatro numeros batem com o banco (sessao CANCELADA, reserva CANCELADA/ESTUDIO, transacao DEVOLUCAO do credito e 5 creditos CANCELAMENTO_ESTUDIO) e o selo CANCELADA aparece nas tres vistas (CAL-08, CAL-12, CAL-16). P2 bloqueio - na quinta 19/11 "Bloquear nesta data" deixa a ocorrencia BLOQUEADA, cancela a reserva ativa, devolve o credito a DISPONIVEL e nao gera credito de estudio; "Cancelar aula" e recusado; "Remover bloqueio" volta a AGENDADA sem restaurar a reserva (CAL-18..CAL-21). Passado - a ocorrencia passada abre o painel com participantes e sem reservar/cancelar; a data 06/10 sem sessao materializada some da diaria, da semanal e da mensal (CAL-06, CAL-15). P3 - "Hoje" nas tres abas volta para 2026-11-14 com a janela corrente de cada uma (CAL-22). CAL-09 - em 1280px as tres vistas ficam sem overflow (0px), com patinhos mini e bordas 2px; nenhum erro de console e nenhum recurso faltando. Capturas: captures/admin-calendario-semana.running.png (semana de 16/11 com o bloco na quarta) e captures/admin-calendario-painel.running.png (painel da terca 24/11). Dados do cenario: 5 alunas "Walk Calendario 1..5" (1..4 fixas na terca 19h, a 5 na reposicao), 1 experimental aprovada em 24/11, a turma de quinta 19h (Intenso), o feriado em 18/11 e o recesso em 02/12; o script recria o cenario no inicio e devolve a composicao de terca no fim.
 
 ---
 
