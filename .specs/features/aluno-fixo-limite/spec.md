@@ -135,6 +135,31 @@ edições passa.
 
 ---
 
+### P3: Encerrado no próprio dia deixa de ser ativo no perfil
+
+**User Story**: As a admin, I want que "Horários fixos ativos" use a mesma
+definição de ativo da composição so that a lista do detalhe nunca mostra
+como ativo um vínculo que já não ocupa vaga.
+
+**Why P3**: Achado de walk: o perfil listava vínculo com `endDate = hoje`
+como ativo, mas a composição já não conta esse vínculo no dia (RES-23:
+deixa de contar a partir da data encerrada). As duas leituras divergiam.
+
+**Acceptance Criteria**:
+
+1. WHEN um vínculo fixo tem `endDate` igual a hoje THEN the system SHALL
+   deixá-lo de fora da lista "Horários fixos ativos" do perfil (ele deixa
+   de contar a partir do próprio dia, RES-23).
+   <!-- state-driven, FIX-06 -->
+2. WHEN um vínculo fixo tem `endDate` futura THEN the system SHALL mantê-lo
+   na lista "Horários fixos ativos" até a data chegar.
+   <!-- state-driven, FIX-07 -->
+
+**Independent Test**: Aluna com dois vínculos de startDate hoje: encerrar
+um hoje e outro amanhã; o perfil lista só o de endDate amanhã.
+
+---
+
 ## Edge Cases
 
 - IF o vínculo informado não existe THEN the system SHALL recusar o
@@ -164,8 +189,11 @@ edições passa.
 | PLIM-03 | P1: Limite do plano | Design | Pending |
 | PLIM-04 | P1: Limite do plano | Design | Pending |
 | PLIM-05 | P2: Guardas de plano | - | Pending |
+
 | PLIM-06 | P2: Guardas de plano | - | Pending |
 | PLIM-07 | P2: Guardas de plano | - | Pending |
+| FIX-06 | P3: Encerrado no dia | - | Pending |
+| FIX-07 | P3: Encerrado no dia | - | Pending |
 
 **Coverage:** 12 total, 0 mapped to tasks, 12 unmapped ⚠️
 

@@ -15,7 +15,7 @@ import {
   grantTestCredit,
 } from "../../../../test/fixtures";
 import { PostgresTestInstance, startPostgres } from "../../../../test/postgres";
-import { nextOccurrence, todayInStudio } from "../../../classes/domain/occurrences";
+import { addDays, nextOccurrence, todayInStudio } from "../../../classes/domain/occurrences";
 import { createBooking } from "../../../bookings/services/bookings";
 import {
   createEnrollment,
@@ -595,5 +595,52 @@ describe("students services", () => {
       ...studentInput({ planId: null }),
     });
     expect(cleared.ok).toBe(true);
+  });
+
+  it("perfil deixa de listar o fixo encerrado no proprio dia (FIX-06)", async () => {
+    const plan = await createTestPlan();
+    const created = await createStudent(
+      pg.db,
+      studentInput({ status: "ATIVO", planId: plan.id }),
+    );
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    const today = todayInStudio(new Date());
+    const monday = await createTestClass(pg.db, { weekday: 3, capacity: 8 });
+    const endedToday = await createEnrollment(pg.db, {
+      studentId: created.value.id,
+      classSlotId: monday.slotId,
+      startDate: today,
+    });
+    expect(endedToday.ok).toBe(true);
+    const wednesday = await createTestClass(pg.db, { weekday: 4, capacity: 8 });
+    const endsTomorrow = await createEnrollment(pg.db, {
+      studentId: created.value.id,
+      classSlotId: wednesday.slotId,
+      startDate: today,
+    });
+    expect(endsTomorrow.ok).toBe(true);
+
+    // Um encerrado hoje (deixa de contar no proprio dia, RES-23, FIX-06) e
+    // outro encerrado amanha (ainda ativo ate la, FIX-07)
+    const ended = await endEnrollment(
+      pg.db,
+      endedToday.ok ? endedToday.value.id : "",
+      { date: today },
+    );
+    expect(ended.ok).toBe(true);
+    const scheduled = await endEnrollment(
+      pg.db,
+      endsTomorrow.ok ? endsTomorrow.value.id : "",
+      { date: addDays(today, 1) },
+    );
+    expect(scheduled.ok).toBe(true);
+
+    const profile = await getStudentProfile(pg.db, created.value.id);
+    expect(profile.ok).toBe(true);
+    if (!profile.ok) return;
+    expect(profile.value.fixedEnrollments).toHaveLength(1);
+    expect(profile.value.fixedEnrollments[0].classSlotId).toBe(wednesday.slotId);
   });
 });

@@ -3,7 +3,7 @@
 // bookings; aqui vive o cadastro e a leitura agregada.
 
 import { asc, eq, or } from "drizzle-orm";
-import { and, gte, isNull } from "drizzle-orm";
+import { and, gt, isNull } from "drizzle-orm";
 import {
   classSlots,
   classTypes,
@@ -402,10 +402,11 @@ export async function getStudentProfile(
       and(
         eq(fixedEnrollments.studentId, studentId),
         eq(fixedEnrollments.status, "ATIVA"),
-        // Fixo encerrado por data deixa de ser ativo (RES-23)
+        // Fixo encerrado por data deixa de ser ativo (RES-23): endDate =
+        // hoje ja nao conta - deixa de contar A PARTIR do proprio dia (FIX-06)
         or(
           isNull(fixedEnrollments.endDate),
-          gte(fixedEnrollments.endDate, today),
+          gt(fixedEnrollments.endDate, today),
         ),
       ),
     )

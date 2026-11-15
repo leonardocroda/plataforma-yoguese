@@ -193,6 +193,32 @@ marca (Field, Button, Toast), padrão de `credit-forms.tsx`
 
 ---
 
+### T6: Perfil para de listar vínculo encerrado no próprio dia (achado de walk)
+
+**What**: o walk do T5 expôs divergência pré-existente: `getStudentProfile`
+usava `gte(endDate, hoje)` e listava como ativo um vínculo que a composição
+já não conta no dia (RES-23). Corrigir para `gt` (deixa de contar a partir
+do próprio dia), com critério novo FIX-06/07 no spec e teste cobrindo as
+duas branches (endDate = hoje sai; endDate futura fica).
+**Where**: `src/modules/students/services/students.ts`,
+`src/modules/students/services/__tests__/students.int.test.ts`,
+`.specs/features/aluno-fixo-limite/spec.md`
+**Depends on**: T3, T5 (walk)
+**Reuses**: `getStudentProfile`, `endEnrollment` por data
+**Requirement**: FIX-06, FIX-07
+
+**Done when**:
+
+- [x] `endDate` = hoje não aparece mais em "Horários fixos ativos"
+- [x] `endDate` futura continua na lista até a data chegar
+- [x] Gate: `npm test`
+
+**Tests**: `perfil deixa de listar o fixo encerrado no proprio dia (FIX-06)` (students.int.test.ts, integration)
+**Gate**: full
+**Commit**: `fix(students): profile stops listing a fixed enrollment ended today`
+
+---
+
 ## Checks
 
 **Run enrollments**: `npx vitest run src/modules/students/services/__tests__/enrollments.int.test.ts --reporter=verbose`
@@ -225,16 +251,22 @@ Proof: run enrollments | ✓ enrollments > refuses the enrollment beyond the pla
 Proof: run enrollments | ✓ enrollments > refuses a fixed enrollment for a student without a plan
 
 **C9** - Conversão com mais horários fixos que a frequência do plano recusa sem criar aluna nem vínculos (PLIM-04)
-Proof: run conversion | ✓ conversion > refuses a conversion whose fixed slots exceed the plan frequency
+Proof: run conversion | ✓ conversion > recusa conversao com mais horarios fixos que a frequencia do plano (PLIM-04)
 
 **C10** - Trocar a aluna para plano com frequência menor que os vínculos ativos recusa nomeando contagem e limite (PLIM-05)
-Proof: run students | ✓ students > refuses a plan change below the active fixed enrollment count
+Proof: run students | ✓ students > recusa plano com frequencia menor que os vinculos fixos ativos (PLIM-05)
 
 **C11** - Remover o plano de uma aluna com vínculos fixos ativos recusa (PLIM-06)
-Proof: run students | ✓ students > refuses clearing the plan of a student with active fixed enrollments
+Proof: run students | ✓ students > recusa remover o plano de aluna com vinculos fixos ativos (PLIM-06)
 
 **C12** - Sem vínculos fixos ativos, trocar, baixar ou limpar o plano passa normalmente (PLIM-07)
-Proof: run students | ✓ students > edits the plan freely when the student has no active fixed enrollments
+Proof: run students | ✓ students > edita o plano livremente sem vinculos fixos ativos (PLIM-07)
+
+**C13** - Vínculo com `endDate` = hoje deixa de aparecer em "Horários fixos ativos" (FIX-06)
+Proof: run students | ✓ students > perfil deixa de listar o fixo encerrado no proprio dia (FIX-06)
+
+**C14** - Vínculo com `endDate` futura continua em "Horários fixos ativos" até a data chegar (FIX-07)
+Proof: run students | ✓ students > perfil deixa de listar o fixo encerrado no proprio dia (FIX-06)
 
 ---
 
@@ -259,7 +291,12 @@ que T2 estabelece; T1/T2/T4 são independentes entre si).
 
 ```
 T1 -> T5
+T3 -> T6
+T5 -> T6
 ```
+
+T6 nasceu de um achado de walk depois do T5: corrige o filtro de ativos do
+perfil (`gt` em vez de `gte`) com critério e teste novos.
 
 ---
 
@@ -272,6 +309,7 @@ T1 -> T5
 | T3: Guards de plano na edição | 1 serviço, 1 conceito (invariante na edição) | ✅ Granular |
 | T4: Guarda na conversão | 1 serviço, 1 conceito (limite na conversão) | ✅ Granular |
 | T5: UI de encerramento | 1 action + 1 componente + ajuste na página | ✅ Granular |
+| T6: Filtro de ativos do perfil | 1 filtro + critérios novos | ✅ Granular |
 
 ## Diagram-Definition Cross-Check
 
