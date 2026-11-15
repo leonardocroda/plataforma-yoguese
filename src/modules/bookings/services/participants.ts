@@ -4,6 +4,8 @@ export type OccurrenceParticipant = {
   id: string;
   name: string;
   kind: "fixo" | "reposição" | "experimental";
+  /** Aluno com cadastro; a experimental aprovada ainda nao tem um. */
+  studentId: string | null;
 };
 
 export type OccurrenceNotice = {
@@ -86,7 +88,12 @@ export function occurrenceParticipants(input: {
     listed.add(enrollment.studentId);
     const name = nameOf(enrollment.studentId);
     if (!notified.has(enrollment.studentId)) {
-      participants.push({ id: enrollment.studentId, name, kind: "fixo" });
+      participants.push({
+        id: enrollment.studentId,
+        name,
+        kind: "fixo",
+        studentId: enrollment.studentId,
+      });
       fixed.push({ id: enrollment.studentId, name });
     }
   }
@@ -97,11 +104,26 @@ export function occurrenceParticipants(input: {
     listed.add(booking.studentId);
     const name = nameOf(booking.studentId);
     if (booking.bookingType === "MAKEUP") {
-      participants.push({ id: booking.studentId, name, kind: "reposição" });
+      participants.push({
+        id: booking.studentId,
+        name,
+        kind: "reposição",
+        studentId: booking.studentId,
+      });
     } else if (booking.bookingType === "EXPERIMENTAL") {
-      participants.push({ id: booking.studentId, name, kind: "experimental" });
+      participants.push({
+        id: booking.studentId,
+        name,
+        kind: "experimental",
+        studentId: booking.studentId,
+      });
     } else {
-      participants.push({ id: booking.studentId, name, kind: "fixo" });
+      participants.push({
+        id: booking.studentId,
+        name,
+        kind: "fixo",
+        studentId: booking.studentId,
+      });
     }
   }
 
@@ -113,6 +135,7 @@ export function occurrenceParticipants(input: {
       id: experimental.id,
       name: experimental.name,
       kind: "experimental",
+      studentId: null,
     });
   }
 

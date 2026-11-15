@@ -60,7 +60,12 @@ describe("participants", () => {
     });
 
     expect(result.participants).toEqual([
-      { id: "fixed-student", name: "Ana Fixa", kind: "fixo" },
+      {
+        id: "fixed-student",
+        name: "Ana Fixa",
+        kind: "fixo",
+        studentId: "fixed-student",
+      },
     ]);
     expect(result.fixed).toEqual([{ id: "fixed-student", name: "Ana Fixa" }]);
   });
@@ -108,13 +113,24 @@ describe("participants", () => {
     });
 
     expect(result.participants).toEqual([
-      { id: "makeup-student", name: "Ana Reposicao", kind: "reposição" },
+      {
+        id: "makeup-student",
+        name: "Ana Reposicao",
+        kind: "reposição",
+        studentId: "makeup-student",
+      },
       {
         id: "experimental-student",
         name: "Ana Experimental",
         kind: "experimental",
+        studentId: "experimental-student",
       },
-      { id: "booking-fixed-student", name: "Ana Reserva Fixa", kind: "fixo" },
+      {
+        id: "booking-fixed-student",
+        name: "Ana Reserva Fixa",
+        kind: "fixo",
+        studentId: "booking-fixed-student",
+      },
     ]);
   });
 
@@ -131,7 +147,12 @@ describe("participants", () => {
     });
 
     expect(result.participants).toEqual([
-      { id: "experimental-1", name: "Ana Convidada", kind: "experimental" },
+      {
+        id: "experimental-1",
+        name: "Ana Convidada",
+        kind: "experimental",
+        studentId: null,
+      },
     ]);
   });
 
@@ -142,15 +163,18 @@ describe("participants", () => {
       enrollments: [
         enrollment("fixed-student"),
         enrollment("notified-student"),
+        enrollment("cancelled-student"),
       ],
       bookings: [
         booking("booking-makeup", "makeup-student", "MAKEUP"),
         booking("booking-experimental", "experimental-student", "EXPERIMENTAL"),
         booking("notice-1", "notified-student", "FIXED", "FALTA"),
+        booking("notice-2", "cancelled-student", "FIXED", "CANCELADA"),
       ],
       nameById: names([
         ["fixed-student", "Ana Fixa"],
         ["notified-student", "Ana Avisou"],
+        ["cancelled-student", "Ana Cancelou"],
         ["makeup-student", "Ana Reposicao"],
         ["experimental-student", "Ana Experimental"],
       ]),
@@ -160,33 +184,84 @@ describe("participants", () => {
     });
 
     expect(result.participants).toEqual([
-      { id: "fixed-student", name: "Ana Fixa", kind: "fixo" },
-      { id: "makeup-student", name: "Ana Reposicao", kind: "reposição" },
+      {
+        id: "fixed-student",
+        name: "Ana Fixa",
+        kind: "fixo",
+        studentId: "fixed-student",
+      },
+      {
+        id: "makeup-student",
+        name: "Ana Reposicao",
+        kind: "reposição",
+        studentId: "makeup-student",
+      },
       {
         id: "experimental-student",
         name: "Ana Experimental",
         kind: "experimental",
+        studentId: "experimental-student",
       },
-      { id: "experimental-1", name: "Ana Convidada", kind: "experimental" },
+      {
+        id: "experimental-1",
+        name: "Ana Convidada",
+        kind: "experimental",
+        studentId: null,
+      },
     ]);
     expect(result.fixed).toEqual([{ id: "fixed-student", name: "Ana Fixa" }]);
     expect(
       result.participants.filter((participant) => participant.kind === "reposição"),
-    ).toEqual([{ id: "makeup-student", name: "Ana Reposicao", kind: "reposição" }]);
+    ).toEqual([
+      {
+        id: "makeup-student",
+        name: "Ana Reposicao",
+        kind: "reposição",
+        studentId: "makeup-student",
+      },
+    ]);
     expect(
       result.participants.filter(
         (participant) => participant.kind === "experimental",
       ),
     ).toEqual([
-      { id: "experimental-student", name: "Ana Experimental", kind: "experimental" },
-      { id: "experimental-1", name: "Ana Convidada", kind: "experimental" },
+      {
+        id: "experimental-student",
+        name: "Ana Experimental",
+        kind: "experimental",
+        studentId: "experimental-student",
+      },
+      {
+        id: "experimental-1",
+        name: "Ana Convidada",
+        kind: "experimental",
+        studentId: null,
+      },
     ]);
+    // O aluno que avisou falta ou cancelamento nao vira participante: o
+    // registro dele fica no aviso, com o tipo exato do aviso (CRD-09).
+    expect(
+      result.participants.some(
+        (participant) => participant.name === "Ana Avisou",
+      ),
+    ).toBe(false);
+    expect(
+      result.participants.some(
+        (participant) => participant.name === "Ana Cancelou",
+      ),
+    ).toBe(false);
     expect(result.notices).toEqual([
       {
         id: "notice-1",
         studentId: "notified-student",
         name: "Ana Avisou",
         status: "FALTA",
+      },
+      {
+        id: "notice-2",
+        studentId: "cancelled-student",
+        name: "Ana Cancelou",
+        status: "CANCELADA",
       },
     ]);
   });

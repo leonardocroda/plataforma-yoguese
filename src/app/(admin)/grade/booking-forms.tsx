@@ -50,6 +50,8 @@ export type GradeParticipant = {
   id: string;
   name: string;
   kind: "fixo" | "reposição" | "experimental";
+  /** Aluno com cadastro; a experimental aprovada ainda nao tem um. */
+  studentId: string | null;
 };
 
 /** Falta ou cancelamento de uma aula fixa e o credito que ele gerou. */
@@ -171,7 +173,7 @@ export function GradeBoard({
       <section className="border-b-2 border-[var(--preto)] p-6 xl:border-b-0 xl:border-r-2 xl:p-7">
         <h1 className="text-[34px]">Semana</h1>
         <p className="mt-1.5 text-[15px] text-[color:var(--cinza)]">
-          {period}. Cada horário mostra as 8 vagas da turma.
+          {period}. Cada horário mostra as vagas da turma.
         </p>
 
         {occurrences.length === 0 ? (
@@ -382,7 +384,17 @@ export function TurmaPanel({
               className="flex items-center justify-between gap-2.5 border-t border-t-[var(--linha)] py-2 text-[15px]"
             >
               <span>{participant.name}</span>
-              <Chip variant="cl">Confirmada</Chip>
+              <span className="flex items-center gap-2.5">
+                <Chip variant="cl">Confirmada</Chip>
+                {participant.studentId ? (
+                  <Link
+                    href={`/alunos/${participant.studentId}`}
+                    className="btn btn-txt peq"
+                  >
+                    Ver cadastro
+                  </Link>
+                ) : null}
+              </span>
             </li>
           ))}
         </RosterGroup>
@@ -400,6 +412,14 @@ export function TurmaPanel({
               className="flex items-center justify-between gap-2.5 border-t border-t-[var(--linha)] py-2 text-[15px]"
             >
               <span>{participant.name}</span>
+              {participant.studentId ? (
+                <Link
+                  href={`/alunos/${participant.studentId}`}
+                  className="btn btn-txt peq"
+                >
+                  Ver cadastro
+                </Link>
+              ) : null}
             </li>
           ))}
         </RosterGroup>
