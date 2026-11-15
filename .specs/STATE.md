@@ -396,6 +396,27 @@ surfaced it. Bookings/history of the past stay read-only.
 
 Snapshot - updated when work pauses.
 
+### Handoff snapshot (2026-11-15) - `aluno-fixo-limite` FECHADA (worktree `spec-aluno-fixo`)
+
+- Feature `aluno-fixo-limite` EXECUTADA e FECHADA: 6 tasks (T1-T6), uma commit atomica por task
+  (`2cd6b3a`..`d088db2`) mais `65bfb2e` fechando os findings do Verifier.
+- T1-T4: guards no servidor (encerramento, limite do plano na criacao, guards de plano na
+  edicao, limite na conversao). T5: UI de encerramento em `/alunos/[id]`. T6 nasceu de um
+  ACHADO DE WALK: `getStudentProfile` listava `endDate = hoje` como ativo (`gte`) enquanto a
+  composicao ja nao contava no dia (RES-23) - corrigido para `gt` com criterios novos
+  FIX-06/FIX-07 no spec.
+- Verifier (author != verifier) devolveu FAIL com 4 findings (perna por-data de C5 sem prova,
+  C2 unilateral, walk nao-duravel, proofs.md untracked); todos fechados em `65bfb2e` com
+  `verification.md` na coluna `Closed` (o 4o por decisao documentada: proofs.md permanece
+  untracked porque carrega o hash do HEAD).
+- Suite: 425 testes verdes, build e lint limpos, `check_proofs.py` no HEAD `65bfb2e`: 16/16
+  pass; walk do detalhe: 10/10 asserts (roteiro em `.specs/features/aluno-fixo-limite/walk.mjs`).
+- FIX: fixture `createStudents` agora vincula um plano de teste (frequencia 7) por default;
+  `plan: false` cria sem plano (usado pelo STUD-09). Student sem plano NAO pode ser fixo.
+- `validate_verification.py aluno-fixo-limite` roda no final do round (ver abajo).
+- MERGE: renumerar AD-046 ao trazer para a mainline se colidir; spec.md/tasks.md/verification.md
+  de `.specs/features/aluno-fixo-limite/` sao novos arquivos (sem conflito esperado em codigo).
+
 ### Handoff snapshot (2026-11-14) - `admin-turmas` FECHADA
 
 - Feature `admin-turmas` EXECUTADA e FECHADA: 7 tasks (T1-T7) em 2 fases, uma commit atomica por
