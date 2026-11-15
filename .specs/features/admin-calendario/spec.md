@@ -203,6 +203,10 @@ enquanto bloqueada.
 | PRD 4.3 "bloquear horários" sem granularidade definida | Bloqueio por turma em data específica (não por data inteira), como P2 | y - AD-032, AD-044 |
 | Guia de marca desenha só a vista semanal do admin ("Admin: calendário e turma") | Vistas diária e mensal estendem a mesma composição; sem referência visual, critérios de resultado (não de layout) | y - AD-044 |
 | PRD 4.2 não desenha estado de ocorrência cancelada na grade | Ocorrência CANCELADA visível com selo nas três visualizações | y - AD-044 |
+| Guia desenha a semana do admin como cinco colunas, segunda a sexta | Sete colunas, segunda a domingo: o estúdio pode ter aula todos os dias | y - user, 2026-11-14: "a semana é de segunda a domingo mesmo, se tava escrito outra coisa na doc a doc tava errada, podemos ter aula todos os dias" (CAL-01) |
+| Guia não desenha abas, setas, seletor de data nem a ação "Hoje" no calendário do admin | Barra de navegação com as abas Diária/Semanal/Mensal, as setas de período, o seletor de data e "Hoje" | y - CAL-02, CAL-03, CAL-04, CAL-22 |
+| Guia rotula os grupos do painel "Alunos fixos", "Reposições" e "Aulas experimentais" | Chips `Fixo`, `Reposição` e `Experimental` com a contagem de cada vínculo, sobre a lista de nomes | y - CAL-10, CAL-11 |
+| Guia afirma na legenda da semana que cada horário mostra 8 vagas | A legenda fala das vagas da turma, porque a capacidade de cada turma é editável (TURM) | y - CAL-09, AD-044 |
 
 ---
 
