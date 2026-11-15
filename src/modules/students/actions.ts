@@ -11,6 +11,10 @@ import {
   type StudentProfileResult,
   type StudentWithPlan,
 } from "./services/students";
+import {
+  endEnrollment as endEnrollmentService,
+  type EnrollmentResult,
+} from "./services/enrollments";
 
 /**
  * Server actions do admin para alunas (STUD-01 a STUD-05). Finas: cada
@@ -81,4 +85,20 @@ export async function getStudentProfileAction(
 ): Promise<StudentProfileResult> {
   await requireAdminSession();
   return getStudentProfileService(await dbClient(), studentId);
+}
+
+/**
+ * Encerra o vinculo fixo pela tela do detalhe da aluna (FIX-01): o
+ * encerramento em data fica no servico (FIX-03, FIX-05) - a action e fina.
+ */
+export async function endEnrollmentAction(input: {
+  enrollmentId: string;
+  date?: string;
+}): Promise<EnrollmentResult> {
+  await requireAdminSession();
+  return endEnrollmentService(
+    await dbClient(),
+    input.enrollmentId,
+    input.date ? { date: input.date } : {},
+  );
 }

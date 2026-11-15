@@ -182,10 +182,10 @@ marca (Field, Button, Toast), padrão de `credit-forms.tsx`
 
 **Done when**:
 
-- [ ] Encerrar pela tela grava a data e o feedback cita o encerramento
-- [ ] A lista "Horários fixos ativos" recarrega sem o vínculo encerrado
-- [ ] Erro do servidor (data < início, já encerrado) aparece na tela
-- [ ] Gate: `npm run build; npm run lint`
+- [x] Encerrar pela tela grava a data e o feedback cita o encerramento
+- [x] A lista "Horários fixos ativos" recarrega sem o vínculo encerrado
+- [x] Erro do servidor (data < início, já encerrado) aparece na tela
+- [x] Gate: `npm run build; npm run lint` (build limpo, 0 erros de lint)
 
 **Tests**: none (regras provadas em T1; tela provada por walk)
 **Gate**: build

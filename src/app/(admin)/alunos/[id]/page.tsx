@@ -1,19 +1,10 @@
 import Link from "next/link";
 import { getStudentProfileAction } from "../../../../modules/students/actions";
-import { STUDIO_TIMEZONE } from "../../../../modules/classes/domain/occurrences";
+import { STUDIO_TIMEZONE, todayInStudio } from "../../../../modules/classes/domain/occurrences";
 import { Chip } from "../../../../modules/ui/components/kit";
+import { EnrollmentsSection } from "./enrollment-forms";
 
 export const dynamic = "force-dynamic";
-
-const WEEKDAY_LABELS = [
-  "Domingo",
-  "Segunda",
-  "Terça",
-  "Quarta",
-  "Quinta",
-  "Sexta",
-  "Sábado",
-];
 
 const statusLabel: Record<string, string> = {
   EXPERIMENTAL: "Experimental",
@@ -125,24 +116,17 @@ export default async function StudentDetailPage({
 
         <section className={sectionClass}>
           <h2 className={headingClass}>Horários fixos ativos</h2>
-          {fixedEnrollments.length === 0 ? (
-            <p className={emptyClass}>Nenhum horário fixo ativo.</p>
-          ) : (
-            <ul className={listClass}>
-              {fixedEnrollments.map((enrollment) => (
-                <li
-                  key={enrollment.id}
-                  className="border-t border-t-[var(--linha)] py-2 first:border-t-0"
-                >
-                  {WEEKDAY_LABELS[enrollment.weekday - 1]} das{" "}
-                  {formatTime(enrollment.startTime)} às{" "}
-                  {formatTime(enrollment.endTime)} -{" "}
-                  {enrollment.classTypeName} (desde{" "}
-                  {formatDate(enrollment.startDate)})
-                </li>
-              ))}
-            </ul>
-          )}
+          <EnrollmentsSection
+            enrollments={fixedEnrollments.map((enrollment) => ({
+              id: enrollment.id,
+              classTypeName: enrollment.classTypeName,
+              weekday: enrollment.weekday,
+              startTime: enrollment.startTime,
+              endTime: enrollment.endTime,
+              startDate: enrollment.startDate,
+            }))}
+            today={todayInStudio(new Date())}
+          />
         </section>
 
         <section className={sectionClass}>
