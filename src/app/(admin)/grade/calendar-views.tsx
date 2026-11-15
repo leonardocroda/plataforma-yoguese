@@ -1,10 +1,9 @@
 import Link from "next/link";
 
 import {
-  weekEndOf,
-  weekStartOf,
+  MONTH_WEEKDAY_LABELS,
+  monthGridDates,
 } from "../../../modules/bookings/domain/calendar";
-import { addDays } from "../../../modules/classes/domain/occurrences";
 import { VacancyDucks } from "../../../modules/ui/components/vacancy-ducks";
 import {
   TurmaPanel,
@@ -12,8 +11,6 @@ import {
   type GradeOccurrence,
   type StudentOption,
 } from "./booking-forms";
-
-const WEEKDAYS_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 /**
  * Vista diaria: uma coluna com as ocorrencias da data escolhida. Mantem a
@@ -142,14 +139,7 @@ export function MonthView({
   const selectedOccurrence =
     allOccurrences.find((occurrence) => occurrence.key === selectedKey) ??
     allOccurrences[0];
-  const gridStart = weekStartOf(firstDate);
-  const gridEnd = weekEndOf(lastDate);
-  const gridDates: string[] = [];
-  let current = gridStart;
-  while (current <= gridEnd) {
-    gridDates.push(current);
-    current = addDays(current, 1);
-  }
+  const gridDates = monthGridDates(firstDate, lastDate);
 
   const month = firstDate.slice(0, 7);
   const occurrencesByDate = new Map(
@@ -167,7 +157,7 @@ export function MonthView({
       </div>
 
       <div className="grid grid-cols-7 overflow-hidden">
-        {WEEKDAYS_SHORT.map((weekday) => (
+        {MONTH_WEEKDAY_LABELS.map((weekday) => (
           <div
             key={weekday}
             className="border-b-2 border-r-2 border-[var(--preto)] bg-[var(--papel-2)] px-2 py-2 text-center text-[12px] font-bold last:border-r-0"

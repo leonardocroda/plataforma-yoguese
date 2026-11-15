@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { weekdayOf } from "../../../classes/domain/occurrences";
 import {
+  MONTH_WEEKDAY_LABELS,
   monthBoundsOf,
+  monthGridDates,
   resolveCalendarWindow,
   weekEndOf,
   weekStartOf,
@@ -66,6 +69,27 @@ describe("calendar window", () => {
     expect(weekEndOf("2026-11-09")).toBe("2026-11-15");
     expect(weekStartOf("2026-11-15")).toBe("2026-11-09");
     expect(weekEndOf("2026-11-15")).toBe("2026-11-15");
+  });
+
+  it("lays the month grid under the Monday-to-Sunday headers", () => {
+    const { from, to } = monthBoundsOf("2026-11-14");
+    const dates = monthGridDates(from, to);
+
+    // 2026-11-01 e domingo: a grade abre na segunda 26/10.
+    expect(dates[0]).toBe("2026-10-26");
+    expect(weekdayOf(dates[0] as string)).toBe(2); // domingo = 1, segunda = 2
+    expect(MONTH_WEEKDAY_LABELS[0]).toBe("Seg");
+    expect(dates.length % 7).toBe(0);
+    expect(dates.length).toBe(42);
+    expect(dates[dates.length - 1]).toBe("2026-12-06");
+    // Cada coluna cai sob o rotulo do seu dia da semana: a grade abre na
+    // segunda, como o cabecalho.
+    const columnOf = (date: string) =>
+      weekdayOf(date) === 1 ? 6 : weekdayOf(date) - 2;
+    dates.slice(0, 7).forEach((date, column) => {
+      expect(columnOf(date)).toBe(column);
+    });
+    expect(MONTH_WEEKDAY_LABELS[columnOf(dates[0] as string)]).toBe("Seg");
   });
 
   it("covers the whole month across leap years and year boundaries", () => {

@@ -60,6 +60,33 @@ export function weekEndOf(date: string): string {
   return addDays(weekStartOf(date), 6);
 }
 
+/** Rotulos das colunas da vista mensal, na ordem da grade: segunda a domingo. */
+export const MONTH_WEEKDAY_LABELS = [
+  "Seg",
+  "Ter",
+  "Qua",
+  "Qui",
+  "Sex",
+  "Sáb",
+  "Dom",
+] as const;
+
+/**
+ * Datas da grade da vista mensal: da segunda da semana do primeiro dia ao
+ * domingo da semana do ultimo dia. A grade comeca na segunda, como o
+ * cabecalho, para cada celula cair sob o dia da semana certo.
+ */
+export function monthGridDates(from: string, to: string): string[] {
+  const end = weekEndOf(to);
+  const dates: string[] = [];
+  let current = weekStartOf(from);
+  while (current <= end) {
+    dates.push(current);
+    current = addDays(current, 1);
+  }
+  return dates;
+}
+
 /** Primeiro e ultimo dia do mes que contem a data. */
 export function monthBoundsOf(date: string): { from: string; to: string } {
   if (!isValidDate(date)) throw new RangeError(`Data invalida: ${date}`);
