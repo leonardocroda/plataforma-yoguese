@@ -306,7 +306,8 @@ Proof: run unit | ✓ block transition (domain) > ignores a covered cancelled oc
 Proof: run int | ✓ bookings > rejects a booking in an occurrence blocked by holiday or closure
 
 **C9** - Cancelamento pelo estúdio em ocorrência BLOQUEADA é recusado: status mantido, reservas intactas, nenhum crédito (FER-09, AC 9)
-Proof: run int | ✓ studio cancellation > refuses the cancellation of a blocked occurrence (FER-09)
+Proof: run int | ✓ studio cancellation > refuses the cancellation of a blocked occurrence by feriado (FER-09)
+Proof: run int | ✓ studio cancellation > refuses the cancellation of a blocked occurrence by recesso (FER-09)
 
 **C10** - Remover o feriado devolve a AGENDADA as ocorrências BLOQUEADA da data de hoje em diante não mais cobertas (FER-10, AC 1)
 Proof: run int | ✓ blocks > unblocks the occurrences when the holiday is deleted (FER-10)
