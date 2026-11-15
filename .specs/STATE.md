@@ -372,6 +372,17 @@ prev/next arrows and a date picker (D+14 reachable). A CANCELADA occurrence stay
 visible with a badge in all three views. Per-slot/date blocking (AD-032, PRD 4.3)
 lands as P2 of `admin-calendario`.
 
+### AD-046 - ACTIVE - Fixo exige plano; frequência do plano limita os vínculos fixos (2026-11-14)
+
+User decision durante o Specify do candidato `aluno-fixo-limite`: sem plano a
+aluna NÃO pode ser fixa (createEnrollment recusa), e uma aluna com plano de
+N vezes por semana não pode ter mais de N vínculos fixos ativos - a regra
+vale na criação pela grade, na conversão de experimental (AD-037) e recusa a
+edição que baixe a frequência ou limpe o plano com vínculos ativos. Remoção
+de vínculo: pelo detalhe da aluna, encerrando em data (default hoje).
+NOTE: numbered in the worktree `spec-aluno-fixo`; the mainline agent may take
+the same number - renumber on merge if both survive (same caveat as AD-041).
+
 ### AD-045 - ACTIVE - Studio cancellation is refused on a past occurrence (2026-11-14)
 
 User decision: with free-time navigation, `cancelOccurrenceByStudio` gains a guard
