@@ -339,4 +339,14 @@ The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** nenhum.
 **Dispatched:** (a preencher no fim)
-**Walked:** (a preencher no fim)
+**Walked:** walk do detalhe (`walk.mjs`, 10/10 asserts, chromium headless,
+dev server 3002 com banco dedicado): login -> `/grade`; com plano 2x e dois
+fixos ativos, o 3o vinculo pela grade recusa nomeando "Plano Walk 2x
+2x/semana: a aluna ja esta fixa em 2 turmas" (PLIM-02 na tela); `/alunos` ->
+detalhe da aluna lista os 2 vinculos com o formulario, data pre-preenchida
+com hoje; encerrar com data anterior ao inicio recusa com `[role=alert]`
+contendo "anterior" (FIX-03 na tela); encerrar em hoje grava `endDate`,
+mostra "Horário fixo encerrado a partir de 2026-11-15." (FIX-01) e a seção
+recarrega com 1 vinculo (FIX-04); a composicao da turma encerrada volta a
+"8 vagas livres de 8" (FIX-02 na tela). O walk tambem expôs o achado que
+virou T6 (perfil listava endDate = hoje como ativo).

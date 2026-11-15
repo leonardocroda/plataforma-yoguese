@@ -218,6 +218,37 @@ describe("enrollments", () => {
       startDate: date,
     });
     expect(next.ok).toBe(true);
+    if (!next.ok) return;
+
+    // RES-23 tem dois lados: endDate futura AINDA ocupa a vaga ate a data
+    // chegar, e a partir da data encerrada ela se libera
+    const futureEnd = await endEnrollment(pg.db, next.value.id, {
+      date: addDays(date, 7),
+    });
+    expect(futureEnd.ok).toBe(true);
+    if (futureEnd.ok) {
+      expect(futureEnd.value.endDate).toBe(addDays(date, 7));
+    }
+
+    const [c] = await createStudents(pg.db, 1);
+    const blocked = await createEnrollment(pg.db, {
+      studentId: c,
+      classSlotId: slotId,
+      startDate: date,
+    });
+    expect(blocked.ok).toBe(false);
+
+    const freed = await createEnrollment(pg.db, {
+      studentId: c,
+      classSlotId: slotId,
+      startDate: addDays(date, 7),
+    });
+    expect(freed.ok).toBe(true);
+
+    const [total] = await pg.db
+      .select({ total: count() })
+      .from(fixedEnrollments);
+    expect(Number(total?.total)).toBe(3);
   });
 
   it("refuses an end date before the start date", async () => {
@@ -256,7 +287,8 @@ describe("enrollments", () => {
     }
   });
 
-  it("refuses ending an already ended or missing enrollment", async () => {    const { slotId, date } = await base(8);
+  it("refuses ending an already ended or missing enrollment", async () => {
+    const { slotId, date } = await base(8);
     const [a] = await createStudents(pg.db, 1);
 
     const created = await createEnrollment(pg.db, {
@@ -271,19 +303,40 @@ describe("enrollments", () => {
     expect(first.ok).toBe(true);
     if (!first.ok) return;
 
-    // FIX-05: re-encerrar por status ou por data recusa no servidor
+    // FIX-05, branch por status: re-encerrar um vinculo encerrado por
+    // status recusa no servidor
     const again = await endEnrollment(pg.db, created.value.id);
     expect(again.ok).toBe(false);
     if (!again.ok) {
       expect(again.error).toContain("ja encerrado");
     }
 
-    const byDate = await endEnrollment(pg.db, created.value.id, {
+    // FIX-05, branch por data: um SEGUNDO vinculo encerrado POR DATA
+    // recusa as duas re-tentativas, e a recusa cita a data gravada
+    const [b] = await createStudents(pg.db, 1);
+    const second = await createEnrollment(pg.db, {
+      studentId: b,
+      classSlotId: slotId,
+      startDate: date,
+    });
+    expect(second.ok).toBe(true);
+    if (!second.ok) return;
+    const datedEnd = await endEnrollment(pg.db, second.value.id, { date });
+    expect(datedEnd.ok).toBe(true);
+    if (!datedEnd.ok) return;
+
+    const reDated = await endEnrollment(pg.db, second.value.id, {
       date: addDays(date, 1),
     });
-    expect(byDate.ok).toBe(false);
-    if (!byDate.ok) {
-      expect(byDate.error).toContain("ja encerrado");
+    expect(reDated.ok).toBe(false);
+    if (!reDated.ok) {
+      expect(reDated.error).toContain(`ja encerrado em ${date}`);
+    }
+
+    const reStatus = await endEnrollment(pg.db, second.value.id);
+    expect(reStatus.ok).toBe(false);
+    if (!reStatus.ok) {
+      expect(reStatus.error).toContain(`ja encerrado em ${date}`);
     }
 
     const missing = await endEnrollment(
