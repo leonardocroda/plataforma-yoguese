@@ -1,4 +1,4 @@
-import { count } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { fixedEnrollments } from "../../../../db/schema";
 import { createStudents, createTestClass, clearTables, grantTestCredit } from "../../../../test/fixtures";
@@ -218,6 +218,83 @@ describe("enrollments", () => {
       startDate: date,
     });
     expect(next.ok).toBe(true);
+  });
+
+  it("refuses an end date before the start date", async () => {
+    const { slotId, date } = await base(8);
+    const [a] = await createStudents(pg.db, 1);
+
+    const created = await createEnrollment(pg.db, {
+      studentId: a,
+      classSlotId: slotId,
+      startDate: date,
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    // FIX-03: data de encerramento anterior ao inicio recusa sem alterar
+    const backdated = await endEnrollment(pg.db, created.value.id, {
+      date: addDays(date, -1),
+    });
+    expect(backdated.ok).toBe(false);
+    if (!backdated.ok) {
+      expect(backdated.error).toContain("anterior");
+    }
+
+    const [row] = await pg.db
+      .select()
+      .from(fixedEnrollments)
+      .where(eq(fixedEnrollments.id, created.value.id));
+    expect(row?.endDate).toBeNull();
+    expect(row?.status).toBe("ATIVA");
+
+    // Borda aceita: encerrar no proprio dia de inicio
+    const sameDay = await endEnrollment(pg.db, created.value.id, { date });
+    expect(sameDay.ok).toBe(true);
+    if (sameDay.ok) {
+      expect(sameDay.value.endDate).toBe(date);
+    }
+  });
+
+  it("refuses ending an already ended or missing enrollment", async () => {
+    const { slotId, date } = await base(8);
+    const [a] = await createStudents(pg.db, 1);
+
+    const created = await createEnrollment(pg.db, {
+      studentId: a,
+      classSlotId: slotId,
+      startDate: date,
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    const first = await endEnrollment(pg.db, created.value.id);
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+
+    // FIX-05: re-encerrar por status ou por data recusa no servidor
+    const again = await endEnrollment(pg.db, created.value.id);
+    expect(again.ok).toBe(false);
+    if (!again.ok) {
+      expect(again.error).toContain("ja encerrado");
+    }
+
+    const byDate = await endEnrollment(pg.db, created.value.id, {
+      date: addDays(date, 1),
+    });
+    expect(byDate.ok).toBe(false);
+    if (!byDate.ok) {
+      expect(byDate.error).toContain("ja encerrado");
+    }
+
+    const missing = await endEnrollment(
+      pg.db,
+      "00000000-0000-0000-0000-000000000000",
+    );
+    expect(missing.ok).toBe(false);
+    if (!missing.ok) {
+      expect(missing.error).toContain("nao encontrado");
+    }
   });
 
   it("student history", async () => {

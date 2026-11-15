@@ -107,7 +107,9 @@ export async function createEnrollment(
 
 /**
  * Encerra o vinculo por end_date (a partir dela deixa de contar) ou
- * tornando inativo (RES-23 AC4).
+ * tornando inativo (RES-23 AC4). Recusas: vinculo inexistente, vinculo
+ * ja encerrado (por data ou por status) e data de encerramento anterior
+ * ao inicio do vinculo (FIX-03, FIX-05) - nenhuma recusa altera a linha.
  */
 export async function endEnrollment(
   db: DbClient,
@@ -115,6 +117,35 @@ export async function endEnrollment(
   input: { date?: string } = {},
   now: Date = new Date(),
 ): Promise<EnrollmentResult> {
+  const [current] = await db
+    .select()
+    .from(fixedEnrollments)
+    .where(eq(fixedEnrollments.id, enrollmentId));
+  if (!current) {
+    return { ok: false, error: "enrollment nao encontrado" };
+  }
+  if (current.endDate) {
+    return {
+      ok: false,
+      error: `vinculo ja encerrado em ${current.endDate}`,
+      field: "date",
+    };
+  }
+  if (current.status === "INATIVA") {
+    return {
+      ok: false,
+      error: "vinculo ja encerrado",
+      field: "status",
+    };
+  }
+  if (input.date && input.date < current.startDate) {
+    return {
+      ok: false,
+      error: "data de encerramento anterior ao inicio do vinculo",
+      field: "date",
+    };
+  }
+
   const update = input.date
     ? { endDate: input.date, updatedAt: now }
     : { status: "INATIVA" as const, updatedAt: now };
