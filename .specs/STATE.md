@@ -385,6 +385,36 @@ surfaced it. Bookings/history of the past stay read-only.
 
 Snapshot - updated when work pauses.
 
+### Handoff snapshot (2026-11-14) - `admin-calendario` FECHADA
+
+- Feature `admin-calendario` EXECUTADA e FECHADA: 13 tasks (T1-T13) em 4 fases e 2 batches
+  (13 commits), mais o fix pass do Verifier em 7 commits: `0e8d047` (cabecalho da vista mensal),
+  `6dd9895` (historico da turma desativada), `165a515` (link de todo participante e legenda das
+  vagas), `4cc32fb` (departures no spec e screens round 1), `409c578` (provas do walk),
+  `7f07486` (provas de creditos) e `d01563e` (provas de bloqueio).
+- Verifier (author != verifier) devolveu FAIL com 23 findings sobre 24 checks; todos fechados em
+  uma passada, com a coluna `Closed` apontando o commit e o check que prova cada um.
+- Juiz de telas independente rodou round 1 e round 2 sobre as capturas refeitas (as duas
+  `matches`, sem nenhuma linha `differs`); o juiz pode ser despachado neste harness.
+- 3 bugs reais fechados no fix pass: a grade mensal comecava na segunda mas o primeiro cabecalho
+  era `Dom`; a ocorrencia CANCELADA sumia quando a turma era desativada (CAL-08); a legenda
+  afirmava "8 vagas" com capacidade editavel. O link de cadastro existia so para os fixos
+  (CAL-11) e passou a valer para todo participante com aluno.
+- Departures registrados em `spec.md` `Differences from the source` com `y`: barra de navegacao
+  (CAL-02/03/04/22), semana de sete dias segunda-domingo (user: "podemos ter aula todos os
+  dias"), rotulos Fixo/Reposicao/Experimental (CAL-10/CAL-11) e a legenda das vagas (CAL-09).
+- Suite: 421 testes verdes (61 arquivos), walk 66/66 asserts, build e lint limpos,
+  `check_proofs.py` 38 pass / 0 fail e `validate_verification.py` 0 erro / 0 warning.
+- Licoes: **L-002** (recorrencia 4) e **L-015** (recorrencia 3) reconfirmadas; 9 candidate novas
+  (L-035..L-043) sobre prova vazia, destinatario de credito, cardinalidade, ordem de cabecalho e
+  leitura de historico de registro inativo.
+- O que entrega: `/grade` com abas Diaria/Semanal/Mensal, setas, seletor de data sem limite de
+  7 dias (D+14), acao "Hoje", painel da ocorrencia com participantes e link de cadastro,
+  cancelamento pelo estudio com os quatro contadores, selos `Cancelada`/`Bloqueada` nas tres
+  vistas, bloqueio por turma/data e a guarda de ocorrencia passada (AD-045).
+- Estado local esperado pos-gate: `proofs.md` (desta feature e das outras) e artefato gerado e
+  fica como modificacao local nao commitada - commitar movimenta o HEAD e invalida o hash.
+
 ### Handoff snapshot (2026-11-14) - `admin-turmas` FECHADA
 
 - Feature `admin-turmas` EXECUTADA e FECHADA: 7 tasks (T1-T7) em 2 fases, uma commit atomica por

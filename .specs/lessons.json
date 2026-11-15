@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 35,
+  "next_id": 44,
   "lessons": [
     {
       "id": "L-001",
@@ -33,18 +33,20 @@
       "features": [
         "core-turmas-reservas",
         "core-creditos-cancelamentos",
-        "admin-turmas"
+        "admin-turmas",
+        "admin-calendario"
       ],
-      "recurrence": 3,
+      "recurrence": 4,
       "harmful": 1,
       "evidence": [
         "C3, C7, C9, C10 (tests)",
         "C41 (tests)",
         "C40 (tests)",
-        "verification.md C10/C13/C15/C17 (tests)"
+        "verification.md C10/C13/C15/C17 (tests)",
+        "C1, C7, C8, C22 (tests)"
       ],
       "created": "2026-11-07T11:24:38Z",
-      "last_seen": "2026-11-14T16:27:23Z"
+      "last_seen": "2026-11-15T01:37:39Z"
     },
     {
       "id": "L-003",
@@ -275,16 +277,18 @@
       "status": "confirmed",
       "features": [
         "core-creditos-cancelamentos",
-        "core-feriados-recessos"
+        "core-feriados-recessos",
+        "admin-calendario"
       ],
-      "recurrence": 2,
+      "recurrence": 3,
       "harmful": 0,
       "evidence": [
         "C9 (bookings)",
-        "C5 (tests)"
+        "C5 (tests)",
+        "C14, C21 (bookings)"
       ],
       "created": "2026-11-10T12:17:01Z",
-      "last_seen": "2026-11-11T19:39:52Z"
+      "last_seen": "2026-11-15T01:37:39Z"
     },
     {
       "id": "L-016",
@@ -627,6 +631,168 @@
       ],
       "created": "2026-11-14T16:28:10Z",
       "last_seen": "2026-11-14T16:28:10Z"
+    },
+    {
+      "id": "L-035",
+      "key": "weak_test::assert a collection is non empty before applying a predicate over all of it because every over an empty list passes silently",
+      "text": "Assert a collection is non-empty before applying a predicate over all of it, because every() over an empty list passes silently.",
+      "signal": "weak_test",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "admin-calendario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C2 (tests)"
+      ],
+      "created": "2026-11-15T01:37:40Z",
+      "last_seen": "2026-11-15T01:37:40Z"
+    },
+    {
+      "id": "L-036",
+      "key": "weak_test::compare the numbers a screen displays with the numbers the service returned because checking the labels alone passes with wrong values",
+      "text": "Compare the numbers a screen displays with the numbers the service returned, because checking the labels alone passes with wrong values.",
+      "signal": "weak_test",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "admin-calendario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C16 (tests)"
+      ],
+      "created": "2026-11-15T01:37:41Z",
+      "last_seen": "2026-11-15T01:37:41Z"
+    },
+    {
+      "id": "L-037",
+      "key": "weak_test::assert the identity of every recipient a rule credits not only the number of rows created",
+      "text": "Assert the identity of every recipient a rule credits, not only the number of rows created.",
+      "signal": "weak_test",
+      "scope": "credits",
+      "status": "candidate",
+      "features": [
+        "admin-calendario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C23 (credits)"
+      ],
+      "created": "2026-11-15T01:37:41Z",
+      "last_seen": "2026-11-15T01:37:41Z"
+    },
+    {
+      "id": "L-038",
+      "key": "weak_test::assert the cardinality of the affected rows before and after a refusal because checking only the known rows lets an extra row pass",
+      "text": "Assert the cardinality of the affected rows before and after a refusal, because checking only the known rows lets an extra row pass.",
+      "signal": "weak_test",
+      "scope": "credits",
+      "status": "candidate",
+      "features": [
+        "admin-calendario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C15 (credits)"
+      ],
+      "created": "2026-11-15T01:37:42Z",
+      "last_seen": "2026-11-15T01:37:42Z"
+    },
+    {
+      "id": "L-039",
+      "key": "weak_test::seed the state a repeat or idempotency assertion needs then assert the fields that must stay untouched",
+      "text": "Seed the state a repeat or idempotency assertion needs, then assert the fields that must stay untouched.",
+      "signal": "weak_test",
+      "scope": "credits",
+      "status": "candidate",
+      "features": [
+        "admin-calendario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C13 (credits)"
+      ],
+      "created": "2026-11-15T01:37:50Z",
+      "last_seen": "2026-11-15T01:37:50Z"
+    },
+    {
+      "id": "L-040",
+      "key": "weak_test::exercise the boundary date the criterion names on both sides because a future only case proves half the rule",
+      "text": "Exercise the boundary date the criterion names on both sides, because a future-only case proves half the rule.",
+      "signal": "weak_test",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "admin-calendario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C12, C19 (tests)"
+      ],
+      "created": "2026-11-15T01:37:50Z",
+      "last_seen": "2026-11-15T01:37:50Z"
+    },
+    {
+      "id": "L-041",
+      "key": "ac_gap::generate a grid s header labels from the same order as its cells because two independent orders drift apart",
+      "text": "Generate a grid's header labels from the same order as its cells, because two independent orders drift apart.",
+      "signal": "ac_gap",
+      "scope": "ui",
+      "status": "candidate",
+      "features": [
+        "admin-calendario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "calendar-views.tsx:16 (ui)"
+      ],
+      "created": "2026-11-15T01:37:51Z",
+      "last_seen": "2026-11-15T01:37:51Z"
+    },
+    {
+      "id": "L-042",
+      "key": "ac_gap::history reads load the metadata of inactive records referenced by existing rows because filtering by the active set hides past state",
+      "text": "History reads load the metadata of inactive records referenced by existing rows, because filtering by the active set hides past state.",
+      "signal": "ac_gap",
+      "scope": "bookings",
+      "status": "candidate",
+      "features": [
+        "admin-calendario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "occurrences.ts:99 (bookings)"
+      ],
+      "created": "2026-11-15T01:37:52Z",
+      "last_seen": "2026-11-15T01:37:52Z"
+    },
+    {
+      "id": "L-043",
+      "key": "spec_deviation::register every visible departure from the binding capture in differences from the source with the user s confirmation because an unregistered departure fails verification even with a green proof",
+      "text": "Register every visible departure from the binding capture in Differences from the source with the user's confirmation, because an unregistered departure fails verification even with a green proof.",
+      "signal": "spec_deviation",
+      "scope": "specs",
+      "status": "candidate",
+      "features": [
+        "admin-calendario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "spec.md:198-206 (specs)"
+      ],
+      "created": "2026-11-15T01:37:52Z",
+      "last_seen": "2026-11-15T01:37:52Z"
     }
   ]
 }

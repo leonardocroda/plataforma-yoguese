@@ -9,10 +9,10 @@
 Corroborated across multiple features. Safe to apply as guidance.
 
 ### L-002 - A proof line must name a test that asserts every case the check names, so one test covers the whole claim.
-- signal: `weak_test` · recurrence: 3 feature(s) · scope: `tests` · harmful: 1
-- features: core-turmas-reservas, core-creditos-cancelamentos, admin-turmas
-- evidence: C3, C7, C9, C10 (tests) (+3 more)
-- last seen: 2026-11-14T16:27:23Z
+- signal: `weak_test` · recurrence: 4 feature(s) · scope: `tests` · harmful: 1
+- features: core-turmas-reservas, core-creditos-cancelamentos, admin-turmas, admin-calendario
+- evidence: C3, C7, C9, C10 (tests) (+4 more)
+- last seen: 2026-11-15T01:37:39Z
 
 ### L-009 - Every rule the source document states gets its own check, because behavior that is correct only by probe breaks silently when no test names it.
 - signal: `weak_test` · recurrence: 3 feature(s) · scope: `tests` · harmful: 0
@@ -21,10 +21,10 @@ Corroborated across multiple features. Safe to apply as guidance.
 - last seen: 2026-11-14T16:28:10Z
 
 ### L-015 - A rule with two branches is proven on both branches, because the branch the happy path never reaches stays untested.
-- signal: `weak_test` · recurrence: 2 feature(s) · scope: `bookings` · harmful: 0
-- features: core-creditos-cancelamentos, core-feriados-recessos
-- evidence: C9 (bookings) (+1 more)
-- last seen: 2026-11-11T19:39:52Z
+- signal: `weak_test` · recurrence: 3 feature(s) · scope: `bookings` · harmful: 0
+- features: core-creditos-cancelamentos, core-feriados-recessos, admin-calendario
+- evidence: C9 (bookings) (+2 more)
+- last seen: 2026-11-15T01:37:39Z
 
 ## Candidates (under observation - do NOT load as guidance yet)
 
@@ -215,6 +215,60 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - features: admin-turmas
 - evidence: tasks.md (Achado do walk) (ui)
 - last seen: 2026-11-14T16:28:10Z
+
+### L-035 - Assert a collection is non-empty before applying a predicate over all of it, because every() over an empty list passes silently.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
+- features: admin-calendario
+- evidence: C2 (tests)
+- last seen: 2026-11-15T01:37:40Z
+
+### L-036 - Compare the numbers a screen displays with the numbers the service returned, because checking the labels alone passes with wrong values.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
+- features: admin-calendario
+- evidence: C16 (tests)
+- last seen: 2026-11-15T01:37:41Z
+
+### L-037 - Assert the identity of every recipient a rule credits, not only the number of rows created.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `credits` · harmful: 0
+- features: admin-calendario
+- evidence: C23 (credits)
+- last seen: 2026-11-15T01:37:41Z
+
+### L-038 - Assert the cardinality of the affected rows before and after a refusal, because checking only the known rows lets an extra row pass.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `credits` · harmful: 0
+- features: admin-calendario
+- evidence: C15 (credits)
+- last seen: 2026-11-15T01:37:42Z
+
+### L-039 - Seed the state a repeat or idempotency assertion needs, then assert the fields that must stay untouched.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `credits` · harmful: 0
+- features: admin-calendario
+- evidence: C13 (credits)
+- last seen: 2026-11-15T01:37:50Z
+
+### L-040 - Exercise the boundary date the criterion names on both sides, because a future-only case proves half the rule.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
+- features: admin-calendario
+- evidence: C12, C19 (tests)
+- last seen: 2026-11-15T01:37:50Z
+
+### L-041 - Generate a grid's header labels from the same order as its cells, because two independent orders drift apart.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `ui` · harmful: 0
+- features: admin-calendario
+- evidence: calendar-views.tsx:16 (ui)
+- last seen: 2026-11-15T01:37:51Z
+
+### L-042 - History reads load the metadata of inactive records referenced by existing rows, because filtering by the active set hides past state.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `bookings` · harmful: 0
+- features: admin-calendario
+- evidence: occurrences.ts:99 (bookings)
+- last seen: 2026-11-15T01:37:52Z
+
+### L-043 - Register every visible departure from the binding capture in Differences from the source with the user's confirmation, because an unregistered departure fails verification even with a green proof.
+- signal: `spec_deviation` · recurrence: 1 feature(s) · scope: `specs` · harmful: 0
+- features: admin-calendario
+- evidence: spec.md:198-206 (specs)
+- last seen: 2026-11-15T01:37:52Z
 
 ## Quarantined (failed when applied - ignore)
 
