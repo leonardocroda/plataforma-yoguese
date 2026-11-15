@@ -1,4 +1,4 @@
-import { and, asc, eq, gt } from "drizzle-orm";
+import { and, asc, eq, gt, inArray } from "drizzle-orm";
 import {
   classSessions,
   classSlots,
@@ -276,6 +276,31 @@ export async function listActiveSlots(db: DbClient): Promise<SlotWithType[]> {
         eq(classTypes.status, "ATIVA"),
       ),
     )
+    .orderBy(asc(classSlots.startTime));
+}
+
+/**
+ * Metadados dos horarios pedidos, ativos ou nao: a ocorrencia que ja existe de
+ * uma turma desativada continua legivel no historico (CAL-08).
+ */
+export async function listSlotsByIds(
+  db: DbClient,
+  ids: string[],
+): Promise<SlotWithType[]> {
+  if (ids.length === 0) return [];
+  return db
+    .select({
+      id: classSlots.id,
+      classTypeId: classSlots.classTypeId,
+      classTypeName: classTypes.name,
+      weekday: classSlots.weekday,
+      startTime: classSlots.startTime,
+      endTime: classSlots.endTime,
+      capacity: classSlots.capacity,
+    })
+    .from(classSlots)
+    .innerJoin(classTypes, eq(classSlots.classTypeId, classTypes.id))
+    .where(inArray(classSlots.id, ids))
     .orderBy(asc(classSlots.startTime));
 }
 

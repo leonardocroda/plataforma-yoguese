@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-import { bookings, classSessions } from "../../../../db/schema";
+import { bookings, classSessions, classSlots } from "../../../../db/schema";
 import {
   createExperimental,
   createStudents,
@@ -237,6 +237,50 @@ describe("occurrences", () => {
     ).toEqual([
       { date: "2026-11-03", sessionStatus: "CANCELADA" },
       { date: "2026-11-10", sessionStatus: "BLOQUEADA" },
+    ]);
+  });
+
+  it("keeps a cancelled occurrence readable after its class slot is deactivated", async () => {
+    const { slotId } = await createTestClass(pg.db, {
+      weekday: 3,
+      capacity: 8,
+    });
+    await pg.db.insert(classSessions).values([
+      { classSlotId: slotId, sessionDate: "2026-11-24", status: "CANCELADA" },
+      { classSlotId: slotId, sessionDate: "2026-12-01", status: "AGENDADA" },
+    ]);
+    await pg.db
+      .update(classSlots)
+      .set({ status: "INATIVA" })
+      .where(eq(classSlots.id, slotId));
+
+    const listed = await listOccurrences(pg.db, {
+      from: "2026-11-24",
+      to: "2026-12-01",
+      now: NOW,
+    });
+
+    expect(listed.ok).toBe(true);
+    if (!listed.ok) return;
+    // A turma desativada nao materializa mais nada (a sessao AGENDADA de
+    // 01/12 some), mas a ocorrencia cancelada continua no historico com a
+    // turma que ela teve (CAL-08).
+    expect(
+      listed.value.map((occurrence) => ({
+        date: occurrence.date,
+        sessionStatus: occurrence.sessionStatus,
+        classSlotId: occurrence.classSlotId,
+        capacity: occurrence.capacity,
+        startTime: occurrence.startTime,
+      })),
+    ).toEqual([
+      {
+        date: "2026-11-24",
+        sessionStatus: "CANCELADA",
+        classSlotId: slotId,
+        capacity: 8,
+        startTime: "19:00:00",
+      },
     ]);
   });
 

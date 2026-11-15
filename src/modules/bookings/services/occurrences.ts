@@ -17,7 +17,7 @@ import {
   fixedEnrollments,
   students,
 } from "../../../db/schema";
-import { listActiveSlots } from "../../classes/services/classes";
+import { listActiveSlots, listSlotsByIds } from "../../classes/services/classes";
 import {
   occurrenceDates,
   todayInStudio,
@@ -97,7 +97,6 @@ export async function listOccurrences(
   const now = input.now ?? new Date();
   const today = todayInStudio(now);
   const slots = await listActiveSlots(db);
-  if (slots.length === 0) return { ok: true, value: [] };
 
   const blocks = await loadBlockDates(db);
   const pairs: OccurrencePair[] = slots.flatMap((slot) =>
@@ -106,19 +105,19 @@ export async function listOccurrences(
     ),
   );
 
-  const slotIds = slots.map((slot) => slot.id);
-  const existing = await db
+  const windowSessions = await db
     .select()
     .from(classSessions)
     .where(
       and(
-        inArray(classSessions.classSlotId, slotIds),
         gte(classSessions.sessionDate, input.from),
         lte(classSessions.sessionDate, input.to),
       ),
     );
   const existingKeys = new Set(
-    existing.map((session) => sessionKey(session.classSlotId, session.sessionDate)),
+    windowSessions.map((session) =>
+      sessionKey(session.classSlotId, session.sessionDate),
+    ),
   );
 
   const futurePairs = pairs.filter((pair) => pair.date >= today);
@@ -165,17 +164,40 @@ export async function listOccurrences(
   }
 
   // Releitura: devolve tambem quem venceu uma insercao concorrente.
-  const sessions = await db
+  const reread = await db
     .select()
     .from(classSessions)
     .where(
       and(
-        inArray(classSessions.classSlotId, slotIds),
         gte(classSessions.sessionDate, input.from),
         lte(classSessions.sessionDate, input.to),
       ),
     );
+
+  // A turma desativada sai da materializacao futura, mas a ocorrencia que ja
+  // tem estado (cancelada ou bloqueada) continua no historico (CAL-08).
+  const slotById = new Map(slots.map((slot) => [slot.id, slot]));
+  const referencedSlotIds = [
+    ...new Set(
+      reread
+        .filter(
+          (session) =>
+            !slotById.has(session.classSlotId) && session.status !== "AGENDADA",
+        )
+        .map((session) => session.classSlotId),
+    ),
+  ];
+  const referencedSlots = await listSlotsByIds(db, referencedSlotIds);
+  for (const slot of referencedSlots) slotById.set(slot.id, slot);
+
+  const activeSlotIds = new Set(slots.map((slot) => slot.id));
+  const sessions = reread.filter(
+    (session) =>
+      activeSlotIds.has(session.classSlotId) ||
+      (slotById.has(session.classSlotId) && session.status !== "AGENDADA"),
+  );
   const sessionIds = sessions.map((session) => session.id);
+  const slotIdsInRead = Array.from(slotById.keys());
 
   const [bookingRows, approvedRows, enrollmentRows, creditRows, studentRows] =
     await Promise.all([
@@ -221,7 +243,7 @@ export async function listOccurrences(
         .innerJoin(students, eq(students.id, fixedEnrollments.studentId))
         .where(
           and(
-            inArray(fixedEnrollments.classSlotId, slotIds),
+            inArray(fixedEnrollments.classSlotId, slotIdsInRead),
             eq(fixedEnrollments.status, "ATIVA"),
             lte(fixedEnrollments.startDate, input.to),
             or(
@@ -239,7 +261,6 @@ export async function listOccurrences(
       db.select({ id: students.id, name: students.name }).from(students),
     ]);
 
-  const slotById = new Map(slots.map((slot) => [slot.id, slot]));
   const nameById = new Map(
     studentRows.map((student) => [student.id, student.name]),
   );
