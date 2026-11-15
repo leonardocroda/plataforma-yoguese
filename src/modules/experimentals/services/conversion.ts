@@ -11,6 +11,7 @@ import {
   classTypes,
   experimentals,
   fixedEnrollments,
+  plans,
   students,
 } from "../../../db/schema";
 import { normalizeEmail } from "../../auth/services/credentials";
@@ -160,6 +161,22 @@ export async function convertExperimental(
   const slots = await loadChosenSlots(db, input.classSlotIds);
   if (!slots.ok) {
     return { ok: false, error: slots.error, field: "classSlotIds" };
+  }
+
+  // PLIM-04: a frequencia do plano escolhido limita os horarios fixos da
+  // conversao (AD-037) - mais slots que a frequencia recusa antes de criar
+  // aluna ou vinculos
+  const [plan] = await db
+    .select()
+    .from(plans)
+    .where(eq(plans.id, input.planId));
+  if (plan && slots.value.length > plan.weeklyFrequency) {
+    const plural = plan.weeklyFrequency === 1 ? "horario fixo" : "horarios fixos";
+    return {
+      ok: false,
+      error: `classSlotIds: o plano ${plan.name} ${plan.weeklyFrequency}x/semana permite no maximo ${plan.weeklyFrequency} ${plural} e foram escolhidos ${slots.value.length}`,
+      field: "classSlotIds",
+    };
   }
 
   // A ocorrencia de cada horario fixo: a proxima da turma (EXP-54)

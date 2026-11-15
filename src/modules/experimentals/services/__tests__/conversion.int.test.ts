@@ -49,13 +49,16 @@ describe("experimental conversion", () => {
   });
 
   /** Plano de teste, ativo por padrao. */
-  async function createPlan(status: "ATIVO" | "INATIVO" = "ATIVO") {
+  async function createPlan(
+    status: "ATIVO" | "INATIVO" = "ATIVO",
+    weeklyFrequency = 2,
+  ) {
     const [plan] = await pg.db
       .insert(plans)
       .values({
         name: `Plano ${Math.random().toString(16).slice(2, 8)}`,
         price: "150.00",
-        weeklyFrequency: 2,
+        weeklyFrequency,
         status,
       })
       .returning();
@@ -80,13 +83,13 @@ describe("experimental conversion", () => {
     return { classTypeId, slotId, date, sessionId: session.id };
   }
 
-  /** Turma de quarta com a proxima ocorrencia agendada. */
-  async function futureOccurrence(capacity = 8) {
+  /** Turma com a proxima ocorrencia agendada, no dia da semana dado. */
+  async function futureOccurrence(capacity = 8, weekday = 3) {
     const { classTypeId, slotId } = await createTestClass(pg.db, {
-      weekday: 3,
+      weekday,
       capacity,
     });
-    const date = nextOccurrence({ weekday: 3 }, today);
+    const date = nextOccurrence({ weekday }, today);
     const materialized = await materializeSession(pg.db, {
       classSlotId: slotId,
       date,
@@ -513,5 +516,59 @@ describe("experimental conversion", () => {
 
     // Sem user_id: a aluna convertida nao tem acesso nem login (EXP-61)
     expect(aluna.userId).toBeNull();
+  });
+
+  it("recusa conversao com mais horarios fixos que a frequencia do plano (PLIM-04)", async () => {
+    const { sessionId } = await pastOccurrence();
+    const experimental = await approvedExperimental(sessionId);
+    const plan = await createPlan("ATIVO", 2);
+    const monday = await futureOccurrence(8, 3);
+    const friday = await futureOccurrence(8, 5);
+    const saturday = await futureOccurrence(8, 6);
+
+    const result = await convertExperimental(pg.db, {
+      experimentalId: experimental.id,
+      email: "maria@teste.com",
+      birthDate: "1990-05-10",
+      planId: plan.id,
+      classSlotIds: [monday.slotId, friday.slotId, saturday.slotId],
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.field).toBe("classSlotIds");
+      // A recusa nomeia o limite do plano e a quantidade escolhida
+      expect(result.error).toContain("horarios fixos");
+      expect(result.error).toContain("foram escolhidos 3");
+    }
+
+    // Nada e criado: nem aluna, nem vinculos, e a experimental segue aprovada
+    expect(await pg.db.select().from(students)).toHaveLength(0);
+    expect(await pg.db.select().from(fixedEnrollments)).toHaveLength(0);
+    const [registro] = await pg.db
+      .select()
+      .from(experimentals)
+      .where(eq(experimentals.id, experimental.id));
+    expect(registro.status).toBe("APROVADA");
+  });
+
+  it("converte com horarios fixos dentro da frequencia do plano (PLIM-04)", async () => {
+    const { sessionId } = await pastOccurrence();
+    const experimental = await approvedExperimental(sessionId);
+    const plan = await createPlan("ATIVO", 2);
+    const monday = await futureOccurrence(8, 3);
+    const friday = await futureOccurrence(8, 5);
+
+    const result = await convertExperimental(pg.db, {
+      experimentalId: experimental.id,
+      email: "maria@teste.com",
+      birthDate: "1990-05-10",
+      planId: plan.id,
+      classSlotIds: [monday.slotId, friday.slotId],
+    });
+
+    expect(result.ok).toBe(true);
+    const enrollments = await pg.db.select().from(fixedEnrollments);
+    expect(enrollments).toHaveLength(2);
   });
 });

@@ -154,9 +154,9 @@ plano (que já precisa ser ATIVO), recusar quando
 
 **Done when**:
 
-- [ ] Conversão com mais slots que a frequência do plano recusa nomeando o limite
-- [ ] Conversão com slots dentro da frequência continua criando aluna + vínculos
-- [ ] Gate: `npm test`
+- [x] Conversão com mais slots que a frequência do plano recusa nomeando o limite
+- [x] Conversão com slots dentro da frequência continua criando aluna + vínculos
+- [x] Gate: `npm test` (424 testes verdes, +2 novos)
 
 **Tests**: integration
 **Gate**: full
