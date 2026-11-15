@@ -105,11 +105,11 @@ ativos (mesma condição do perfil)
 
 **Done when**:
 
-- [ ] Aluna com plano 2x fixa em 2 turmas tem a 3ª recusada nomeando plano e contagem
-- [ ] Aluna com plano 2x consegue os 2 vínculos normalmente (branch do meio)
-- [ ] Aluna sem plano recusa com a mensagem específica
-- [ ] Testes existentes de vínculo continuam verdes (fixture com plano default)
-- [ ] Gate: `npm test`
+- [x] Aluna com plano 2x fixa em 2 turmas tem a 3ª recusada nomeando plano e contagem
+- [x] Aluna com plano 2x consegue os 2 vínculos normalmente (branch do meio)
+- [x] Aluna sem plano recusa com a mensagem específica
+- [x] Testes existentes de vínculo continuam verdes (fixture com plano default)
+- [x] Gate: `npm test` (419 testes verdes, +3 novos)
 
 **Tests**: integration
 **Gate**: full

@@ -5,6 +5,7 @@ import {
   classSlots,
   classTypes,
   experimentals,
+  plans,
   students,
 } from "../db/schema";
 import { grantCredit } from "../modules/credits/services/credits";
@@ -125,8 +126,34 @@ export async function createTestClass(
 export async function createStudents(
   db: DbClient,
   count: number,
+  options: {
+    /**
+     * PLIM-03: a regra nova exige plano para o vinculo fixo. O default
+     * vincula um plano de teste com frequencia 7 (os testes existentes
+     * continuam valendo); `plan: false` cria sem plano e `plan: { ... }`
+     * escolhe a frequencia do limite.
+     */
+    plan?: false | { weeklyFrequency?: number };
+  } = {},
 ): Promise<string[]> {
   const suffix = Math.random().toString(16).slice(2, 10);
+  let planId: string | null = null;
+  if (options.plan !== false) {
+    const weeklyFrequency =
+      typeof options.plan === "object" && options.plan
+        ? (options.plan.weeklyFrequency ?? 7)
+        : 7;
+    const [plan] = await db
+      .insert(plans)
+      .values({
+        name: `Plano teste ${suffix}`,
+        price: "0.00",
+        weeklyFrequency,
+        status: "ATIVO",
+      })
+      .returning();
+    planId = plan.id;
+  }
   const rows = await db
     .insert(students)
     .values(
@@ -136,6 +163,7 @@ export async function createStudents(
         phone: `1199999${String(1000 + i)}`,
         email: `aluno-${suffix}-${i + 1}@teste.com`,
         birthDate: "1990-01-01",
+        planId,
       })),
     )
     .returning();

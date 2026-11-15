@@ -333,11 +333,11 @@ describe("students services", () => {
   });
 
   it("reativar aluna sem plano e recusado e com plano funciona (STUD-09)", async () => {
-    const [created] = await createStudents(pg.db, 1);
+    // A aluna fixture nasce sem plano quando o teste pede `plan: false`:
+    // reativar recusa com erro do campo
+    const [created] = await createStudents(pg.db, 1, { plan: false });
     expect(created).toBeTruthy();
     if (!created) return;
-
-    // A aluna fixture nasce sem plano: reativar recusa com erro do campo
     const refused = await setStudentStatus(pg.db, {
       studentId: created,
       status: "ATIVO",
